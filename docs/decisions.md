@@ -25,3 +25,40 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 9. **State runtime agen.** `agent/data/seen-hashes.json` dan `agent/data/state.json` dibuat otomatis oleh agen saat berjalan, dan tidak di-commit (hasil mode lokal dan testnet berbeda).
 10. **Broadcast Foundry.** Broadcast lokal (`contracts/broadcast/*/31337/`) diabaikan git. Broadcast testnet boleh di-commit sebagai jejak deploy.
 11. **Versi compiler.** `solc_version = "0.8.24"` dipasang tetap di `foundry.toml`, sesuai "Solidity ^0.8.24" di PRD. Semua modul OZ yang akan dipakai (ERC20, SafeERC20, Ownable, ReentrancyGuard, ERC721) cocok dengan versi ini, karena pragma-nya `^0.8.20` / `^0.8.24`. `evm_version` dibiarkan default Foundry; akan dicek ulang terhadap dokumentasi BNB Chain saat deploy testnet (Gelombang 8).
+
+## Gelombang 2 — Kontrak + test
+
+1. **`CampaignDeployer` (kontrak tambahan).** Jika `new HarvestCampaign` ada di dalam `CampaignFactory`, runtime factory menjadi 25.158 byte dan melewati batas EIP-170 (24.576 byte); tidak bisa di-deploy ke BSC testnet. Mengubah optimizer (runs 1/50, via-ir) tidak cukup. Solusinya:
+   - Constructor factory membuat `CampaignDeployer` sekali. Hanya kontrak inilah yang memuat bytecode kampanye.
+   - Runtime factory sekarang 6,9 KB dan deployer 19,4 KB.
+   - Signature `CampaignFactory(usdt)` dan urutan deploy di PRD tidak berubah.
+   - `HarvestCampaign` menerima alamat factory lewat constructor, lalu membaca `usdt`, `reputationBook`, dan `reservePool` dari factory.
+2. **`params` disimpan tanpa array milestone.** State `params` bertipe `Terms`, yaitu `CampaignParams` tanpa `milestoneNames`/`milestoneBps`, karena nama dan bobot milestone sudah disimpan di `milestones[]`. Ini menghemat gas dan ukuran bytecode.
+3. **`IAgentIdentity` minimal.** Isinya hanya `ownerOf` dan `tokenURI`, yaitu fungsi standar ERC-721 (PRD: identitas ERC-8004 berbasis ERC-721). ABI pendaftaran registri resmi tidak ditulis di kontrak; akan diriset di Gelombang 8 (`docs/erc8004-notes.md`).
+4. **`isAgent` selalu mengecek `ownerOf(agentId) == wallet`,** baik untuk registri resmi maupun mock. Di kedua jalur, agen mendaftar dari wallet-nya sendiri, jadi aturan ini selalu terpenuhi. `setAgent` juga memvalidasi kepemilikan ini. Jika registri me-revert, `isAgent` mengembalikan `false`, bukan revert.
+5. **Satu wallet satu peran.** Aturan ini ditegakkan di `registerCooperative`, `registerFarmer`, dan `setAgent`: admin, koperasi, petani, dan agen saling eksklusif. Investor tidak dibatasi.
+6. **`fund` "kecuali petani/koperasi"** diartikan sebagai petani dan koperasi *kampanye itu sendiri*, yaitu pihak yang punya konflik kepentingan.
+7. **Batas waktu.**
+
+   | Aturan | Syarat |
+   | --- | --- |
+   | `fund` masih boleh | `now <= fundingDeadline` |
+   | `finalizeFunding` boleh | `now > fundingDeadline` |
+   | `markDefault` boleh | `now > expectedHarvestDate + 30 hari` |
+   | Panen dihitung tepat waktu | `now <= expectedHarvestDate + 7 hari` (konstanta `ON_TIME_WINDOW`) |
+8. **Pencairan milestone terakhir** = `raisedAmount − totalReleased`, tidak memakai `balanceOf`. Tujuannya agar USDT yang dikirim nyasar ke kontrak tidak ikut cair ke petani. Untuk `markFailed`/`markDefault`, pool tetap dihitung dari `usdt.balanceOf(this)` sesuai PRD.
+9. **Bagian investor saat panen** = `amount − farmerShare − reserveShare` (rumus PRD). Debu pembulatan jatuh ke investor. `INVESTOR_PROFIT_BPS` tetap ada sebagai konstanta informasi untuk UI.
+10. **Overturn putusan AI.** `recordOverturn` dicatat setiap kali keputusan admin di `resolveDispute` berbeda dari putusan AI terakhir, ke arah mana pun.
+11. **Statistik agen.** `AgentStats` di `ReputationBook` berupa satu struct global. Ini mengikuti signature PRD `recordVerdict(bool)`/`recordOverturn()`, karena MVP hanya punya satu agen.
+12. **Validasi `createCampaign`:**
+    - `commodity` tidak kosong, `targetAmount > 0`, `fundingDuration > 0`.
+    - `expectedHarvestDate` harus di masa depan.
+    - 1–10 milestone, setiap bobot > 0, total bobot = 10.000.
+    - CID bukti, alasan AI, dan nota panen tidak boleh kosong.
+13. **Tambahan kecil di luar PRD:**
+    - View `claimable(address)` untuk dashboard investor, `campaignCount()`, dan `totalReleased`.
+    - Event `DisputeResolved`, `ModulesSet`, `AgentConfigured`, `ReservePool.Contributed/Compensated`, dan `MockAgentIdentity.AgentRegistered`.
+    - File `interfaces/IBagiPanen.sol` berisi antarmuka internal, supaya tidak ada import melingkar.
+    - Parameter alamat pada event (`investor`, `campaign`) di-*index*. Signature event (topic0) tetap sama dengan PRD.
+14. **ID `MockAgentIdentity` mulai dari 1,** supaya 0 berarti "belum dikonfigurasi". Pemilik `ReservePool` adalah deployer (admin).
+15. **Token porsi.** `transfer` dan `transferFrom` selalu revert, sesuai PRD. `approve` dibiarkan karena tidak berbahaya: allowance tidak bisa dipakai untuk memindahkan token.
