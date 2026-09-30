@@ -29,12 +29,13 @@ const ROLE_TONE: Record<Role, Tone> = {
 };
 
 export function Header() {
-  const { role } = useRole();
+  const { role, address } = useRole();
   const pathname = usePathname();
   const nav = [
     { href: "/", label: "Beranda", show: true },
     { href: "/create", label: "Ajukan kampanye", show: role === "petani" },
     { href: "/dashboard", label: "Dashboard", show: role === "petani" || role === "investor" },
+    { href: `/petani/${address}`, label: "Rapor saya", show: role === "petani" && Boolean(address) },
     { href: "/koperasi", label: "Koperasi", show: role === "koperasi" },
     { href: "/admin", label: "Admin", show: role === "admin" },
     { href: "/agent", label: "Agen AI", show: true },

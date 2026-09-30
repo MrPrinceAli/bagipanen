@@ -1,11 +1,13 @@
 "use client";
 
+import { type ReactNode, useEffect, useState } from "react";
+import { getAddress, isAddress } from "viem";
 import { IS_LOCAL, explorerTxUrl } from "@/lib/config";
 import { formatRupiah, formatUsdt, shortHash } from "@/lib/format";
 import { ipfsUrl } from "@/lib/ipfs";
 import type { TxState } from "@/lib/tx";
 import { FailType, MSTATUS_LABEL, MStatus, STATUS_LABEL, Status } from "@/lib/types";
-import { Badge, cn, Spinner, type Tone } from "./ui";
+import { Badge, Button, cn, Input, Spinner, type Tone } from "./ui";
 
 /** Jumlah USDT + perkiraan rupiah (kurs tetap). */
 export function Usdt({ value, className, showRupiah = true }: { value: bigint; className?: string; showRupiah?: boolean }) {
@@ -121,5 +123,65 @@ export function Stepper({ steps }: { steps: { label: string; status: StepStatus 
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * Tombol dengan konfirmasi dua langkah untuk aksi yang tidak bisa dibatalkan
+ * (mis. tandai gagal panen). Klik pertama meminta konfirmasi, klik kedua menjalankan.
+ */
+export function ConfirmButton({
+  children,
+  confirmText = "Klik lagi untuk konfirmasi",
+  onConfirm,
+  variant = "danger",
+  loading,
+  disabled,
+  size,
+}: {
+  children: ReactNode;
+  confirmText?: string;
+  onConfirm: () => unknown;
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  loading?: boolean;
+  disabled?: boolean;
+  size?: "sm" | "md";
+}) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <Button
+      variant={variant}
+      size={size}
+      loading={loading}
+      disabled={disabled}
+      onClick={() => {
+        if (!armed) return setArmed(true);
+        setArmed(false);
+        void onConfirm();
+      }}
+    >
+      {armed ? `⚠ ${confirmText}` : children}
+    </Button>
+  );
+}
+
+/** Validasi alamat wallet dari input pengguna. */
+export function parseAddressInput(value: string): `0x${string}` | null {
+  const v = value.trim();
+  return isAddress(v, { strict: false }) ? getAddress(v) : null;
+}
+
+export function AddressInput({ id, value, onChange, placeholder = "0x…" }: { id: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const invalid = value.trim() !== "" && parseAddressInput(value) === null;
+  return (
+    <div className="flex flex-col gap-1">
+      <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} spellCheck={false} className="font-mono" />
+      {invalid && <p className="text-xs text-red-700">Alamat wallet tidak valid.</p>}
+    </div>
   );
 }

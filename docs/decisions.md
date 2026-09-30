@@ -185,3 +185,21 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 15. **`npm run dev:chain`** sekarang juga menjalankan `register` agen (dengan `APP_MODE=local` dipaksa), jika `agent/node_modules` sudah ada.
 16. **Variabel env agen yang ditambahkan:** `BSC_TESTNET_RPC` (agen butuh RPC di testnet, padahal tidak tercantum di bagian agen PRD), serta opsional `LOCAL_RPC_URL`, `LOCAL_IPFS_DIR`, `POLL_INTERVAL_MS`, `RETRY_DELAY_MS`, `MAX_LOG_RANGE`.
 17. **Unit test** memakai `node:test` lewat `tsx --test` (40 test), dengan fixture foto kecil di `agent/test/fixtures/`.
+
+## Gelombang 6 — Halaman koperasi, admin, Rapor Petani, agen
+
+1. **Daftar koperasi dan petani** dibaca dari event `CooperativeRegistered` / `FarmerRegistered` di factory, karena kontrak hanya menyimpan mapping, bukan daftar.
+2. **Aturan berbasis waktu di halaman admin memakai waktu blok terbaru (waktu chain), bukan jam browser.** Contohnya tombol "Tandai gagal bayar" (aktif setelah perkiraan panen + 30 hari) dan "Tutup pendanaan" untuk tenggat yang lewat. Waktu chain adalah acuan yang dipakai kontrak, dan ini juga memungkinkan uji dengan `evm_increaseTime` di Anvil.
+3. **Aksi admin yang tidak bisa dibatalkan memakai konfirmasi dua langkah:** tandai gagal panen, tandai gagal bayar, dan tolak final sengketa. Konfirmasi batal otomatis setelah 5 detik.
+4. **Persetujuan kampanye tersedia di `/admin` dan tetap juga di halaman detail kampanye** (dari Gelombang 4). Admin juga bisa "Tutup pendanaan" untuk kampanye yang tenggatnya lewat, walau aksi ini sebenarnya boleh dilakukan siapa saja.
+5. **Antrean koperasi** berisi milestone aktif di kampanye dampingannya yang berstatus Bukti dikirim / Diperiksa AI dan belum diputuskan koperasi. Koperasi boleh memutuskan sebelum atau sesudah agen AI; kontrak mencairkan dana hanya jika keduanya setuju.
+6. **Halaman `/agent`.**
+   - Registri ditulis jujur: "MockAgentIdentity (fallback)" jika memakai registri mock hasil deploy, atau "ERC-8004" jika admin mengarahkan `setAgent` ke registri lain.
+   - Agent card dibaca dari `tokenURI(agentId)`, fungsi standar ERC-721. Bentuk URI yang didukung: `ipfs://`, `https://`, dan `data:`.
+7. **10 putusan terakhir** diambil dari event `VerdictRecorded` tanpa filter alamat, lalu disaring ke kampanye resmi (`isCampaign`). Ringkasan tiap putusan dibaca dari JSON `reasonCID`.
+8. **Rumus Rapor Petani.**
+   - Tepat waktu = `onTimeHarvests ÷ harvestsCompleted`.
+   - Akurasi estimasi = `totalReported ÷ totalEstimated`; hanya kampanye yang sudah panen yang ikut dihitung (sesuai `ReputationBook`).
+   - Nilai "–" jika belum ada panen.
+   - Badge "Diblokir" tampil jika `defaults > 0`.
+9. **Header:** petani mendapat tautan "Rapor saya".

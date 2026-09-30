@@ -49,7 +49,7 @@ export function ActionPanels(props: PanelProps) {
   return <div className="flex flex-col gap-4">{panels}</div>;
 }
 
-function AdminReviewPanel({ c }: { c: CampaignSummary }) {
+export function AdminReviewPanel({ c }: { c: CampaignSummary }) {
   const tx = useTx();
   const [action, setAction] = useState<"approve" | "reject" | null>(null);
   const send = (fn: "approveCampaign" | "rejectCampaign") => {
@@ -384,7 +384,7 @@ function HarvestPanel({ c }: { c: CampaignSummary }) {
   );
 }
 
-function CooperativePanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone }) {
+export function CooperativePanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone }) {
   const tx = useTx();
   const [choice, setChoice] = useState<boolean | null>(null);
   const decide = (ok: boolean) => {
