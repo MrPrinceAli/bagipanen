@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // npm run dev:chain — satu perintah untuk chain lokal berisi data demo:
-// nyalakan Anvil → deploy kontrak → seed data demo → sync ABI & alamat.
+// nyalakan Anvil → deploy kontrak → seed data demo → sync ABI & alamat → daftarkan agen AI.
 // Anvil tetap berjalan sampai Ctrl+C. Setiap kali dijalankan, chain dimulai dari nol.
 import { spawn, spawnSync } from "node:child_process";
-import { openSync, readFileSync } from "node:fs";
+import { existsSync, openSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -75,6 +75,21 @@ step("Deploy kontrak (Deploy.s.sol)", "forge", ["script", "script/Deploy.s.sol",
 step("Seed data demo (Seed.s.sol)", "forge", ["script", "script/Seed.s.sol", "--rpc-url", "anvil", "--broadcast"], contractsDir);
 step("Sync ABI & alamat ke web/ dan agent/", "node", [join(root, "scripts/sync.mjs"), "--no-build"], root);
 
+const agentDir = join(root, "agent");
+let agentRegistered = false;
+if (existsSync(join(agentDir, "node_modules"))) {
+  console.log("\n▶ Daftarkan agen AI (MockAgentIdentity + setAgent)");
+  const res = spawnSync("npm", ["run", "-s", "register"], {
+    cwd: agentDir,
+    stdio: "inherit",
+    env: { ...process.env, APP_MODE: "local" },
+  });
+  agentRegistered = res.status === 0;
+  if (!agentRegistered) console.warn("⚠ Registrasi agen gagal; chain tetap berjalan. Coba: cd agent && npm run register");
+} else {
+  console.warn("\n⚠ agent/node_modules belum ada — lewati registrasi agen. Jalankan: cd agent && npm install && npm run register");
+}
+
 const d = JSON.parse(readFileSync(join(root, "deployments/anvil.json"), "utf8"));
 const rows = [
   ["CampaignFactory", d.factory],
@@ -97,4 +112,5 @@ console.log("\nKontrak:");
 for (const [name, addr] of rows) console.log(`  ${name.padEnd(18)} ${addr}`);
 console.log("\nAkun demo (akun bawaan Anvil):");
 for (const [label, key] of accounts) console.log(`  ${label.padEnd(18)} ${d.accounts[key].address}`);
+console.log(`\nAgen AI: ${agentRegistered ? "terdaftar ✓ — jalankan `npm run dev:agent` di terminal lain" : "belum terdaftar"}`);
 console.log("\nTekan Ctrl+C untuk mematikan chain.");

@@ -6,8 +6,10 @@
   "scripts": {
     "dev:chain": "node scripts/dev-chain.mjs",
     "dev:web": "cd web && npm run dev",
+    "dev:agent": "cd agent && npm run start",
     "sync": "node scripts/sync.mjs",
     "test:contracts": "cd contracts && forge test",
+    "test:agent": "cd agent && npm test",
     "deploy:testnet": "cd contracts && forge script script/Deploy.s.sol --rpc-url bscTestnet --broadcast && cd .. && node scripts/sync.mjs --no-build"
   },
   "engines": {

@@ -133,3 +133,55 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 13. **Riwayat transaksi** dibaca dari event kampanye + event persetujuan di factory, mulai dari `START_BLOCK`. Di testnet ada tautan BscScan; di lokal hanya hash. Pembagian rentang `getLogs` untuk batas RPC BSC akan dicek di Gelombang 8.
 14. **Variabel env opsional baru:** `NEXT_PUBLIC_LOCAL_RPC_URL` dan `NEXT_PUBLIC_BSC_TESTNET_RPC`. Jika kosong, dipakai RPC bawaan definisi chain di viem. Jika `NEXT_PUBLIC_IPFS_GATEWAY` kosong di testnet, dipakai `https://ipfs.io`. `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` diisi placeholder sampai Gelombang 8.
 15. **Halaman `/koperasi`, `/admin`, `/petani/[address]`, `/agent`** untuk sementara menampilkan kartu "segera hadir" (Gelombang 6).
+
+## Gelombang 5 — Agen AI (MockVision)
+
+1. **Versi paket agen.** viem 2.57.1 (sama dengan web), `@google/genai` 2.24.0, `exifr` 7.1.3, `dotenv` 18, `tsx` 4.23. TypeScript 5.9.3 dipakai supaya sama dengan web, walau TypeScript terbaru sudah 7.x. `@types/node` 20.
+2. **Adapter dipilih dari `APP_MODE`.**
+
+   | Mode | Penyimpanan | Penilai foto |
+   | --- | --- | --- |
+   | `local` | folder lokal bersama web (`web/.local-ipfs`, dapat diubah lewat `LOCAL_IPFS_DIR`), dengan format file + `.meta.json` yang sama | MockVision |
+   | `testnet` | Pinata | Gemini |
+
+   Adapter Pinata dan Gemini sudah dibuat, tetapi belum dipakai sampai Gelombang 8.
+3. **Wallet agen di mode lokal** diturunkan dari mnemonic Anvil (akun `agen`, indeks 6), lalu menandatangani secara lokal dengan viem. Di testnet dipakai `AGENT_PRIVATE_KEY`.
+4. **Nama file untuk MockVision** dibaca dari `<cid>.meta.json` yang ditulis API upload web. Karena penyimpanan berbasis isi (CID = hash), file dengan isi identik yang diunggah ulang dengan nama lain akan tercatat dengan nama terakhir.
+5. **Rincian aturan EXIF:**
+   - `missing` hanya jika GPS **dan** tanggal sama-sama tidak ada.
+   - Jika hanya salah satu yang ada, bagian yang ada tetap diperiksa, dan bagian yang hilang dicatat.
+   - Selisih tanggal dihitung mutlak, ≤ 7 hari. Jarak ≤ 2 km (tepat 2 km masih lolos).
+6. **Cuaca:**
+   - `precip14dMm` dan `maxDailyPrecipMm` dihitung dari 14 hari sebelum hari ini (WIB).
+   - `extreme` = ada hari (lampau maupun prakiraan) dengan hujan > 100 mm.
+   - Data statis hanya dipakai di mode lokal saat Open-Meteo tidak bisa dihubungi.
+   - Objek `weather` di JSON putusan ditambah `tempMaxC`, `tempMinC`, dan `source`.
+7. **Deteksi duplikat.** SHA-256 foto dicatat per (kampanye, milestone), setelah putusan tercatat onchain. Unggah ulang foto yang sama untuk milestone yang sama bukan duplikat (sesuai PRD: "untuk kampanye atau milestone lain").
+8. **Idempotensi.** Bukti dilewati jika:
+   - kampanye sudah tidak Berjalan;
+   - milestone sudah lewat;
+   - percobaan sudah digantikan yang lebih baru;
+   - `aiDecided` sudah true;
+   - status milestone bukan `ProofSubmitted`;
+   - CID di kontrak berbeda.
+
+   Pengecekan diulang tepat sebelum mengirim transaksi, dan `recordVerdict` disimulasikan dulu. Revert kontrak dianggap "keadaan sudah berubah", sehingga dilewati tanpa diulang. Galat jaringan/API diulang 3 kali dengan jeda 15 detik.
+9. **Deteksi chain berganti.** `data/state.json` menyimpan identitas chain (chainId, factory, hash blok genesis). Jika identitas itu berubah (mis. `dev:chain` diulang), state dan `seen-hashes.json` otomatis direset tanpa perlu me-restart agen.
+10. **Agen belum terdaftar.** Selama wallet agen belum terdaftar (`isAgent` = false), agen menunggu tanpa memajukan blok, jadi bukti tidak hilang.
+11. **`getLogs` dibagi per rentang blok:** `MAX_LOG_RANGE` bawaan 5.000 di testnet dan 100.000 di lokal.
+12. **Gemini:**
+    - `systemInstruction` = kalimat pertama prompt PRD; sisa prompt PRD + konteks kampanye menjadi pesan pengguna.
+    - Gambar dilampirkan lewat `createPartFromBase64`.
+    - Output JSON memakai `responseMimeType: application/json` + `responseSchema` (tipe `Type`), `temperature` 0,2.
+    - `detected_stage` dibatasi ke Tanam / Tumbuh / Pra-panen / Tidak diketahui.
+    - Output model dinormalisasi agar selalu sesuai skema.
+13. **Pinata.** API v3 files (`POST https://uploads.pinata.cloud/v3/files`, `network=public`, `data.cid`, dari docs.pinata.cloud), dipakai untuk JSON putusan agen **dan** unggahan web. Unduhan lewat `${IPFS_GATEWAY}/ipfs/<cid>`.
+14. **`register-agent`:**
+    - `agentWallet` diisi di salinan agent card. `image` placeholder dihapus sampai ada logo. Di lokal, `network` diisi `anvil-local`.
+    - URI = `ipfs://<cid>`.
+    - Idempoten: dilewati jika wallet sudah menjadi agen.
+    - Mode lokal: `setAgent` otomatis oleh admin Anvil. Mode testnet dengan registri mock: script mencetak parameter untuk halaman `/admin`.
+    - Registri ERC-8004 resmi belum didukung sampai riset di Gelombang 8.
+15. **`npm run dev:chain`** sekarang juga menjalankan `register` agen (dengan `APP_MODE=local` dipaksa), jika `agent/node_modules` sudah ada.
+16. **Variabel env agen yang ditambahkan:** `BSC_TESTNET_RPC` (agen butuh RPC di testnet, padahal tidak tercantum di bagian agen PRD), serta opsional `LOCAL_RPC_URL`, `LOCAL_IPFS_DIR`, `POLL_INTERVAL_MS`, `RETRY_DELAY_MS`, `MAX_LOG_RANGE`.
+17. **Unit test** memakai `node:test` lewat `tsx --test` (40 test), dengan fixture foto kecil di `agent/test/fixtures/`.

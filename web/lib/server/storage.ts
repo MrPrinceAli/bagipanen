@@ -5,7 +5,7 @@ import path from "node:path";
 /**
  * Adapter penyimpanan file (hanya dipakai di API route, jangan diimpor dari komponen klien).
  * - local  : web/.local-ipfs/<cid>, CID = SHA-256 isi file (mode lokal)
- * - pinata : IPFS via Pinata (mode testnet; disiapkan saat konfigurasi)
+ * - pinata : IPFS via Pinata (mode testnet)
  */
 export type StorageAdapter = {
   name: "local" | "pinata";
@@ -33,10 +33,31 @@ const local: StorageAdapter = {
   },
 };
 
+const PINATA_UPLOAD_URL = "https://uploads.pinata.cloud/v3/files";
+
+/**
+ * IPFS via Pinata (docs.pinata.cloud): POST uploads.pinata.cloud/v3/files, multipart `file` +
+ * `network=public`, header `Authorization: Bearer <PINATA_JWT>` → CID di `data.cid`.
+ * File dikirim apa adanya sehingga EXIF foto tetap utuh.
+ */
 const pinata: StorageAdapter = {
   name: "pinata",
-  async put() {
-    throw new Error("Penyimpanan Pinata belum disiapkan. Gunakan NEXT_PUBLIC_APP_MODE=local untuk saat ini.");
+  async put(data, contentType, fileName) {
+    const jwt = process.env.PINATA_JWT;
+    if (!jwt) throw new Error("PINATA_JWT belum diisi di web/.env.local.");
+    const form = new FormData();
+    form.append("file", new Blob([new Uint8Array(data)], { type: contentType }), fileName);
+    form.append("network", "public");
+    form.append("name", fileName);
+    const res = await fetch(PINATA_UPLOAD_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${jwt}` },
+      body: form,
+      signal: AbortSignal.timeout(30_000),
+    });
+    const body = (await res.json().catch(() => ({}))) as { data?: { cid?: string } };
+    if (!res.ok || !body.data?.cid) throw new Error(`Unggah ke Pinata gagal (HTTP ${res.status}).`);
+    return body.data.cid;
   },
   url(cid) {
     const gateway = (process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://ipfs.io").replace(/\/+$/, "");
