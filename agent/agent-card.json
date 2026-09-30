@@ -1,0 +1,14 @@
+{
+  "name": "BagiPanen Verifier Agent",
+  "description": "Agen AI independen yang memverifikasi bukti lapangan milestone pendanaan panen di BagiPanen.",
+  "image": "ipfs://<cid-logo>",
+  "agentWallet": "0x...",
+  "bagipanen": {
+    "role": "field-proof-verifier",
+    "regions": ["Jawa Barat"],
+    "commodities": ["Cabai merah", "Padi"],
+    "partnerCooperatives": ["Koperasi Tani Makmur, Garut"],
+    "methods": ["vision-llm", "exif-gps-check", "weather-open-meteo", "duplicate-hash"],
+    "network": "bsc-testnet"
+  }
+}

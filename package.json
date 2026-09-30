@@ -1,0 +1,6 @@
+{
+  "name": "bagipanen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo BagiPanen. Script sync & dev:chain ditambahkan di Gelombang 3."
+}

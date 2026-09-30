@@ -1,0 +1,6 @@
+{
+  "name": "bagipanen-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend BagiPanen (Next.js App Router). Dependensi dipasang di Gelombang 4."
+}

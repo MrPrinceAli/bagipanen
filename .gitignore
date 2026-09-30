@@ -1,0 +1,25 @@
+# Rahasia — jangan pernah di-commit
+.env
+.env.*
+!.env.example
+
+# Sistem & editor
+.DS_Store
+*.log
+
+# Node
+node_modules/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+
+# Next.js
+web/.next/
+web/.local-ipfs/
+web/next-env.d.ts
+.vercel
+
+# Agen: state runtime (dibuat otomatis oleh agen)
+agent/data/*.json
