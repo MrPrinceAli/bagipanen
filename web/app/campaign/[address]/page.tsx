@@ -22,6 +22,7 @@ import {
   projectedInvestorReturn,
 } from "@/lib/format";
 import { useRole } from "@/lib/role";
+import { useEffectiveNow } from "@/lib/time";
 import { type CampaignMetadata, FailType, Status } from "@/lib/types";
 
 export default function CampaignPage() {
@@ -30,6 +31,7 @@ export default function CampaignPage() {
   const { data, isLoading, isError } = useCampaign(address);
   const { data: meta } = useIpfsJson<CampaignMetadata>(data?.summary.metadataCID);
   const { role } = useRole();
+  const now = useEffectiveNow();
 
   if (!address) return <Notice tone="error">Alamat kampanye tidak valid.</Notice>;
   if (isLoading)
@@ -93,7 +95,7 @@ export default function CampaignPage() {
             </div>
             <p className="mt-2 text-sm text-stone-600">
               {c.status === Status.Funding
-                ? `Tenggat pendanaan ${formatDateTime(c.fundingDeadline)} (${formatTimeLeft(c.fundingDeadline)})`
+                ? `Tenggat pendanaan ${formatDateTime(c.fundingDeadline)} (${formatTimeLeft(c.fundingDeadline, Number(now) * 1000)})`
                 : c.status === Status.Draft
                   ? "Menunggu persetujuan admin sebelum pendanaan dibuka."
                   : c.status === Status.Failed && c.failType === FailType.Funding

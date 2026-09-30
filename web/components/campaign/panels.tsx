@@ -11,7 +11,7 @@ import { usePosition } from "@/lib/campaigns";
 import { formatPercent, formatRupiah, formatUsdt, parseUsdtInput, usdtToInput } from "@/lib/format";
 import { uploadFile } from "@/lib/ipfs";
 import type { Role } from "@/lib/role";
-import { useNow } from "@/lib/time";
+import { useEffectiveNow } from "@/lib/time";
 import { useTx } from "@/lib/tx";
 import { type CampaignSummary, FailType, type Milestone, MStatus, Status } from "@/lib/types";
 import { IpfsImage, Stepper, TxStatus, Usdt } from "../common";
@@ -24,7 +24,7 @@ type PanelProps = { c: CampaignSummary; milestones: readonly Milestone[]; role: 
 export function ActionPanels(props: PanelProps) {
   const { c, milestones, role } = props;
   const { address, isConnected } = useAccount();
-  const now = useNow();
+  const now = useEffectiveNow();
   const isFarmer = Boolean(address && isAddressEqual(address, c.farmer));
   const isCoop = Boolean(address && isAddressEqual(address, c.cooperative));
   const current = milestones[c.currentMilestone];
@@ -34,9 +34,9 @@ export function ActionPanels(props: PanelProps) {
 
   const panels = [];
   if (role === "admin" && c.status === Status.Draft) panels.push(<AdminReviewPanel key="admin" c={c} />);
-  if (c.status === Status.Funding && now <= Number(c.fundingDeadline) && !isFarmer && !isCoop)
+  if (c.status === Status.Funding && now <= c.fundingDeadline && !isFarmer && !isCoop)
     panels.push(<FundPanel key="fund" c={c} />);
-  if (c.status === Status.Funding && now > Number(c.fundingDeadline)) panels.push(<FinalizePanel key="finalize" c={c} />);
+  if (c.status === Status.Funding && now > c.fundingDeadline) panels.push(<FinalizePanel key="finalize" c={c} />);
   if (!isFarmer && !isCoop) panels.push(<InvestorPanel key="investor" {...props} />);
   if (isFarmer && c.status === Status.Active && current && (current.status === MStatus.Pending || current.status === MStatus.Rejected))
     panels.push(<ProofPanel key="proof" c={c} milestone={current} />);

@@ -7,6 +7,7 @@ import { formatRupiah, formatUsdt, shortHash } from "@/lib/format";
 import { ipfsUrl } from "@/lib/ipfs";
 import type { TxState } from "@/lib/tx";
 import { FailType, MSTATUS_LABEL, MStatus, STATUS_LABEL, Status } from "@/lib/types";
+import { useToast } from "./Toast";
 import { Badge, Button, cn, Input, Spinner, type Tone } from "./ui";
 
 /** Jumlah USDT + perkiraan rupiah (kurs tetap). */
@@ -75,6 +76,13 @@ export function TxLink({ hash }: { hash: string }) {
 
 /** Status transaksi: menunggu, sukses dengan tautan, atau pesan error yang mudah dipahami. */
 export function TxStatus({ state, successText = "Transaksi berhasil." }: { state: TxState; successText?: string }) {
+  const toast = useToast();
+  const successHash = state.status === "success" ? state.hash : undefined;
+  // Pesan sukses juga dikirim sebagai toast: komponen ini bisa hilang setelah data di-refresh.
+  useEffect(() => {
+    if (successHash) toast?.push({ text: successText, hash: successHash });
+  }, [successHash, successText, toast]);
+
   if (state.status === "idle") return null;
   if (state.status === "signing")
     return (

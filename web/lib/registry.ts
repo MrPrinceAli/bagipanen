@@ -13,17 +13,6 @@ import { fetchIpfsJson, ipfsUrl } from "./ipfs";
 import type { CampaignSummary, Milestone } from "./types";
 import { deployments } from "./deployments";
 
-/** Waktu blok terbaru (detik). Dipakai untuk aturan berbasis waktu chain, mis. masa tenggang default. */
-export function useChainTime() {
-  const client = usePublicClient();
-  return useQuery({
-    queryKey: ["chainTime"],
-    enabled: Boolean(client),
-    refetchInterval: REFRESH_MS,
-    queryFn: async () => (await client!.getBlock()).timestamp,
-  });
-}
-
 /** Semua kampanye + milestone (untuk antrean koperasi & admin). */
 export function useAllCampaigns() {
   const client = usePublicClient();

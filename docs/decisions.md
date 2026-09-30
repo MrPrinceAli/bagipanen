@@ -203,3 +203,11 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
    - Nilai "–" jika belum ada panen.
    - Badge "Diblokir" tampil jika `defaults > 0`.
 9. **Header:** petani mendapat tautan "Rapor saya".
+
+## Gelombang 7 — Uji skenario penuh & perbaikan
+
+1. **Hasil uji acceptance** (bagian lokal) dicatat di [acceptance.md](acceptance.md).
+2. **README ditulis sekarang (versi lokal),** supaya butir checklist "README" terpenuhi. Alamat BSC testnet dan link Vercel ditambahkan di Gelombang 8–9, bersama pemolesan untuk juri.
+3. **Notifikasi (toast) global untuk transaksi sukses.** `TxStatus` tetap menampilkan status di tempat, dan sekarang juga mengirim toast. Tujuannya agar pesan sukses tetap terlihat walaupun komponennya hilang setelah data di-refresh.
+4. **Waktu acuan untuk aturan tenggat dan masa tenggang di UI** = `max(jam perangkat, timestamp blok terbaru)` (`useEffectiveNow`). Hitung mundur di kartu beranda tetap memakai jam perangkat, karena hanya bersifat tampilan.
+5. **Error boundary Next 16** memakai prop `retry` (bukan `reset` seperti versi lama), sesuai dokumentasi yang terpasang.

@@ -33,7 +33,7 @@ export function Header() {
   const pathname = usePathname();
   const nav = [
     { href: "/", label: "Beranda", show: true },
-    { href: "/create", label: "Ajukan kampanye", show: role === "petani" },
+    { href: "/create", label: "Ajukan", show: role === "petani" },
     { href: "/dashboard", label: "Dashboard", show: role === "petani" || role === "investor" },
     { href: `/petani/${address}`, label: "Rapor saya", show: role === "petani" && Boolean(address) },
     { href: "/koperasi", label: "Koperasi", show: role === "koperasi" },
@@ -53,13 +53,13 @@ export function Header() {
         </div>
       </div>
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 pb-2">
-        <nav className="-mx-1 flex gap-1 overflow-x-auto">
+        <nav className="-mx-1 flex min-w-0 gap-1 overflow-x-auto">
           {nav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
               className={cn(
-                "shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-medium",
+                "shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium sm:px-2.5",
                 pathname === n.href ? "bg-daun-100 text-daun-900" : "text-stone-600 hover:bg-tanah-100",
               )}
             >
@@ -130,7 +130,8 @@ function FaucetButton() {
             tx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "mint", args: [address, FAUCET_AMOUNT] })
           }
         >
-          Minta mUSDT demo
+          <span className="sm:hidden">Minta mUSDT</span>
+          <span className="hidden sm:inline">Minta mUSDT demo</span>
         </Button>
       </div>
       {tx.state.status === "error" && <TxStatus state={tx.state} />}

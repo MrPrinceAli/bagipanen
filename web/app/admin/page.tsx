@@ -14,7 +14,8 @@ import { reservePoolAbi } from "@/lib/abi/ReservePool";
 import { addresses } from "@/lib/addresses";
 import { useReserveBalance } from "@/lib/campaigns";
 import { formatDate, formatUsdt, parseUsdtInput, shortAddress } from "@/lib/format";
-import { identityIsMock, useAgentProfile, useAllCampaigns, useChainTime, useRegistrations } from "@/lib/registry";
+import { identityIsMock, useAgentProfile, useAllCampaigns, useRegistrations } from "@/lib/registry";
+import { useEffectiveNow } from "@/lib/time";
 import { useRole } from "@/lib/role";
 import { useTx } from "@/lib/tx";
 import { type CampaignSummary, FailType, type Milestone, MStatus, Status } from "@/lib/types";
@@ -64,12 +65,12 @@ function DisputeCard({ summary: c, milestones }: Row) {
   );
 }
 
-function ActiveCard({ summary: c, milestones, chainTime }: Row & { chainTime: bigint | undefined }) {
+function ActiveCard({ summary: c, milestones, now }: Row & { now: bigint }) {
   const failTx = useTx();
   const defaultTx = useTx();
   const m = milestones[c.currentMilestone];
   const defaultAt = c.expectedHarvestDate + DEFAULT_GRACE;
-  const canDefault = chainTime !== undefined && chainTime > defaultAt;
+  const canDefault = now > defaultAt;
   return (
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -293,7 +294,7 @@ function AgentSection() {
 export default function AdminPage() {
   const { role } = useRole();
   const { data: rows, isLoading } = useAllCampaigns();
-  const { data: chainTime } = useChainTime();
+  const now = useEffectiveNow();
 
   if (role === undefined) return <Spinner />;
   if (role !== "admin") return <Notice tone="info">Halaman ini khusus admin. {role === "tamu" ? "Pilih akun Admin di header." : "Wallet Anda bukan admin."}</Notice>;
@@ -302,7 +303,7 @@ export default function AdminPage() {
   const drafts = all.filter((r) => r.summary.status === Status.Draft);
   const disputes = all.filter((r) => r.summary.status === Status.Active && r.milestones[r.summary.currentMilestone]?.status === MStatus.Disputed);
   const active = all.filter((r) => r.summary.status === Status.Active);
-  const expired = all.filter((r) => r.summary.status === Status.Funding && chainTime !== undefined && chainTime > r.summary.fundingDeadline);
+  const expired = all.filter((r) => r.summary.status === Status.Funding && now > r.summary.fundingDeadline);
   const eligible = all.filter(
     (r) => (r.summary.status === Status.Failed && r.summary.failType === FailType.Crop) || r.summary.status === Status.Defaulted,
   );
@@ -381,7 +382,7 @@ export default function AdminPage() {
               <FinalizeCard key={r.summary.address} {...r} />
             ))}
             {active.map((r) => (
-              <ActiveCard key={r.summary.address} {...r} chainTime={chainTime} />
+              <ActiveCard key={r.summary.address} {...r} now={now} />
             ))}
           </div>
         )}
