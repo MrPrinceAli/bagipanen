@@ -62,3 +62,37 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
     - Parameter alamat pada event (`investor`, `campaign`) di-*index*. Signature event (topic0) tetap sama dengan PRD.
 14. **ID `MockAgentIdentity` mulai dari 1,** supaya 0 berarti "belum dikonfigurasi". Pemilik `ReservePool` adalah deployer (admin).
 15. **Token porsi.** `transfer` dan `transferFrom` selalu revert, sesuai PRD. `approve` dibiarkan karena tidak berbahaya: allowance tidak bisa dipakai untuk memindahkan token.
+
+## Gelombang 3 — Deploy Anvil, seed, sync
+
+1. **Akun demo Anvil.** Indeks akun bawaan Anvil untuk setiap peran:
+
+   | Indeks | Peran |
+   | --- | --- |
+   | 0 | Admin |
+   | 1 | Koperasi |
+   | 2 | Petani |
+   | 3 | Rina |
+   | 4 | Budi |
+   | 5 | Sari |
+   | 6 | Agen |
+
+   Pemetaan ini hanya ditulis di satu tempat (`contracts/script/AnvilAccounts.sol`). `Deploy.s.sol` menyalinnya ke `deployments/anvil.json` bersama mnemonic bawaan Anvil. Mnemonic itu publik dan bukan rahasia; PRD memang meminta pemilih akun demo menandatangani dengan private key bawaan Anvil. Web dan agen menurunkan key dari situ, dan hanya di mode lokal. File `bscTestnet.json` tidak pernah berisi mnemonic atau daftar akun.
+2. **Deploy memilih jaringan dari chain ID RPC**, bukan dari `APP_MODE`. Chain 31337 ditulis ke `deployments/anvil.json`, chain 97 ke `deployments/bscTestnet.json`, dan chain lain ditolak. Di Anvil, `ERC8004_IDENTITY_REGISTRY` diabaikan dan selalu dipakai `MockAgentIdentity`. Di testnet, alamat registri yang diisi wajib berupa kontrak.
+3. **Format deployment JSON.** Kuncinya datar: `usdt`, `identityRegistry`, `identityIsMock`, `factory`, `campaignDeployer`, `reputationBook`, `reservePool`, `deployer`, `startBlock`, `chainId`, `network`. `startBlock` adalah `block.number` saat simulasi, jadi selalu ≤ blok deploy sebenarnya; aman sebagai titik awal `getLogs` agen.
+4. **Isi seed:**
+   - Koperasi Tani Makmur, Garut.
+   - Petani "Pak Darto".
+   - 5.000 mUSDT untuk Rina, Budi, dan Sari masing-masing.
+   - 1.000 mUSDT untuk petani, supaya bisa menyetor hasil panen 1.650 di demo tanpa faucet.
+   - **Tanpa kampanye**, karena kampanye dibuat lewat UI beserta metadata IPFS-nya (Gelombang 4/7).
+   - Registrasi agen dan `setAgent` belum dikerjakan; akan dilakukan `agent/scripts/register-agent.ts` di Gelombang 5 dan ditambahkan ke `dev:chain` saat itu.
+
+   Seed aman dijalankan ulang: pendaftaran yang sudah ada dilewati.
+5. **Hasil `npm run sync`.** Satu modul `.ts` per kontrak (`export const xxxAbi = [...] as const`) agar wagmi/viem bisa menebak tipe. Tidak ada `index.ts`. `deployments.ts` memuat `anvil` dan `bscTestnet` (bernilai `null` jika belum di-deploy). Hasil sync dan `deployments/anvil.json` ikut di-commit: Vercel tidak punya Foundry, dan alamat Anvil deterministik (bergantung pada nonce, bukan bytecode).
+6. **`dev:chain` selalu mulai dari chain kosong** (tanpa `--state`). Konsekuensinya:
+   - File di `web/.local-ipfs/` tetap ada, dan itu tidak masalah.
+   - Agen harus mendeteksi chain yang di-reset (blok tersimpan > blok terbaru) di Gelombang 5.
+   - Port 8545 dipakai tetap; jika port sudah terpakai, `dev:chain` berhenti dengan pesan jelas.
+   - Log Anvil ditulis ke `.anvil.log`.
+7. **`npm run deploy:testnet`** sudah ada, tapi belum memakai `--verify`. Konfigurasi verifikasi BscScan/Etherscan akan dicek dari dokumentasi terbaru di Gelombang 8. Jalur testnet (fallback mock, registri diisi, registri bukan kontrak) sudah diuji dengan Anvil `--chain-id 97`.

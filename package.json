@@ -2,5 +2,14 @@
   "name": "bagipanen",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo BagiPanen. Script sync & dev:chain ditambahkan di Gelombang 3."
+  "description": "Monorepo BagiPanen: contracts/ (Foundry), web/ (Next.js), agent/ (Node.js).",
+  "scripts": {
+    "dev:chain": "node scripts/dev-chain.mjs",
+    "sync": "node scripts/sync.mjs",
+    "test:contracts": "cd contracts && forge test",
+    "deploy:testnet": "cd contracts && forge script script/Deploy.s.sol --rpc-url bscTestnet --broadcast && cd .. && node scripts/sync.mjs --no-build"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

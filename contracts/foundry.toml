@@ -11,3 +11,9 @@ remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "forge-std/=lib/forge-std/src/",
 ]
+# Script deploy menulis alamat ke ../deployments/<jaringan>.json
+fs_permissions = [{ access = "read-write", path = "../deployments" }]
+
+[rpc_endpoints]
+anvil = "http://127.0.0.1:8545"
+bscTestnet = "${BSC_TESTNET_RPC}"

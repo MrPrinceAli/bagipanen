@@ -11,6 +11,7 @@
 node_modules/
 
 # Foundry
+.anvil.log
 contracts/out/
 contracts/cache/
 contracts/broadcast/*/31337/
