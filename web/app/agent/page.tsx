@@ -1,5 +1,5 @@
-// Placeholder — profil agen ERC-8004.
-// Diimplementasikan di Gelombang 6 (lihat docs/PRD.md, Spesifikasi frontend).
+import { ComingSoon } from "@/components/ComingSoon";
+
 export default function Page() {
-  return null;
+  return <ComingSoon title="Profil Agen AI" description="Identitas ERC-8004 agen verifikator, isi agent card, dan statistik putusannya." />;
 }

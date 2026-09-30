@@ -96,3 +96,40 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
    - Port 8545 dipakai tetap; jika port sudah terpakai, `dev:chain` berhenti dengan pesan jelas.
    - Log Anvil ditulis ke `.anvil.log`.
 7. **`npm run deploy:testnet`** sudah ada, tapi belum memakai `--verify`. Konfigurasi verifikasi BscScan/Etherscan akan dicek dari dokumentasi terbaru di Gelombang 8. Jalur testnet (fallback mock, registri diisi, registri bukan kontrak) sudah diuji dengan Anvil `--chain-id 97`.
+
+## Gelombang 4 — Frontend inti
+
+1. **Versi paket.**
+   - Next.js 16.3.7 + React 19.2 + Tailwind v4, konfigurasi dari `create-next-app@latest`.
+   - **wagmi 2.19.5** sesuai PRD (wagmi v2). Versi terbaru sebenarnya 3.x, tapi RainbowKit 2.2.11 (terbaru) mensyaratkan `wagmi ^2.9`.
+   - viem 2.57.1, TanStack Query 5, dan `exifr` untuk membaca GPS foto di browser.
+   - `tsconfig` target dinaikkan ke ES2020, karena kode memakai literal BigInt.
+2. **`overrides: @coinbase/cdp-sdk 1.52.0`.** Paket ini turunan wagmi → `@wagmi/connectors` → `@base-org/account`. Mulai 1.53.0, paket ini mengimpor paket `@x402/*` yang hanya peer dependency *opsional*, sehingga build Turbopack gagal. Versi 1.52.0 adalah yang terakhir tanpa impor itu, dan masih memenuhi syarat `^1.0.0` dari `@base-org/account`. BagiPanen tidak memakai connector Base Account maupun x402.
+3. **Hasil `npm audit`: 2 high (`axios`, `ws`) dan 25 moderate**, semuanya dependensi turunan. Semua perbaikan yang tersedia mewajibkan wagmi v3 (breaking, dan bertentangan dengan PRD + RainbowKit), jadi dibiarkan. Dampaknya kecil karena jalur kode itu tidak dipakai: `ws` untuk transport websocket (aplikasi memakai http), `axios` di connector Base Account.
+4. **Akun demo lokal.** Dibuat sebagai connector wagmi sendiri (`lib/anvilConnector.ts`). `eth_sendTransaction` diteruskan ke Anvil, yang menandatangani dengan key bawaannya karena akun-akun itu memang "unlocked". Jadi **tidak ada private key di browser**; polanya sama dengan connector `mock` bawaan wagmi. Akun bisa diganti tanpa memutus koneksi, dan pilihannya diingat di `localStorage`.
+5. **Semua transaksi disimulasikan dulu (`simulateContract` / `eth_call`) sebelum dikirim.** Ternyata Anvil tetap menambang transaksi yang revert, sehingga UI hanya bisa menampilkan pesan umum. Dengan simulasi:
+   - revert tertangkap sebelum transaksi dikirim, lengkap dengan nama custom error untuk diterjemahkan;
+   - tidak ada transaksi gagal yang ikut ditambang, dan tidak ada gas terbuang di testnet;
+   - revert lintas kontrak (factory → kampanye) di-decode lewat gabungan ABI error semua kontrak.
+6. **Penyimpanan lokal.**
+   - File disimpan di `web/.local-ipfs/<sha256-hex>`, dengan metadata (tipe konten) di `<cid>.meta.json`, dan disajikan lewat `GET /api/ipfs/[cid]` (hanya mode lokal).
+   - Tipe foto diperiksa dari isi file (magic bytes JPEG/PNG/WebP), bukan hanya dari header browser.
+   - JSON diserialisasi ulang sebelum di-hash.
+7. **Adapter Pinata di web** masih berupa placeholder yang memberi error jelas. Adapter ini dibuat bersama adapter Pinata agen (Gelombang 5) setelah dokumentasi resmi Pinata dicek.
+8. **Admin bisa menyetujui/menolak kampanye Draf langsung di halaman detail.** Ini supaya alur Gelombang 4 (buat → danai → detail) bisa selesai di browser. Halaman `/admin` yang lengkap menyusul di Gelombang 6.
+9. **"Klik koordinat" di form `/create`** diwujudkan sebagai:
+   - tombol **Ambil dari GPS foto** (EXIF; otomatis terisi saat foto lahan dipilih jika koordinat masih kosong);
+   - tombol **Pakai lokasi perangkat** (geolokasi browser);
+   - isian manual.
+
+   Tidak ada widget peta, supaya tanpa dependensi atau API key tambahan. Di halaman detail, peta berupa tautan Google Maps (sesuai PRD).
+10. **Definisi statistik beranda.**
+    - *Total didanai* = jumlah `raisedAmount` kampanye yang mencapai target (status Berjalan, Panen, Gagal panen, Gagal bayar).
+    - *Kampanye aktif* = Pendanaan + Berjalan.
+    - *Dana cadangan* = `ReservePool.balance()`.
+    - *Proyeksi imbal hasil* = pool investor yang dihitung dari estimasi penjualan dengan rumus bagi hasil PRD (demo: 26%).
+11. **Kampanye Draf** hanya tampil untuk admin dan petani, di bagian "Menunggu persetujuan admin". Kampanye yang dibatalkan disembunyikan dari beranda.
+12. **Format input angka Indonesia:** titik = pemisah ribuan, koma = desimal. Tanggal panen disimpan sebagai pukul 12.00 WIB pada tanggal yang dipilih. Pilihan durasi pendanaan: 10 menit (demo), 1 jam, 1 hari, 7 hari, 30 hari. `approve` mUSDT selalu sejumlah yang akan dipakai, tidak pernah tak terbatas.
+13. **Riwayat transaksi** dibaca dari event kampanye + event persetujuan di factory, mulai dari `START_BLOCK`. Di testnet ada tautan BscScan; di lokal hanya hash. Pembagian rentang `getLogs` untuk batas RPC BSC akan dicek di Gelombang 8.
+14. **Variabel env opsional baru:** `NEXT_PUBLIC_LOCAL_RPC_URL` dan `NEXT_PUBLIC_BSC_TESTNET_RPC`. Jika kosong, dipakai RPC bawaan definisi chain di viem. Jika `NEXT_PUBLIC_IPFS_GATEWAY` kosong di testnet, dipakai `https://ipfs.io`. `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` diisi placeholder sampai Gelombang 8.
+15. **Halaman `/koperasi`, `/admin`, `/petani/[address]`, `/agent`** untuk sementara menampilkan kartu "segera hadir" (Gelombang 6).

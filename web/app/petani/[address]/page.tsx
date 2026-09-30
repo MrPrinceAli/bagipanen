@@ -1,5 +1,5 @@
-// Placeholder — Rapor Petani.
-// Diimplementasikan di Gelombang 6 (lihat docs/PRD.md, Spesifikasi frontend).
+import { ComingSoon } from "@/components/ComingSoon";
+
 export default function Page() {
-  return null;
+  return <ComingSoon title="Rapor Petani" description="Rekam jejak panen petani yang tercatat di BNB Chain sebagai riwayat kredit alternatif." />;
 }

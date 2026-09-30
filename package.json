@@ -5,6 +5,7 @@
   "description": "Monorepo BagiPanen: contracts/ (Foundry), web/ (Next.js), agent/ (Node.js).",
   "scripts": {
     "dev:chain": "node scripts/dev-chain.mjs",
+    "dev:web": "cd web && npm run dev",
     "sync": "node scripts/sync.mjs",
     "test:contracts": "cd contracts && forge test",
     "deploy:testnet": "cd contracts && forge script script/Deploy.s.sol --rpc-url bscTestnet --broadcast && cd .. && node scripts/sync.mjs --no-build"

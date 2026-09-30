@@ -1,5 +1,5 @@
-// Placeholder — halaman admin.
-// Diimplementasikan di Gelombang 6 (lihat docs/PRD.md, Spesifikasi frontend).
+import { ComingSoon } from "@/components/ComingSoon";
+
 export default function Page() {
-  return null;
+  return <ComingSoon title="Halaman Admin" description="Daftarkan koperasi, setujui kampanye, tangani sengketa, gagal panen, default, dan konfigurasi agen." />;
 }

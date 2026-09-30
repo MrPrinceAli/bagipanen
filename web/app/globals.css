@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Palet hijau-tanah BagiPanen */
+@theme {
+  --color-daun-50: #f1f7ee;
+  --color-daun-100: #deedd6;
+  --color-daun-200: #bfdcae;
+  --color-daun-300: #97c47f;
+  --color-daun-500: #4e8a3b;
+  --color-daun-600: #3c722d;
+  --color-daun-700: #2f5a25;
+  --color-daun-800: #264820;
+  --color-daun-900: #1d3719;
+
+  --color-tanah-50: #fbf7f1;
+  --color-tanah-100: #f3e9da;
+  --color-tanah-200: #e5d0b1;
+  --color-tanah-400: #c39465;
+  --color-tanah-500: #a8703d;
+  --color-tanah-600: #8a5a30;
+  --color-tanah-700: #6d4627;
+
+  --color-padi-100: #fbefcf;
+  --color-padi-500: #d49b25;
+  --color-padi-700: #8f6412;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-tanah-50);
+  color: #292524;
+}
