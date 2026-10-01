@@ -29,8 +29,8 @@ Kondisi khusus juga diuji lewat UI (Gelombang 6 dan 7):
 | Minimal satu milestone ditolak AI dengan alasan jelas, lalu disetujui setelah unggah ulang | ✅ lokal · ✅ testnet | Tanam percobaan 1 ditolak (alasan tampil di timeline, riwayat, dan panel unggah ulang), percobaan 2 disetujui. Di testnet Gemini menolak foto jagung: "komoditas tidak sesuai (terdeteksi: Jagung)". |
 | Putusan agen muncul di UI ≤ 30 detik setelah bukti dikirim | ✅ lokal · ⚠️ testnet | Lokal (MockVision): 10,4 / 10,4 / 10,4 / 20,5 detik, tanpa reload. Testnet: putusan tercatat di chain 32–49 detik setelah bukti dikirim (ditambah ≤ 10 detik refresh UI). Penyebab dan perbaikannya ada di bagian BSC testnet. |
 | Rapor Petani menampilkan statistik yang benar setelah kampanye selesai | ✅ lokal · ✅ testnet | Lokal: 1 didanai · 1 panen · 100% tepat waktu · 100% akurasi estimasi · 0 gagal panen · 0 gagal bayar. Testnet: sama, dengan 2 kampanye didanai. |
-| Semua halaman bisa dipakai di layar 360 px dan berbahasa Indonesia | ✅ | 11 halaman × peran (tamu, petani, investor, koperasi, admin, termasuk 404): tanpa scroll horizontal, semua gambar termuat, `lang="id"`, tanpa teks bocor (`undefined`/`NaN`/Inggris) |
-| README: deskripsi, arsitektur, alamat kontrak, cara menjalankan | ✅ lokal | [README.md](../README.md). Alamat BSC testnet dan link Vercel ditambahkan di Gelombang 8–9. |
+| Semua halaman bisa dipakai di layar 360 px dan berbahasa Indonesia | ✅ lokal · ✅ Vercel | 11 halaman × peran (tamu, petani, investor, koperasi, admin, termasuk 404): tanpa scroll horizontal, semua gambar termuat, `lang="id"`, tanpa teks bocor (`undefined`/`NaN`/Inggris). Vercel (testnet): 7 halaman di 360 px tanpa scroll horizontal dan tanpa teks bocor, tanpa error konsol |
+| README: deskripsi, arsitektur, alamat kontrak, cara menjalankan | ✅ | [README.md](../README.md): link demo Vercel, alamat BSC testnet + BscScan, agen #2544, arsitektur, cara mencoba untuk juri, cara menjalankan lokal/testnet/Vercel. |
 
 ## Test otomatis
 

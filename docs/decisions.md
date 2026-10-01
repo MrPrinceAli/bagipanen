@@ -254,3 +254,19 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
     - Node RPC publik di belakang load balancer kadang tertinggal satu blok. Akibatnya `fund` langsung setelah `approve` sesekali gagal estimasi gas. Skrip uji mengulang transaksi. Di web risikonya kecil: tombol "Danai" baru aktif setelah allowance baru terbaca, dan jika simulasi tetap gagal, pesan galat tampil dan pengguna cukup menekan ulang.
 12. **Petunjuk dompet mengikuti mode.** Di testnet, teks "pilih akun demo di header" diganti "Hubungkan dompet … di header" (tidak ada pemilih akun demo di testnet).
 
+## Gelombang 9 — README & deploy Vercel
+
+1. **Repo GitHub publik** [`MrPrinceAli/bagipanen`](https://github.com/MrPrinceAli/bagipanen) (pilihan pemilik proyek).
+   - Sebelum push pertama, email penulis di semua commit diganti ke alamat noreply GitHub, atas persetujuan pemilik proyek.
+   - Seluruh riwayat git dipindai terhadap semua nilai rahasia di `.env` dan private key akun demo: 0 temuan.
+2. **Proyek Vercel `bagipanen`** dibuat lewat API Vercel dan langsung tertaut ke repo GitHub, dengan root directory `web/` dan framework Next.js.
+   - Deploy berasal dari commit di GitHub, jadi file `.env` lokal tidak pernah ikut terunggah.
+   - Setiap push ke `main` otomatis di-deploy ulang.
+   - Env (production + preview): `NEXT_PUBLIC_APP_MODE=testnet`, `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC` (publicnode), `NEXT_PUBLIC_IDR_PER_USDT=16000`, dan `PINATA_JWT` bertipe *sensitive* (tidak bisa dibaca ulang dari dashboard).
+   - Alamat kontrak diambil dari `web/lib/deployments.ts`.
+3. **Batas unggah: PRD 5 MB vs. batas body fungsi Vercel ±4,5 MB.** Opsi paling sederhana: batas API tetap 5 MB sesuai PRD (berlaku penuh di mode lokal). Jika hosting menolak lebih dulu (HTTP 413 tanpa pesan dari API kita), web menampilkan pesan bahasa Indonesia yang menyarankan foto lebih kecil. Foto tidak dikompres, agar EXIF tetap utuh (aturan PRD).
+4. **`/api/upload` di Vercel terbuka tanpa login**, karena PRD tidak memakai backend/database. Validasinya lewat isi file (JPEG/PNG/WebP) dan ukuran, serta JSON maks 100 KB dengan field `schema`. Risiko penyalahgunaan kuota Pinata gratis diterima untuk masa hackathon.
+5. **WalletConnect project ID tidak diisi.** Pilihan wallet: MetaMask/injected. Di HP, situs dibuka dari browser di dalam aplikasi MetaMask (ditulis di README).
+6. **Kampanye terbuka untuk juri** di BSC testnet (`0xff66…74b9`, pendanaan 14 hari sampai 15 Okt 2026), supaya juri bisa mencoba mendanai dengan wallet sendiri.
+7. **Proteksi deployment Vercel** dibiarkan bawaan: domain produksi `bagipanen.vercel.app` publik, sedangkan URL per-deployment meminta login Vercel. README hanya memakai domain produksi.
+
