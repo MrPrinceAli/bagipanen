@@ -24,10 +24,10 @@ BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season
 
 Yang dibutuhkan: MetaMask dan sedikit tBNB untuk gas. **Tidak ada uang sungguhan:** semua berjalan di BSC testnet dengan stablecoin demo (mUSDT).
 
-1. Buka **[bagipanen.vercel.app](https://bagipanen.vercel.app)**, klik **Hubungkan Dompet**, dan pilih MetaMask. Jika diminta, setujui pindah ke jaringan **BSC Testnet** (chain 97). Di HP, buka link dari browser di dalam aplikasi MetaMask.
+1. Buka **[bagipanen.vercel.app](https://bagipanen.vercel.app)**, klik **Hubungkan dompet**, lalu pilih MetaMask. Kalau diminta pindah jaringan, setujui pindah ke **BSC Testnet** (chain 97). Di HP, buka tautannya dari browser di dalam aplikasi MetaMask.
 2. Ambil tBNB gratis dari [faucet QuickNode](https://faucet.quicknode.com/binance-smart-chain/bnb-testnet) atau [faucet BNB Chain](https://www.bnbchain.org/en/testnet-faucet). Faucet BNB Chain mensyaratkan saldo BNB mainnet. 0,005 tBNB sudah cukup untuk puluhan transaksi.
-3. Klik **Minta mUSDT demo** di header. Wallet Anda mendapat 1.000 mUSDT.
-4. Buka kampanye **"Modal tanam cabai merah musim kemarau 2027"** (pendanaan terbuka sampai 15 Oktober 2026). Danai lewat dua langkah, *Setujui mUSDT → Danai*. Token porsi (BPS) akan tercatat di dashboard Anda.
+3. Klik **Minta mUSDT** di header untuk mendapat 1.000 mUSDT.
+4. Buka kampanye **"Modal tanam cabai merah musim kemarau 2027"** (pendanaan terbuka sampai 15 Oktober 2026). Danai lewat dua langkah, *Izinkan mUSDT → Danai*. Token porsi (BPS) langsung muncul di dashboard.
 
 Yang bisa dilihat tanpa wallet:
 
@@ -204,12 +204,12 @@ Pilih peran lewat **pemilih akun demo** di header. Setiap akun adalah akun bawaa
 
 ### Skenario demo
 
-1. **Petani → Ajukan.** Klik *Isi contoh data demo*, lalu pilih foto lahan. Koordinat terisi otomatis dari GPS foto, atau dari contoh data jika foto tidak punya GPS. Klik *Ajukan kampanye*.
-2. **Admin → Admin.** Klik *Setujui kampanye*. Tenggat pendanaan 10 menit dimulai.
-3. **Rina, Budi, Sari** buka halaman kampanye dan danai 500, 300, dan 200 lewat *Setujui mUSDT → Danai*. Status berubah menjadi **Berjalan**.
-4. **Petani** unggah bukti Tanam berupa foto yang salah. Agen menolak dalam ±10 detik, beserta alasannya. **Koperasi → Koperasi** memutuskan di antrean. Petani lalu unggah ulang foto yang benar; agen dan koperasi setuju, dan 400 USDT cair.
+1. **Petani → Ajukan.** Klik *Isi contoh data demo*, lalu pilih foto lahan. Koordinat terisi otomatis dari GPS foto, atau memakai koordinat contoh kalau fotonya tidak punya GPS. Klik *Ajukan kampanye*.
+2. **Admin → Admin.** Klik *Setujui & buka pendanaan*. Hitung mundur pendanaan 10 menit dimulai.
+3. **Rina, Budi, Sari** buka halaman kampanye dan danai 500, 300, dan 200 lewat *Izinkan mUSDT → Danai*. Begitu target tercapai, statusnya berubah menjadi **Berjalan**.
+4. **Petani** mengirim bukti tahap Tanam berupa foto yang salah. Agen menolaknya dalam ±10 detik dan menjelaskan alasannya. **Koperasi → Koperasi** ikut memutuskan dari antrean. Petani lalu mengirim ulang foto yang benar. Setelah agen dan koperasi setuju, 400 USDT cair.
 5. Ulangi untuk **Tumbuh** (350) dan **Pra-panen** (250).
-6. **Petani** setor hasil panen 1.650 beserta foto nota (*Unggah nota → Setujui mUSDT → Setor*). Bagian petani 357,5 dan dana cadangan 32,5 langsung terkirim.
+6. **Petani** setor hasil panen 1.650 beserta foto nota (*Unggah nota → Izinkan mUSDT → Setor*). Bagian petani 357,5 dan dana cadangan 32,5 langsung terkirim.
 7. **Rina, Budi, Sari** klaim 630, 378, dan 252. Lihat juga **Rapor Petani** (klik nama petani) dan **Agen AI**.
 
 Foto contoh berlisensi bebas ada di [docs/demo-photos/](docs/demo-photos/), beserta sumber dan lisensinya. Di mode lokal, penilai foto adalah `MockVision`: ia menyetujui foto, kecuali nama filenya mengandung `salah` atau `tolak`, misalnya `foto-salah-jagung.jpg`. Pemeriksaan EXIF, duplikat, dan cuaca tetap berjalan sungguhan.

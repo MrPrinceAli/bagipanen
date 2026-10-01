@@ -92,7 +92,7 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
   log("AI", `${result.detected_commodity}, fase ${result.detected_stage}, kondisi ${result.plant_condition}, yakin ${n2(result.confidence)} (${model})`);
 
   // 7. JSON putusan → IPFS → recordVerdict
-  const decision = decide(result, exif, dup !== null, m.name);
+  const decision = decide(result, exif, dup !== null, m.name, summary.commodity);
   const agent = await readAgentConfig();
   const doc = buildVerdictDocument({
     campaign: p.campaign,

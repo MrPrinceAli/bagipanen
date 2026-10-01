@@ -270,3 +270,34 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 6. **Kampanye terbuka untuk juri** di BSC testnet (`0xff66…74b9`, pendanaan 14 hari sampai 15 Okt 2026), supaya juri bisa mencoba mendanai dengan wallet sendiri.
 7. **Proteksi deployment Vercel** dibiarkan bawaan: domain produksi `bagipanen.vercel.app` publik, sedangkan URL per-deployment meminta login Vercel. README hanya memakai domain produksi.
 
+## Perbaikan setelah Gelombang 9 — Rombak UI/UX & bahasa
+
+Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahasanya tidak boleh terdengar seperti ketikan robot/AI.
+
+1. **Arah visual (pilihan pemilik proyek): hero gelap + isi terang.**
+   - Palet baru di `globals.css`: `hutan` (hijau hutan, warna utama), `emas` (aksen emas padi), `krem` (latar).
+   - Font judul Fraunces (serif), isi tetap Plus Jakarta Sans.
+   - Ikon dari `lucide-react` (paket gratis).
+   - Setiap halaman diawali pita judul gelap (`PageHero`), lalu isinya naik menutupi bagian bawah pita itu (`PageBody`).
+2. **Foto hero** `web/public/hero-lahan.jpg`: potongan landscape dari foto *Kebun cabai* (Amelia Citra, CC BY-SA 4.0, Wikimedia Commons). Atribusinya ada di footer.
+3. **Sapaan "kamu" (pilihan pemilik proyek).** Pedoman yang dipakai:
+   - kalimat pendek dan aktif;
+   - "dompet", bukan "wallet"; "tahap", bukan "milestone";
+   - tanpa format kaku "Label: a; b" dan tanpa em-dash di teks UI.
+   - README tetap memakai bahasa formal, karena pembacanya juri.
+4. **Label status baru:**
+   - kampanye: Menunggu review, Cari dana, Berjalan, Sudah panen, Gagal, Tidak disetujui, Gagal bayar;
+   - tahap: Belum ada bukti, Bukti masuk, Sudah dicek AI, Ditolak, Sengketa, Dana cair.
+5. **Ringkasan putusan agen (`summary_id`) kini kalimat biasa.** Contoh: "Foto ditolak. Tanaman di foto terlihat seperti jagung, bukan cabai merah. Fase tanamannya pra-panen, padahal tahap ini tanam."
+   - Contoh di PRD ("Disetujui: fase tumbuh, …") hanya contoh nilai, bukan format wajib.
+   - Aturan keputusannya tidak berubah.
+   - `decide()` sekarang menerima komoditas kampanye agar kalimatnya bisa menyebut tanaman yang seharusnya.
+   - Jawaban model seperti "tidak dikenali" tidak dipakai sebagai nama tanaman.
+6. **Web menyusun kalimat putusan dari data terstruktur di JSON putusan** (`lib/verdictText.ts`, gayanya sama dengan agen).
+   - Dengan cara ini, putusan lama di testnet (format "Ditolak: …; …", sudah permanen di IPFS) juga tampil natural.
+   - Tautan "Catatan lengkap (JSON)" tetap membuka dokumen aslinya.
+   - Jika datanya tidak lengkap, web memakai `summary_id`.
+7. **Statistik beranda tetap sesuai PRD** (total didanai, kampanye aktif, dana cadangan), ditambah jumlah petani dan statistik agen.
+8. **Form Ajukan:** GPS foto boleh menimpa koordinat dari "Isi contoh data demo", tetapi tidak menimpa koordinat yang diketik manual.
+9. **Tombol dompet memakai `ConnectButton.Custom` RainbowKit**, supaya gayanya sama dengan desain baru. Fungsi dan modal MetaMask tidak berubah.
+

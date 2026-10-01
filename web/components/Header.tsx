@@ -1,39 +1,50 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useQuery } from "@tanstack/react-query";
+import { Coins } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import type { Address } from "viem";
-import { useAccount, useConnect, useDisconnect, usePublicClient, useSwitchChain } from "wagmi";
+import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { mockUSDTAbi } from "@/lib/abi/MockUSDT";
 import { addresses, CONTRACTS_READY } from "@/lib/addresses";
-import { rememberDemoAccount } from "@/lib/anvilConnector";
 import { useUsdtBalance } from "@/lib/campaigns";
 import { FAUCET_AMOUNT, IS_LOCAL, REFRESH_MS, targetChain } from "@/lib/config";
-import { DEMO_ACCOUNTS } from "@/lib/demoAccounts";
 import { formatUsdt } from "@/lib/format";
-import { ROLE_LABEL, type Role, useRole } from "@/lib/role";
+import { ROLE_LABEL, useRole } from "@/lib/role";
 import { useTx } from "@/lib/tx";
-import { TxStatus } from "./common";
-import { Badge, Button, cn, Select, type Tone } from "./ui";
+import { Button, Container, cn, Spinner } from "./ui";
+import { WalletButton } from "./wallet";
 
-const ROLE_TONE: Record<Role, Tone> = {
-  tamu: "neutral",
-  admin: "red",
-  koperasi: "blue",
-  petani: "brown",
-  agen: "yellow",
-  investor: "green",
-};
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden>
+      <rect width="32" height="32" rx="10" fill="#e6b043" />
+      <path d="M16 27V10" stroke="#0b1d15" strokeWidth="2" strokeLinecap="round" />
+      <path d="M16 15c-3.6 0-6.2-2.3-6.7-5.7 3.6 0 6.2 2.3 6.7 5.7Z" fill="#0b1d15" />
+      <path d="M16 15c3.6 0 6.2-2.3 6.7-5.7-3.6 0-6.2 2.3-6.7 5.7Z" fill="#0b1d15" />
+      <path d="M16 21.5c-3.6 0-6.2-2.3-6.7-5.7 3.6 0 6.2 2.3 6.7 5.7Z" fill="#0b1d15" />
+      <path d="M16 21.5c3.6 0 6.2-2.3 6.7-5.7-3.6 0-6.2 2.3-6.7 5.7Z" fill="#0b1d15" />
+      <circle cx="16" cy="6.6" r="2" fill="#0b1d15" />
+    </svg>
+  );
+}
+
+export function Logo({ className }: { className?: string }) {
+  return (
+    <Link href="/" className={cn("flex items-center gap-2.5 text-white", className)}>
+      <LogoMark className="size-8" />
+      <span className="font-display text-xl font-semibold tracking-tight">BagiPanen</span>
+    </Link>
+  );
+}
 
 export function Header() {
   const { role, address } = useRole();
   const pathname = usePathname();
   const nav = [
     { href: "/", label: "Beranda", show: true },
-    { href: "/create", label: "Ajukan", show: role === "petani" },
+    { href: "/create", label: "Ajukan kampanye", short: "Ajukan", show: role === "petani" },
     { href: "/dashboard", label: "Dashboard", show: role === "petani" || role === "investor" },
     { href: `/petani/${address}`, label: "Rapor saya", show: role === "petani" && Boolean(address) },
     { href: "/koperasi", label: "Koperasi", show: role === "koperasi" },
@@ -41,106 +52,76 @@ export function Header() {
     { href: "/agent", label: "Agen AI", show: true },
   ].filter((n) => n.show);
 
+  const link = (n: (typeof nav)[number], compact = false) => (
+    <Link
+      key={n.href}
+      href={n.href}
+      className={cn(
+        "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition",
+        pathname === n.href ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/8 hover:text-white",
+      )}
+    >
+      {compact && n.short ? n.short : n.label}
+    </Link>
+  );
+
   return (
-    <header className="sticky top-0 z-20 border-b border-tanah-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 text-lg font-extrabold text-daun-800">
-          <span aria-hidden>🌾</span> BagiPanen
-        </Link>
-        <div className="flex items-center gap-2">
-          {role && role !== "tamu" && <Badge tone={ROLE_TONE[role]}>{ROLE_LABEL[role]}</Badge>}
-          {IS_LOCAL ? <AccountPicker /> : <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />}
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-hutan-950/90 text-white backdrop-blur-xl">
+      <Container className="flex h-16 items-center gap-3">
+        <Logo />
+        <nav className="ml-4 hidden items-center gap-1 lg:flex">{nav.map((n) => link(n))}</nav>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="hidden sm:block">
+            <FaucetButton />
+          </div>
+          {role && role !== "tamu" && (
+            <span className="hidden rounded-full bg-emas-400/15 px-3 py-1 text-xs font-semibold text-emas-200 ring-1 ring-emas-300/30 md:inline">
+              {ROLE_LABEL[role]}
+            </span>
+          )}
+          <WalletButton />
         </div>
-      </div>
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 pb-2">
-        <nav className="-mx-1 flex min-w-0 gap-1 overflow-x-auto">
-          {nav.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={cn(
-                "shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium sm:px-2.5",
-                pathname === n.href ? "bg-daun-100 text-daun-900" : "text-stone-600 hover:bg-tanah-100",
-              )}
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-        <FaucetButton />
+      </Container>
+      <div className="border-t border-white/5 lg:hidden">
+        <Container className="flex items-center gap-2 py-2">
+          <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto">{nav.map((n) => link(n, true))}</nav>
+          <div className="sm:hidden">
+            <FaucetButton compact />
+          </div>
+        </Container>
       </div>
       <NetworkBanner />
     </header>
   );
 }
 
-/** Pemilih akun demo Anvil (hanya mode lokal). */
-function AccountPicker() {
-  const { address, isConnected } = useAccount();
-  const { connectors, connectAsync } = useConnect();
-  const { disconnect } = useDisconnect();
-  const demo = connectors.find((c) => c.id === "anvilDemo");
-
-  async function onChange(value: string) {
-    if (!demo) return;
-    if (value === "") return disconnect();
-    const next = value as Address;
-    if (!isConnected) {
-      rememberDemoAccount(next);
-      await connectAsync({ connector: demo });
-    } else {
-      (demo as unknown as { selectAccount(a: Address): void }).selectAccount(next);
-    }
-  }
-
-  if (DEMO_ACCOUNTS.length === 0) return <Badge tone="red">Akun demo tidak ada</Badge>;
-  return (
-    <Select
-      aria-label="Pilih akun demo"
-      className="w-auto max-w-48 py-1.5"
-      value={isConnected && address ? address : ""}
-      onChange={(e) => void onChange(e.target.value)}
-    >
-      <option value="">Pilih akun demo…</option>
-      {DEMO_ACCOUNTS.map((a) => (
-        <option key={a.address} value={a.address}>
-          {a.label} · {a.hint}
-        </option>
-      ))}
-    </Select>
-  );
-}
-
-/** Tombol "Minta mUSDT demo": mint 1.000 mUSDT ke wallet sendiri. */
-function FaucetButton() {
+/** Tombol "minta mUSDT": mint 1.000 mUSDT demo ke dompet sendiri. */
+function FaucetButton({ compact = false }: { compact?: boolean }) {
   const { address, isConnected } = useAccount();
   const { data: balance } = useUsdtBalance();
   const tx = useTx();
   if (!isConnected || !address || !addresses.usdt) return null;
 
   return (
-    <div className="flex shrink-0 flex-col items-end">
-      <div className="flex items-center gap-2">
-        {balance !== undefined && <span className="hidden text-xs text-stone-500 sm:inline">{formatUsdt(balance)} mUSDT</span>}
-        <Button
-          size="sm"
-          variant="secondary"
-          loading={tx.busy}
-          onClick={() =>
-            tx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "mint", args: [address, FAUCET_AMOUNT] })
-          }
-        >
-          <span className="sm:hidden">Minta mUSDT</span>
-          <span className="hidden sm:inline">Minta mUSDT demo</span>
-        </Button>
-      </div>
-      {tx.state.status === "error" && <TxStatus state={tx.state} />}
-      {tx.state.status === "success" && <span className="text-xs text-daun-700">+1.000 mUSDT ✓</span>}
+    <div className="flex items-center gap-2">
+      {!compact && balance !== undefined && (
+        <span className="hidden text-xs text-white/60 xl:inline">Saldo {formatUsdt(balance)} mUSDT</span>
+      )}
+      <Button
+        size="sm"
+        variant="light"
+        loading={tx.busy}
+        title={tx.state.status === "error" ? tx.state.message : "Isi 1.000 mUSDT (token demo) ke dompetmu"}
+        onClick={() => tx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "mint", args: [address, FAUCET_AMOUNT] })}
+      >
+        {!tx.busy && <Coins className="size-4 text-emas-300" aria-hidden />}
+        {tx.state.status === "success" ? "+1.000 masuk" : compact ? "mUSDT" : "Minta mUSDT"}
+      </Button>
     </div>
   );
 }
 
-/** Banner jaringan salah (testnet) atau chain lokal belum siap. */
+/** Pita peringatan: jaringan dompet salah, atau chain/kontrak belum siap. */
 function NetworkBanner() {
   const { chainId, isConnected } = useAccount();
   const { switchChain, isPending } = useSwitchChain();
@@ -160,24 +141,40 @@ function NetworkBanner() {
   let message: ReactNode = null;
   if (!IS_LOCAL && isConnected && chainId !== targetChain.id) {
     message = (
-      <span className="flex flex-wrap items-center gap-2">
-        Wallet Anda tidak terhubung ke {targetChain.name}.
-        <Button size="sm" loading={isPending} onClick={() => switchChain({ chainId: targetChain.id })}>
-          Ganti ke {targetChain.name}
+      <span className="flex flex-wrap items-center justify-center gap-3">
+        Dompetmu sedang terhubung ke jaringan lain.
+        <Button size="sm" variant="primary" onClick={() => switchChain({ chainId: targetChain.id })} disabled={isPending}>
+          {isPending && <Spinner />} Pindah ke {targetChain.name}
         </Button>
       </span>
     );
   } else if (health.isError) {
-    message = IS_LOCAL
-      ? "Tidak terhubung ke chain lokal. Jalankan `npm run dev:chain` di root repo."
-      : `Tidak bisa terhubung ke ${targetChain.name}. Coba muat ulang halaman.`;
+    message = IS_LOCAL ? (
+      <>
+        Chain lokal belum jalan. Jalankan <Code>npm run dev:chain</Code> di folder proyek.
+      </>
+    ) : (
+      `Belum bisa terhubung ke ${targetChain.name}. Coba muat ulang halaman.`
+    );
   } else if (health.data === "no-addresses") {
-    message = "Alamat kontrak belum diatur. Jalankan deploy lalu `npm run sync`.";
+    message = (
+      <>
+        Alamat kontrak belum diatur. Deploy kontrak dulu, lalu jalankan <Code>npm run sync</Code>.
+      </>
+    );
   } else if (health.data === "no-contracts") {
-    message = IS_LOCAL
-      ? "Kontrak belum ada di chain lokal. Jalankan ulang `npm run dev:chain`."
-      : "Kontrak tidak ditemukan di jaringan ini. Periksa alamat kontrak.";
+    message = IS_LOCAL ? (
+      <>
+        Kontrak belum ada di chain lokal. Jalankan ulang <Code>npm run dev:chain</Code>.
+      </>
+    ) : (
+      "Kontraknya tidak ditemukan di jaringan ini. Cek lagi alamat kontrak."
+    );
   }
   if (!message) return null;
-  return <div className="border-t border-padi-500/40 bg-padi-100 px-4 py-2 text-center text-sm text-padi-700">{message}</div>;
+  return <div className="bg-emas-300 px-4 py-2 text-center text-sm font-medium text-hutan-950">{message}</div>;
+}
+
+function Code({ children }: { children: ReactNode }) {
+  return <code className="rounded-md bg-hutan-950/10 px-1.5 py-0.5 font-mono text-[0.85em]">{children}</code>;
 }

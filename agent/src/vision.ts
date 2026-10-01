@@ -159,7 +159,7 @@ function mockAssess(photo: StoredFile, ctx: VisionContext): VisionResult {
         confidence: 0.2,
         estimated_days_to_harvest: days,
         reason_id: `Simulasi MockVision: nama file "${photo.fileName}" menandai foto yang tidak sesuai (mis. foto layar atau tanaman lain), bukan ${ctx.commodity.toLowerCase()} fase ${ctx.milestoneName}.`,
-        red_flags: ["bukan foto lahan komoditas yang diajukan (simulasi MockVision)"],
+        red_flags: ["ini bukan foto lahan tanaman yang diajukan (simulasi MockVision)"],
       };
     }
     return {

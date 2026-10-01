@@ -18,7 +18,7 @@ export function Providers({ children }: { children: ReactNode }) {
           {IS_LOCAL ? (
             children
           ) : (
-            <RainbowKitProvider locale="id-ID" theme={lightTheme({ accentColor: "#2f5a25", borderRadius: "medium" })}>
+            <RainbowKitProvider locale="id-ID" theme={lightTheme({ accentColor: "#1b4130", borderRadius: "large", overlayBlur: "small" })}>
               {children}
             </RainbowKitProvider>
           )}

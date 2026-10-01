@@ -24,22 +24,22 @@ export const MStatus = {
 } as const;
 
 export const STATUS_LABEL: Record<number, string> = {
-  [Status.Draft]: "Draf",
-  [Status.Funding]: "Pendanaan",
+  [Status.Draft]: "Menunggu review",
+  [Status.Funding]: "Cari dana",
   [Status.Active]: "Berjalan",
-  [Status.Harvested]: "Panen",
+  [Status.Harvested]: "Sudah panen",
   [Status.Failed]: "Gagal",
-  [Status.Cancelled]: "Dibatalkan",
+  [Status.Cancelled]: "Tidak disetujui",
   [Status.Defaulted]: "Gagal bayar",
 };
 
 export const MSTATUS_LABEL: Record<number, string> = {
-  [MStatus.Pending]: "Menunggu",
-  [MStatus.ProofSubmitted]: "Bukti dikirim",
-  [MStatus.AIReviewed]: "Diperiksa AI",
+  [MStatus.Pending]: "Belum ada bukti",
+  [MStatus.ProofSubmitted]: "Bukti masuk",
+  [MStatus.AIReviewed]: "Sudah dicek AI",
   [MStatus.Rejected]: "Ditolak",
   [MStatus.Disputed]: "Sengketa",
-  [MStatus.Released]: "Cair",
+  [MStatus.Released]: "Dana cair",
 };
 
 export type Summary = ContractFunctionReturnType<typeof harvestCampaignAbi, "view", "getSummary">;

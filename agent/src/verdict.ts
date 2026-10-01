@@ -7,34 +7,49 @@ export const MIN_CONFIDENCE = 0.7;
 
 export type Decision = { approved: boolean; reasons: string[] };
 
-const dec = (v: number) => new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+const lower = (v: string) => v.trim().toLowerCase();
+/** Model kadang menjawab "tidak dikenali" / "unknown" alih-alih mengosongkan isian. */
+const known = (v: string | undefined) => Boolean(v && !/^(tidak (dikenali|diketahui|jelas)|unknown|-)$/i.test(v.trim()));
+const sentence = (v: string) => `${v.charAt(0).toUpperCase()}${v.slice(1)}.`;
 
 /**
  * Aturan keputusan (PRD):
  *   approved = is_farm_photo && commodity_match && stage_match && confidence >= 0.70
  *              && exif.status != "mismatch" && !duplicate
+ * Alasan ditulis sebagai kalimat utuh karena langsung tampil di UI.
  */
-export function decide(vision: VisionResult, exif: ExifCheck, duplicate: boolean, milestoneName: string): Decision {
+export function decide(vision: VisionResult, exif: ExifCheck, duplicate: boolean, milestoneName: string, commodity = "komoditas kampanye ini"): Decision {
   const reasons: string[] = [];
-  if (!vision.is_farm_photo) reasons.push("bukan foto lahan pertanian");
-  if (!vision.commodity_match) reasons.push(`komoditas tidak sesuai (terdeteksi: ${vision.detected_commodity || "tidak dikenali"})`);
-  if (!vision.stage_match) reasons.push(`fase tidak sesuai (terdeteksi ${vision.detected_stage}, seharusnya ${milestoneName})`);
-  if (vision.confidence < MIN_CONFIDENCE) reasons.push(`keyakinan AI ${dec(vision.confidence)} di bawah ${dec(MIN_CONFIDENCE)}`);
+  if (!vision.is_farm_photo) reasons.push("foto ini tidak terlihat seperti foto lahan pertanian");
+  if (!vision.commodity_match)
+    reasons.push(
+      known(vision.detected_commodity)
+        ? `tanaman di foto terlihat seperti ${lower(vision.detected_commodity)}, bukan ${lower(commodity)}`
+        : `jenis tanamannya tidak bisa dikenali sebagai ${lower(commodity)}`,
+    );
+  if (!vision.stage_match)
+    reasons.push(
+      known(vision.detected_stage)
+        ? `fase tanamannya ${lower(vision.detected_stage)}, padahal tahap ini ${lower(milestoneName)}`
+        : `fase tanamannya tidak bisa dipastikan, padahal tahap ini ${lower(milestoneName)}`,
+    );
+  if (vision.confidence < MIN_CONFIDENCE)
+    reasons.push(`agen kurang yakin dengan foto ini (${Math.round(vision.confidence * 100)}%, minimal ${Math.round(MIN_CONFIDENCE * 100)}%)`);
   if (exif.status === "mismatch") reasons.push(...exif.notes);
-  if (duplicate) reasons.push("foto sama dengan bukti kampanye/milestone lain");
+  if (duplicate) reasons.push("foto yang sama sudah pernah dipakai di kampanye atau tahap lain");
   return { approved: reasons.length === 0, reasons };
 }
 
-/** Ringkasan satu kalimat untuk UI (`summary_id`). */
+/** Ringkasan untuk UI (`summary_id`), ditulis sebagai kalimat biasa. */
 export function summarize(decision: Decision, vision: VisionResult, exif: ExifCheck, weather: WeatherCheck): string {
   const extras: string[] = [];
-  if (exif.status === "missing") extras.push("EXIF tidak ada (dicatat)");
-  if (weather.extreme) extras.push("peringatan cuaca ekstrem");
-  const tail = extras.length ? ` Catatan: ${extras.join("; ")}.` : "";
+  if (exif.status === "missing") extras.push("Foto ini tidak menyimpan data GPS dan tanggal, jadi lokasinya belum bisa dicek otomatis.");
+  if (weather.extreme) extras.push("Ada peringatan hujan ekstrem di sekitar lahan.");
+  const tail = extras.length ? ` ${extras.join(" ")}` : "";
   if (decision.approved) {
-    return `Disetujui: fase ${vision.detected_stage.toLowerCase()}, kondisi ${vision.plant_condition}, perkiraan panen ±${vision.estimated_days_to_harvest} hari lagi.${tail}`;
+    return `Foto diterima. Tanaman terlihat di fase ${lower(vision.detected_stage)} dengan kondisi ${vision.plant_condition}, perkiraan panen sekitar ${vision.estimated_days_to_harvest} hari lagi.${tail}`;
   }
-  return `Ditolak: ${decision.reasons.join("; ")}.${tail}`;
+  return `Foto ditolak. ${decision.reasons.map(sentence).join(" ")}${tail}`;
 }
 
 export type VerdictDocument = {

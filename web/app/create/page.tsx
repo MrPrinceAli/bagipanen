@@ -1,17 +1,18 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Crosshair, ImageIcon, LocateFixed, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { type Address, parseEventLogs } from "viem";
 import { usePublicClient } from "wagmi";
-import { Stepper, type StepStatus, TxStatus } from "@/components/common";
-import { Button, Card, Field, Input, Notice, SectionTitle, Select, Spinner, Textarea } from "@/components/ui";
-import { IS_LOCAL } from "@/lib/config";
+import { FilePicker, Stepper, type StepStatus, TxStatus } from "@/components/common";
+import { Button, Card, Field, Input, Loading, Notice, PageBody, PageHero, Select, Textarea } from "@/components/ui";
+import { RoleGate } from "@/components/wallet";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { reputationBookAbi } from "@/lib/abi/ReputationBook";
 import { addresses, CONTRACTS_READY, requireAddresses } from "@/lib/addresses";
-import { formatRupiah, formatUsdt, parseUsdtInput } from "@/lib/format";
+import { formatPercent, formatRupiah, formatUsdt, parseUsdtInput, projectedInvestorReturn } from "@/lib/format";
 import { uploadFile, uploadJson } from "@/lib/ipfs";
 import { useRole } from "@/lib/role";
 import { nowSeconds } from "@/lib/time";
@@ -20,7 +21,7 @@ import type { CampaignMetadata } from "@/lib/types";
 
 const MILESTONES = { names: ["Tanam", "Tumbuh", "Pra-panen"], bps: [4000, 3500, 2500] };
 const DURATIONS = [
-  { value: 600, label: "10 menit (demo)" },
+  { value: 600, label: "10 menit (untuk demo)" },
   { value: 3600, label: "1 jam" },
   { value: 86_400, label: "1 hari" },
   { value: 7 * 86_400, label: "7 hari" },
@@ -32,6 +33,21 @@ type CostRow = { item: string; usdt: string };
 function isoDatePlusDays(days: number) {
   const d = new Date((nowSeconds() + days * 86_400) * 1000);
   return d.toISOString().slice(0, 10);
+}
+
+function Section({ n, title, description, children }: { n: number; title: string; description?: string; children: ReactNode }) {
+  return (
+    <Card>
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-hutan-900 font-display text-sm font-semibold text-emas-300">{n}</span>
+        <div>
+          <h2 className="font-display text-xl font-semibold text-hutan-950">{title}</h2>
+          {description && <p className="mt-0.5 text-sm text-stone-600">{description}</p>}
+        </div>
+      </div>
+      {children}
+    </Card>
+  );
 }
 
 export default function CreatePage() {
@@ -55,6 +71,8 @@ export default function CreatePage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [coordNote, setCoordNote] = useState<string>("");
+  // Asal koordinat: GPS foto boleh menimpa koordinat contoh, tapi tidak menimpa isian manual.
+  const [coordSource, setCoordSource] = useState<"none" | "demo" | "photo" | "device" | "manual">("none");
   const [formError, setFormError] = useState<string>("");
   const [phase, setPhase] = useState<"idle" | "photo" | "meta" | "chain" | "done">("idle");
 
@@ -93,29 +111,31 @@ export default function CreatePage() {
       const exifr = (await import("exifr")).default;
       const gps = await exifr.gps(file);
       if (gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude)) {
-        if (overwrite || (!lat && !lon)) {
+        if (overwrite || coordSource === "none" || coordSource === "demo") {
           setLat(gps.latitude.toFixed(6));
           setLon(gps.longitude.toFixed(6));
-          setCoordNote("Koordinat diisi dari GPS foto lahan.");
+          setCoordSource("photo");
+          setCoordNote("Koordinat diambil dari GPS foto.");
         }
         return;
       }
-      if (overwrite) setCoordNote("Foto ini tidak punya data GPS. Isi manual atau pakai lokasi perangkat.");
+      if (overwrite) setCoordNote("Foto ini tidak menyimpan GPS. Isi manual atau pakai lokasi HP.");
     } catch {
-      if (overwrite) setCoordNote("Tidak bisa membaca data GPS dari foto ini.");
+      if (overwrite) setCoordNote("Data GPS di foto ini tidak terbaca.");
     }
   }
 
   function coordsFromDevice() {
-    if (!navigator.geolocation) return setCoordNote("Perangkat tidak mendukung lokasi.");
-    setCoordNote("Mengambil lokasi perangkat…");
+    if (!navigator.geolocation) return setCoordNote("Perangkat ini tidak mendukung lokasi.");
+    setCoordNote("Mengambil lokasi…");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLon(pos.coords.longitude.toFixed(6));
-        setCoordNote("Koordinat diisi dari lokasi perangkat.");
+        setCoordSource("device");
+        setCoordNote("Koordinat diambil dari lokasi perangkat.");
       },
-      () => setCoordNote("Izin lokasi ditolak atau lokasi tidak tersedia."),
+      () => setCoordNote("Izin lokasi ditolak atau sinyal GPS belum dapat."),
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
@@ -124,14 +144,15 @@ export default function CreatePage() {
     setCommodity("Cabai merah");
     setTitle("Modal tanam cabai merah musim hujan 2026");
     setStory(
-      "Pak Darto menanam cabai merah di lahan 0,5 ha di Cikajang, Garut, didampingi Koperasi Tani Makmur. Modal dipakai untuk bibit, pupuk, pestisida, dan tenaga kerja satu musim tanam.",
+      "Pak Darto menanam cabai merah di lahan 0,5 ha di Cikajang, Garut, bersama Koperasi Tani Makmur. Modal musim ini dipakai untuk bibit, pupuk, obat tanaman, dan upah tenaga kerja.",
     );
     setLocationName("Cikajang, Garut");
     // Koordinat contoh Cikajang (id.wikipedia.org/wiki/Cikajang,_Garut). Tidak menimpa koordinat dari GPS foto.
-    if (!lat && !lon) {
+    if (coordSource === "none") {
       setLat("-7.356436");
       setLon("107.806990");
-      setCoordNote("Koordinat contoh: Cikajang, Garut. Ganti sesuai lokasi lahan jika memakai foto asli ber-GPS.");
+      setCoordSource("demo");
+      setCoordNote("Koordinat contoh: Cikajang, Garut. Ganti kalau kamu pakai foto asli yang ada GPS-nya.");
     }
     setLandArea("5000");
     setTarget("1.000");
@@ -140,8 +161,8 @@ export default function CreatePage() {
     setDuration(600);
     setCostPlan([
       { item: "Bibit", usdt: "250" },
-      { item: "Pupuk & pestisida", usdt: "400" },
-      { item: "Tenaga kerja", usdt: "350" },
+      { item: "Pupuk & obat tanaman", usdt: "400" },
+      { item: "Upah tenaga kerja", usdt: "350" },
     ]);
   }
 
@@ -163,13 +184,13 @@ export default function CreatePage() {
     if (!locationName.trim()) problems.push("nama lokasi");
     if (!Number.isFinite(latN) || Math.abs(latN) > 90 || !lat) problems.push("lintang");
     if (!Number.isFinite(lonN) || Math.abs(lonN) > 180 || !lon) problems.push("bujur");
-    if (!Number.isInteger(area) || area <= 0) problems.push("luas lahan (m², bilangan bulat)");
-    if (!targetWei || targetWei <= 0n) problems.push("target modal");
-    if (!estimateWei || estimateWei <= 0n) problems.push("estimasi hasil penjualan");
-    if (!harvestUnix || harvestUnix <= nowSeconds()) problems.push("perkiraan tanggal panen (harus di masa depan)");
-    if (!photo) problems.push("foto lahan awal");
-    if (rows.some((r) => parseUsdtInput(r.usdt) === null)) problems.push("jumlah di rencana biaya");
-    if (problems.length) return setFormError(`Periksa isian: ${problems.join(", ")}.`);
+    if (!Number.isInteger(area) || area <= 0) problems.push("luas lahan (angka bulat dalam m²)");
+    if (!targetWei || targetWei <= 0n) problems.push("kebutuhan modal");
+    if (!estimateWei || estimateWei <= 0n) problems.push("perkiraan hasil penjualan");
+    if (!harvestUnix || harvestUnix <= nowSeconds()) problems.push("tanggal panen (harus setelah hari ini)");
+    if (!photo) problems.push("foto lahan");
+    if (rows.some((r) => parseUsdtInput(r.usdt) === null)) problems.push("angka di rencana biaya");
+    if (problems.length) return setFormError(`Masih ada yang perlu dilengkapi: ${problems.join(", ")}.`);
 
     try {
       setPhase("photo");
@@ -188,47 +209,67 @@ export default function CreatePage() {
       const metadata = await uploadJson(meta);
       setPhase("chain");
       const receipt = await tx.write({
-          address: addresses.factory!,
-          abi: campaignFactoryAbi,
-          functionName: "createCampaign",
-          args: [
-            {
-              commodity: commodity.trim(),
-              locationName: locationName.trim(),
-              latE6: Math.round(latN * 1_000_000),
-              lonE6: Math.round(lonN * 1_000_000),
-              landAreaM2: area,
-              targetAmount: targetWei!,
-              estimatedRevenue: estimateWei!,
-              fundingDuration: BigInt(duration),
-              expectedHarvestDate: BigInt(harvestUnix),
-              metadataCID: metadata.cid,
-              milestoneNames: MILESTONES.names,
-              milestoneBps: MILESTONES.bps,
-            },
-          ],
-        });
+        address: addresses.factory!,
+        abi: campaignFactoryAbi,
+        functionName: "createCampaign",
+        args: [
+          {
+            commodity: commodity.trim(),
+            locationName: locationName.trim(),
+            latE6: Math.round(latN * 1_000_000),
+            lonE6: Math.round(lonN * 1_000_000),
+            landAreaM2: area,
+            targetAmount: targetWei!,
+            estimatedRevenue: estimateWei!,
+            fundingDuration: BigInt(duration),
+            expectedHarvestDate: BigInt(harvestUnix),
+            metadataCID: metadata.cid,
+            milestoneNames: MILESTONES.names,
+            milestoneBps: MILESTONES.bps,
+          },
+        ],
+      });
       if (!receipt) return setPhase("idle");
       const [created] = parseEventLogs({ abi: campaignFactoryAbi, logs: receipt.logs, eventName: "CampaignCreated" });
       setPhase("done");
       if (created) router.push(`/campaign/${created.args.campaign}`);
     } catch (err) {
       setPhase("idle");
-      setFormError(err instanceof Error ? err.message : "Gagal mengunggah file.");
+      setFormError(err instanceof Error ? err.message : "Filenya gagal diunggah. Coba lagi.");
     }
   }
 
-  if (!CONTRACTS_READY) return <Notice tone="warn">Alamat kontrak belum diatur.</Notice>;
-  if (role === undefined) return <Spinner />;
+  const hero = (description?: ReactNode, actions?: ReactNode) => (
+    <PageHero eyebrow="Ajukan kampanye" title="Ceritakan lahanmu, biar investor ikut menanam" description={description} actions={actions} />
+  );
+
+  if (!CONTRACTS_READY)
+    return (
+      <>
+        {hero()}
+        <PageBody>
+          <Notice tone="warn">Alamat kontrak belum diatur.</Notice>
+        </PageBody>
+      </>
+    );
+  if (role === undefined)
+    return (
+      <>
+        {hero()}
+        <PageBody>
+          <Loading />
+        </PageBody>
+      </>
+    );
   if (role !== "petani")
     return (
-      <Notice tone="info">
-        Halaman ini untuk petani yang sudah didaftarkan koperasi.{" "}
-        {role === "tamu" ? `${IS_LOCAL ? "Pilih akun" : "Hubungkan dompet"} Petani di header.` : "Wallet Anda saat ini bukan petani."}
-      </Notice>
+      <>
+        {hero("Kampanye diajukan oleh petani yang sudah didaftarkan koperasinya.")}
+        <PageBody>
+          <RoleGate need="petani" role={role} />
+        </PageBody>
+      </>
     );
-  if (names.data?.blocked)
-    return <Notice tone="error">Wallet ini diblokir membuat kampanye baru karena pernah gagal bayar (tercatat di Rapor Petani).</Notice>;
 
   const stepStatus = (p: typeof phase, mine: "photo" | "meta" | "chain"): StepStatus => {
     const order = ["photo", "meta", "chain", "done"];
@@ -238,187 +279,224 @@ export default function CreatePage() {
     return cur > idx ? "done" : cur === idx ? "active" : "todo";
   };
   const busy = phase !== "idle" && phase !== "done";
+  const ret = targetWei && estimateWei ? projectedInvestorReturn(targetWei, estimateWei) : null;
+  const costSum = costPlan.reduce((s, r) => s + (parseUsdtInput(r.usdt) ?? 0n), 0n);
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-extrabold text-daun-900">Ajukan kampanye</h1>
-          <p className="text-sm text-stone-600">
-            {names.data ? `${names.data.farmerName} · didampingi ${names.data.cooperativeName}` : "Memuat data petani…"}
-          </p>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={fillDemo}>
-          Isi contoh data demo
-        </Button>
-      </div>
+    <>
+      {hero(
+        names.data ? (
+          <>
+            {names.data.farmerName} · didampingi {names.data.cooperativeName}
+          </>
+        ) : (
+          "Memuat data petani…"
+        ),
+        <Button variant="light" onClick={fillDemo}>
+          <Sparkles className="size-4 text-emas-300" aria-hidden /> Isi contoh data demo
+        </Button>,
+      )}
+      <PageBody>
+        {names.data?.blocked ? (
+          <Notice tone="error">Dompet ini tidak bisa mengajukan kampanye baru karena pernah gagal bayar. Catatannya ada di Rapor Petani.</Notice>
+        ) : (
+          <form onSubmit={onSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="flex min-w-0 flex-col gap-6">
+              <Section n={1} title="Tanaman & cerita" description="Bagian ini yang pertama kali dibaca investor.">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Komoditas" htmlFor="commodity">
+                    <Input id="commodity" list="commodities" value={commodity} onChange={(e) => setCommodity(e.target.value)} placeholder="Cabai merah" />
+                    <datalist id="commodities">
+                      <option value="Cabai merah" />
+                      <option value="Padi" />
+                      <option value="Bawang merah" />
+                      <option value="Tomat" />
+                      <option value="Jagung" />
+                    </datalist>
+                  </Field>
+                  <Field label="Judul kampanye" htmlFor="title">
+                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modal tanam cabai merah musim hujan" />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <Field label="Cerita singkat" htmlFor="story" hint="Ceritakan siapa kamu, kondisi lahannya, dan modalnya mau dipakai untuk apa.">
+                      <Textarea id="story" value={story} onChange={(e) => setStory(e.target.value)} />
+                    </Field>
+                  </div>
+                </div>
+              </Section>
 
-      <Card>
-        <SectionTitle>Tanaman & cerita</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Komoditas" htmlFor="commodity">
-            <Input id="commodity" list="commodities" value={commodity} onChange={(e) => setCommodity(e.target.value)} placeholder="Cabai merah" />
-            <datalist id="commodities">
-              <option value="Cabai merah" />
-              <option value="Padi" />
-              <option value="Bawang merah" />
-              <option value="Tomat" />
-              <option value="Jagung" />
-            </datalist>
-          </Field>
-          <Field label="Judul kampanye" htmlFor="title">
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modal tanam cabai merah musim hujan" />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Cerita singkat" htmlFor="story" hint="Siapa Anda, lahan seperti apa, dan untuk apa modalnya.">
-              <Textarea id="story" value={story} onChange={(e) => setStory(e.target.value)} />
-            </Field>
-          </div>
-        </div>
-      </Card>
+              <Section n={2} title="Lahan" description="Agen AI akan mencocokkan lokasi foto bukti dengan titik lahan ini.">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Field
+                      label="Foto lahan saat ini"
+                      htmlFor="photo"
+                      hint="Maksimal 5 MB. Ambil langsung dari galeri kamera supaya data GPS dan tanggalnya tetap ada."
+                    >
+                      <FilePicker id="photo" file={photo} onChange={selectPhoto} label="Pilih foto lahan" />
+                    </Field>
+                  </div>
+                  <Field label="Nama lokasi" htmlFor="loc">
+                    <Input id="loc" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Cikajang, Garut" />
+                  </Field>
+                  <Field label="Luas lahan (m²)" htmlFor="area" hint="0,5 ha = 5.000 m²">
+                    <Input id="area" inputMode="numeric" value={landArea} onChange={(e) => setLandArea(e.target.value)} placeholder="5000" />
+                  </Field>
+                  <Field label="Lintang (latitude)" htmlFor="lat">
+                    <Input id="lat" inputMode="decimal" value={lat} onChange={(e) => {
+                        setLat(e.target.value);
+                        setCoordSource("manual");
+                      }} placeholder="-7.2" />
+                  </Field>
+                  <Field label="Bujur (longitude)" htmlFor="lon">
+                    <Input id="lon" inputMode="decimal" value={lon} onChange={(e) => {
+                        setLon(e.target.value);
+                        setCoordSource("manual");
+                      }} placeholder="107.8" />
+                  </Field>
+                  <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+                    <Button size="sm" variant="secondary" disabled={!photo} onClick={() => photo && coordsFromPhoto(photo, true)}>
+                      <Crosshair className="size-4" aria-hidden /> Ambil dari GPS foto
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={coordsFromDevice}>
+                      <LocateFixed className="size-4" aria-hidden /> Pakai lokasi perangkat
+                    </Button>
+                    {coordNote && <span className="text-xs text-stone-600">{coordNote}</span>}
+                  </div>
+                  <p className="text-xs leading-relaxed text-stone-500 sm:col-span-2">
+                    Foto bukti nanti harus diambil paling jauh 2 km dari titik ini, jadi isi sesuai lokasi lahan yang sebenarnya.
+                  </p>
+                </div>
+              </Section>
 
-      <Card>
-        <SectionTitle>Lahan</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Field label="Foto lahan awal" htmlFor="photo" hint="JPEG/PNG/WebP, maks 5 MB. Unggah langsung dari galeri kamera agar data GPS & tanggal (EXIF) tidak hilang.">
-              <Input
-                id="photo"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => selectPhoto(e.target.files?.[0] ?? null)}
-              />
-            </Field>
-            {preview && (
-              // eslint-disable-next-line @next/next/no-img-element -- pratinjau file lokal (blob URL)
-              <img src={preview} alt="Pratinjau foto lahan" className="mt-2 h-48 w-full rounded-xl object-cover" />
-            )}
-          </div>
-          <Field label="Nama lokasi" htmlFor="loc">
-            <Input id="loc" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Cikajang, Garut" />
-          </Field>
-          <Field label="Luas lahan (m²)" htmlFor="area" hint="0,5 ha = 5000 m²">
-            <Input id="area" inputMode="numeric" value={landArea} onChange={(e) => setLandArea(e.target.value)} placeholder="5000" />
-          </Field>
-          <Field label="Lintang (latitude)" htmlFor="lat">
-            <Input id="lat" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-7.2" />
-          </Field>
-          <Field label="Bujur (longitude)" htmlFor="lon">
-            <Input id="lon" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="107.8" />
-          </Field>
-          <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-            <Button type="button" size="sm" variant="secondary" disabled={!photo} onClick={() => photo && coordsFromPhoto(photo, true)}>
-              Ambil dari GPS foto
-            </Button>
-            <Button type="button" size="sm" variant="secondary" onClick={coordsFromDevice}>
-              Pakai lokasi perangkat
-            </Button>
-            {coordNote && <span className="text-xs text-stone-600">{coordNote}</span>}
-          </div>
-          <p className="text-xs text-stone-500 sm:col-span-2">
-            Agen AI memeriksa jarak GPS foto bukti ke koordinat ini (maksimal 2 km), jadi isi sesuai lokasi lahan sebenarnya.
-          </p>
-        </div>
-      </Card>
+              <Section n={3} title="Pendanaan" description="Dana cair bertahap: tanam 40%, tumbuh 35%, pra-panen 25%.">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Butuh modal berapa? (USDT)" htmlFor="target" hint={targetWei ? `Sekitar ${formatRupiah(targetWei)}` : "Pakai koma untuk desimal"}>
+                    <Input id="target" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="1.000" />
+                  </Field>
+                  <Field label="Perkiraan hasil penjualan (USDT)" htmlFor="estimate" hint={estimateWei ? `Sekitar ${formatRupiah(estimateWei)}` : undefined}>
+                    <Input id="estimate" inputMode="decimal" value={estimate} onChange={(e) => setEstimate(e.target.value)} placeholder="1.650" />
+                  </Field>
+                  <Field label="Perkiraan tanggal panen" htmlFor="harvest">
+                    <Input id="harvest" type="date" min={isoDatePlusDays(1)} value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
+                  </Field>
+                  <Field label="Lama pendanaan" htmlFor="duration">
+                    <Select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                      {DURATIONS.map((d) => (
+                        <option key={d.value} value={d.value}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+              </Section>
 
-      <Card>
-        <SectionTitle>Pendanaan</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Kebutuhan modal (USDT)" htmlFor="target" hint={targetWei ? `≈ ${formatRupiah(targetWei)} (perkiraan)` : "Gunakan koma untuk desimal"}>
-            <Input id="target" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="1.000" />
-          </Field>
-          <Field
-            label="Estimasi hasil penjualan (USDT)"
-            htmlFor="estimate"
-            hint={estimateWei ? `≈ ${formatRupiah(estimateWei)} (perkiraan)` : undefined}
-          >
-            <Input id="estimate" inputMode="decimal" value={estimate} onChange={(e) => setEstimate(e.target.value)} placeholder="1.650" />
-          </Field>
-          <Field label="Perkiraan tanggal panen" htmlFor="harvest">
-            <Input id="harvest" type="date" min={isoDatePlusDays(1)} value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
-          </Field>
-          <Field label="Durasi pendanaan" htmlFor="duration">
-            <Select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-              {DURATIONS.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
-        <p className="mt-4 text-sm text-stone-600">
-          Pencairan bertahap: <strong>Tanam 40%</strong> · <strong>Tumbuh 35%</strong> · <strong>Pra-panen 25%</strong>, masing-masing
-          setelah bukti foto disetujui agen AI dan koperasi.
-        </p>
-      </Card>
-
-      <Card>
-        <SectionTitle
-          action={
-            <Button type="button" size="sm" variant="ghost" onClick={() => setCostPlan([...costPlan, { item: "", usdt: "" }])}>
-              + Tambah baris
-            </Button>
-          }
-        >
-          Rencana biaya
-        </SectionTitle>
-        <div className="flex flex-col gap-2">
-          {costPlan.map((row, i) => (
-            <div key={i} className="flex gap-2">
-              <Input
-                aria-label={`Pos biaya ${i + 1}`}
-                value={row.item}
-                onChange={(e) => setCostPlan(costPlan.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))}
-                placeholder="Bibit"
-              />
-              <Input
-                aria-label={`Jumlah USDT ${i + 1}`}
-                className="w-32"
-                inputMode="decimal"
-                value={row.usdt}
-                onChange={(e) => setCostPlan(costPlan.map((r, j) => (j === i ? { ...r, usdt: e.target.value } : r)))}
-                placeholder="USDT"
-              />
-              <Button type="button" variant="ghost" size="sm" aria-label="Hapus baris" onClick={() => setCostPlan(costPlan.filter((_, j) => j !== i))}>
-                ✕
-              </Button>
+              <Section n={4} title="Rencana biaya" description="Rincian pemakaian modal. Tidak wajib, tapi bikin investor lebih yakin.">
+                <div className="flex flex-col gap-2">
+                  {costPlan.map((row, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input
+                        aria-label={`Pos biaya ${i + 1}`}
+                        value={row.item}
+                        onChange={(e) => setCostPlan(costPlan.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))}
+                        placeholder="Contoh: Bibit"
+                      />
+                      <Input
+                        aria-label={`Jumlah USDT ${i + 1}`}
+                        className="w-28 sm:w-36"
+                        inputMode="decimal"
+                        value={row.usdt}
+                        onChange={(e) => setCostPlan(costPlan.map((r, j) => (j === i ? { ...r, usdt: e.target.value } : r)))}
+                        placeholder="USDT"
+                      />
+                      <button
+                        type="button"
+                        aria-label="Hapus baris"
+                        onClick={() => setCostPlan(costPlan.filter((_, j) => j !== i))}
+                        className="flex size-11 shrink-0 items-center justify-center rounded-2xl text-stone-400 transition hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setCostPlan([...costPlan, { item: "", usdt: "" }])}>
+                      <Plus className="size-4" aria-hidden /> Tambah pos biaya
+                    </Button>
+                    {targetWei && (
+                      <p className="text-xs text-stone-500">
+                        Total {formatUsdt(costSum)} dari {formatUsdt(targetWei)} USDT
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Section>
             </div>
-          ))}
-          {targetWei && (
-            <p className="text-xs text-stone-500">
-              Total rencana:{" "}
-              {formatUsdt(costPlan.reduce((s, r) => s + (parseUsdtInput(r.usdt) ?? 0n), 0n))} dari {formatUsdt(targetWei)} USDT
-            </p>
-          )}
-        </div>
-      </Card>
 
-      <Card>
-        {phase !== "idle" && (
-          <div className="mb-4">
-            <Stepper
-              steps={[
-                { label: "Unggah foto lahan", status: stepStatus(phase, "photo") },
-                { label: "Unggah metadata", status: stepStatus(phase, "meta") },
-                { label: "Kirim ke blockchain", status: stepStatus(phase, "chain") },
-              ]}
-            />
-          </div>
+            {/* -------------------------------------------- Ringkasan & kirim */}
+            <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
+              <Card className="overflow-hidden p-0 sm:p-0">
+                <div className="relative h-40 bg-linear-to-br from-hutan-700 to-hutan-950">
+                  {preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- pratinjau file lokal (blob URL)
+                    <img src={preview} alt="Pratinjau foto lahan" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-white/50">
+                      <ImageIcon className="size-8" aria-hidden />
+                      <span className="text-xs">Foto lahan muncul di sini</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-4 p-5">
+                  <div>
+                    <p className="text-xs font-semibold tracking-wide text-emas-700 uppercase">Pratinjau</p>
+                    <p className="mt-1 font-display text-lg leading-snug font-semibold text-hutan-950">{title || "Judul kampanyemu"}</p>
+                    <p className="text-sm text-stone-500">{[commodity, locationName].filter(Boolean).join(" · ") || "Komoditas · lokasi"}</p>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <dt className="text-xs text-stone-500">Kebutuhan modal</dt>
+                      <dd className="font-semibold text-hutan-950">{targetWei ? `${formatUsdt(targetWei)} USDT` : "–"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-stone-500">Imbal hasil investor</dt>
+                      <dd className="font-semibold text-hutan-700">{ret === null ? "–" : `${formatPercent(ret)} / musim`}</dd>
+                    </div>
+                  </dl>
+                  {targetWei && (
+                    <ul className="flex flex-col gap-1.5 rounded-2xl bg-krem-50 p-3 text-sm ring-1 ring-krem-200">
+                      {MILESTONES.names.map((n, i) => (
+                        <li key={n} className="flex justify-between">
+                          <span className="text-stone-600">
+                            {n} <span className="text-stone-400">· {MILESTONES.bps[i] / 100}%</span>
+                          </span>
+                          <span className="font-semibold">{formatUsdt((targetWei * BigInt(MILESTONES.bps[i])) / 10_000n)} USDT</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {phase !== "idle" && (
+                    <Stepper
+                      steps={[
+                        { label: "Unggah foto", status: stepStatus(phase, "photo") },
+                        { label: "Simpan detail", status: stepStatus(phase, "meta") },
+                        { label: "Kirim", status: stepStatus(phase, "chain") },
+                      ]}
+                    />
+                  )}
+                  {formError && <Notice tone="error">{formError}</Notice>}
+                  <Button type="submit" size="lg" variant="gold" loading={busy}>
+                    Ajukan kampanye
+                  </Button>
+                  <TxStatus state={tx.state} successText="Kampanye dibuat. Membuka halamannya…" />
+                  <p className="text-xs leading-relaxed text-stone-500">Setelah diajukan, kampanyemu direview admin dulu sebelum pendanaan dibuka.</p>
+                </div>
+              </Card>
+            </aside>
+          </form>
         )}
-        {formError && (
-          <div className="mb-3">
-            <Notice tone="error">{formError}</Notice>
-          </div>
-        )}
-        <div className="flex flex-col gap-2">
-          <Button type="submit" loading={busy}>
-            Ajukan kampanye
-          </Button>
-          <TxStatus state={tx.state} successText="Kampanye dibuat. Membuka halaman kampanye…" />
-          <p className="text-xs text-stone-500">Status awal kampanye adalah Draf sampai disetujui admin.</p>
-        </div>
-      </Card>
-    </form>
+      </PageBody>
+    </>
   );
 }

@@ -1,30 +1,65 @@
 @import "tailwindcss";
 
-/* Palet hijau-tanah BagiPanen */
+/* Palet BagiPanen: hijau hutan (utama), emas padi (aksen), krem (latar). */
 @theme {
-  --color-daun-50: #f1f7ee;
-  --color-daun-100: #deedd6;
-  --color-daun-200: #bfdcae;
-  --color-daun-300: #97c47f;
-  --color-daun-500: #4e8a3b;
-  --color-daun-600: #3c722d;
-  --color-daun-700: #2f5a25;
-  --color-daun-800: #264820;
-  --color-daun-900: #1d3719;
+  --color-hutan-50: #f1f7f3;
+  --color-hutan-100: #ddeee3;
+  --color-hutan-200: #bcdcc8;
+  --color-hutan-300: #8fc2a3;
+  --color-hutan-400: #5fa27b;
+  --color-hutan-500: #3d855d;
+  --color-hutan-600: #2c6a48;
+  --color-hutan-700: #23543a;
+  --color-hutan-800: #1b4130;
+  --color-hutan-900: #132e22;
+  --color-hutan-950: #0b1d15;
 
-  --color-tanah-50: #fbf7f1;
-  --color-tanah-100: #f3e9da;
-  --color-tanah-200: #e5d0b1;
-  --color-tanah-400: #c39465;
-  --color-tanah-500: #a8703d;
-  --color-tanah-600: #8a5a30;
-  --color-tanah-700: #6d4627;
+  --color-emas-50: #fdf9ee;
+  --color-emas-100: #faefd2;
+  --color-emas-200: #f4dca0;
+  --color-emas-300: #edc56a;
+  --color-emas-400: #e6b043;
+  --color-emas-500: #d4952a;
+  --color-emas-600: #b4761f;
+  --color-emas-700: #8d5a1c;
+  --color-emas-800: #73491d;
 
-  --color-padi-100: #fbefcf;
-  --color-padi-500: #d49b25;
-  --color-padi-700: #8f6412;
+  --color-krem-50: #fdfbf6;
+  --color-krem-100: #f8f3e8;
+  --color-krem-200: #efe6d3;
+  --color-krem-300: #e2d5b9;
+  --color-krem-400: #cbb894;
 
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  --shadow-soft: 0 1px 2px rgb(19 46 34 / 0.04), 0 10px 30px -14px rgb(19 46 34 / 0.22);
+  --shadow-lift: 0 2px 6px rgb(19 46 34 / 0.06), 0 28px 56px -24px rgb(19 46 34 / 0.4);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Cahaya lembut di latar gelap (hero & header halaman). */
+@utility glow-hutan {
+  background-image:
+    radial-gradient(55% 60% at 85% -10%, rgb(230 176 67 / 0.16), transparent 70%),
+    radial-gradient(60% 70% at -5% 110%, rgb(61 133 93 / 0.28), transparent 70%);
+}
+
+/* Pola garis bedengan halus untuk latar gelap. */
+@utility pola-bedengan {
+  background-image: repeating-linear-gradient(115deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 22px);
 }
 
 :root {
@@ -32,6 +67,17 @@
 }
 
 body {
-  background: var(--color-tanah-50);
-  color: #292524;
+  background: var(--color-krem-50);
+  color: #1c1a17;
+}
+
+::selection {
+  background: var(--color-emas-200);
+  color: var(--color-hutan-950);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
+  }
 }

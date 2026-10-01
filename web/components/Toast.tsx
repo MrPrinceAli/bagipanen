@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2, ExternalLink } from "lucide-react";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { explorerTxUrl } from "@/lib/config";
 import { shortHash } from "@/lib/format";
@@ -27,23 +28,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4" aria-live="polite">
+      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex flex-col items-center gap-2 px-4" aria-live="polite">
         {items.map((t) => {
           const url = t.hash ? explorerTxUrl(t.hash) : null;
           return (
             <div
               key={t.id}
               role="status"
-              className="pointer-events-auto flex max-w-md flex-wrap items-center gap-x-2 rounded-xl bg-daun-800 px-4 py-2.5 text-sm text-white shadow-lg"
+              className="pointer-events-auto flex max-w-md animate-fade-up items-center gap-3 rounded-full border border-white/10 bg-hutan-950/95 py-2.5 pr-5 pl-3 text-sm text-white shadow-lift backdrop-blur"
             >
-              <span>✓ {t.text}</span>
+              <CheckCircle2 className="size-5 shrink-0 text-emas-300" aria-hidden />
+              <span className="font-medium">{t.text}</span>
               {t.hash &&
                 (url ? (
-                  <a href={url} target="_blank" rel="noreferrer" className="font-mono text-xs text-daun-100 underline">
-                    {shortHash(t.hash)} ↗
+                  <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-xs text-emas-200 hover:underline">
+                    {shortHash(t.hash)} <ExternalLink className="size-3" aria-hidden />
                   </a>
                 ) : (
-                  <span className="font-mono text-xs text-daun-200">tx {shortHash(t.hash)}</span>
+                  <span className="font-mono text-xs text-white/50">tx {shortHash(t.hash)}</span>
                 ))}
             </div>
           );

@@ -1,21 +1,27 @@
 "use client"; // error boundary wajib Client Component
 
+import { CloudOff } from "lucide-react";
 import { useEffect } from "react";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, IconBubble, PageBody, PageHero } from "@/components/ui";
+import { IS_LOCAL } from "@/lib/config";
 
 export default function ErrorPage({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
   return (
-    <Card className="mx-auto max-w-xl text-center">
-      <h1 className="text-xl font-extrabold text-daun-900">Terjadi kesalahan</h1>
-      <p className="mt-2 text-sm text-stone-600">
-        Halaman ini gagal dimuat. Periksa koneksi ke jaringan (mode lokal: pastikan `npm run dev:chain` berjalan), lalu coba lagi.
-      </p>
-      <Button className="mt-4" onClick={() => retry()}>
-        Coba lagi
-      </Button>
-    </Card>
+    <>
+      <PageHero eyebrow="Ada kendala" title="Halaman ini gagal dimuat" />
+      <PageBody>
+        <Card className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 py-10 text-center">
+          <IconBubble icon={CloudOff} tone="gold" className="size-12" />
+          <p className="text-stone-600">
+            Biasanya karena koneksi ke jaringan sedang terputus.{" "}
+            {IS_LOCAL ? "Pastikan chain lokal (npm run dev:chain) masih berjalan, lalu coba lagi." : "Cek koneksi internetmu, lalu coba lagi."}
+          </p>
+          <Button onClick={() => retry()}>Coba lagi</Button>
+        </Card>
+      </PageBody>
+    </>
   );
 }

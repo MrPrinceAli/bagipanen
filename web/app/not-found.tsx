@@ -1,17 +1,17 @@
-import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Sprout } from "lucide-react";
+import { ButtonLink, Card, IconBubble, PageBody, PageHero } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <Card className="mx-auto max-w-xl text-center">
-      <p className="text-4xl" aria-hidden>
-        🌾
-      </p>
-      <h1 className="mt-2 text-xl font-extrabold text-daun-900">Halaman tidak ditemukan</h1>
-      <p className="mt-2 text-sm text-stone-600">Alamat yang Anda buka tidak ada di BagiPanen.</p>
-      <Link href="/" className="mt-4 inline-block text-sm text-daun-700 underline">
-        ← Kembali ke beranda
-      </Link>
-    </Card>
+    <>
+      <PageHero eyebrow="404" title="Halamannya tidak ketemu" />
+      <PageBody>
+        <Card className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 py-10 text-center">
+          <IconBubble icon={Sprout} tone="gold" className="size-12" />
+          <p className="text-stone-600">Mungkin tautannya salah ketik, atau halamannya sudah dipindah.</p>
+          <ButtonLink href="/">Kembali ke beranda</ButtonLink>
+        </Card>
+      </PageBody>
+    </>
   );
 }

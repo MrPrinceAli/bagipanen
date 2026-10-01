@@ -65,22 +65,22 @@ export function evaluateExif(
   const takenAt = hasDate ? toWibIso(data.takenAt!) : null;
 
   if (!hasGps && !hasDate) {
-    return { status: "missing", distanceKm: null, takenAt: null, notes: ["EXIF (GPS & tanggal) tidak ada"] };
+    return { status: "missing", distanceKm: null, takenAt: null, notes: ["foto tidak menyimpan data GPS dan tanggal"] };
   }
 
   let mismatch = false;
   if (distanceKm !== null && distanceKm > MAX_DISTANCE_KM) {
     mismatch = true;
-    notes.push(`lokasi foto ${km(distanceKm)} km dari lahan (maks ${MAX_DISTANCE_KM} km)`);
+    notes.push(`lokasi foto ${km(distanceKm)} km dari lahan, padahal batasnya ${MAX_DISTANCE_KM} km`);
   }
   if (hasDate) {
     const ageDays = Math.abs(submittedAtUnix - data.takenAt!.getTime() / 1000) / 86_400;
     if (ageDays > MAX_AGE_DAYS) {
       mismatch = true;
-      notes.push(`foto diambil ${km(ageDays)} hari dari waktu kirim (maks ${MAX_AGE_DAYS} hari)`);
+      notes.push(`tanggal foto berselisih ${km(ageDays)} hari dari waktu kirim, padahal batasnya ${MAX_AGE_DAYS} hari`);
     }
   }
-  if (!hasGps) notes.push("GPS foto tidak ada");
-  if (!hasDate) notes.push("tanggal foto tidak ada");
+  if (!hasGps) notes.push("foto tidak menyimpan data GPS");
+  if (!hasDate) notes.push("foto tidak menyimpan tanggal");
   return { status: mismatch ? "mismatch" : "ok", distanceKm, takenAt, notes };
 }

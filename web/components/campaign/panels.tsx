@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Camera, ClipboardCheck, Clock, HandCoins, Receipt, ShieldCheck, Wallet } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { isAddressEqual } from "viem";
 import { useAccount } from "wagmi";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { harvestCampaignAbi } from "@/lib/abi/HarvestCampaign";
 import { mockUSDTAbi } from "@/lib/abi/MockUSDT";
 import { addresses } from "@/lib/addresses";
-import { IS_LOCAL } from "@/lib/config";
 import { usePosition } from "@/lib/campaigns";
 import { formatPercent, formatRupiah, formatUsdt, parseUsdtInput, usdtToInput } from "@/lib/format";
 import { uploadFile } from "@/lib/ipfs";
@@ -15,13 +15,14 @@ import type { Role } from "@/lib/role";
 import { useEffectiveNow } from "@/lib/time";
 import { useTx } from "@/lib/tx";
 import { type CampaignSummary, FailType, type Milestone, MStatus, Status } from "@/lib/types";
-import { IpfsImage, Stepper, TxStatus, Usdt } from "../common";
-import { Button, Card, Field, Input, Notice } from "../ui";
+import { FilePicker, IpfsImage, Stepper, TxStatus, Usdt } from "../common";
+import { Button, Card, CardTitle, cn, Field, Input, Notice } from "../ui";
+import { ConnectPrompt } from "../wallet";
 import { VerdictSummary } from "./Timeline";
 
 type PanelProps = { c: CampaignSummary; milestones: readonly Milestone[]; role: Role | undefined; symbol: string };
 
-/** Semua aksi yang tersedia untuk wallet yang login, sesuai peran & status kampanye. */
+/** Semua aksi yang tersedia untuk dompet yang terhubung, sesuai peran & status kampanye. */
 export function ActionPanels(props: PanelProps) {
   const { c, milestones, role } = props;
   const { address, isConnected } = useAccount();
@@ -31,19 +32,31 @@ export function ActionPanels(props: PanelProps) {
   const current = milestones[c.currentMilestone];
   const allReleased = c.currentMilestone >= c.milestoneCount;
 
-  if (!isConnected) return <Notice tone="info">Hubungkan wallet ({IS_LOCAL ? "pilih akun demo" : "tombol Hubungkan Dompet"} di header) untuk mendanai atau melakukan aksi.</Notice>;
+  if (!isConnected)
+    return (
+      <Card className="flex flex-col gap-3">
+        <CardTitle icon={Wallet} description={c.status === Status.Funding ? "Hubungkan dompetmu dulu untuk ikut mendanai kampanye ini." : "Hubungkan dompetmu untuk melihat porsi atau mengklaim hasil."}>
+          {c.status === Status.Funding ? "Mau ikut mendanai?" : "Punya porsi di sini?"}
+        </CardTitle>
+        <ConnectPrompt />
+      </Card>
+    );
 
   const panels = [];
   if (role === "admin" && c.status === Status.Draft) panels.push(<AdminReviewPanel key="admin" c={c} />);
-  if (c.status === Status.Funding && now <= c.fundingDeadline && !isFarmer && !isCoop)
-    panels.push(<FundPanel key="fund" c={c} />);
+  if (c.status === Status.Funding && now <= c.fundingDeadline && !isFarmer && !isCoop) panels.push(<FundPanel key="fund" c={c} />);
   if (c.status === Status.Funding && now > c.fundingDeadline) panels.push(<FinalizePanel key="finalize" c={c} />);
   if (!isFarmer && !isCoop) panels.push(<InvestorPanel key="investor" {...props} />);
   if (isFarmer && c.status === Status.Active && current && (current.status === MStatus.Pending || current.status === MStatus.Rejected))
     panels.push(<ProofPanel key="proof" c={c} milestone={current} />);
   if (isFarmer && c.status === Status.Active && allReleased) panels.push(<HarvestPanel key="harvest" c={c} />);
-  if (isCoop && c.status === Status.Active && current && !current.verifierDecided &&
-    (current.status === MStatus.ProofSubmitted || current.status === MStatus.AIReviewed))
+  if (
+    isCoop &&
+    c.status === Status.Active &&
+    current &&
+    !current.verifierDecided &&
+    (current.status === MStatus.ProofSubmitted || current.status === MStatus.AIReviewed)
+  )
     panels.push(<CooperativePanel key="coop" c={c} milestone={current} />);
 
   if (panels.length === 0) return null;
@@ -59,18 +72,19 @@ export function AdminReviewPanel({ c }: { c: CampaignSummary }) {
   };
   return (
     <Card>
-      <h3 className="font-semibold text-daun-900">Tinjauan admin</h3>
-      <p className="mt-1 text-sm text-stone-600">Setujui untuk membuka pendanaan (tenggat dimulai sekarang), atau tolak pengajuan ini.</p>
-      <div className="mt-3 flex gap-2">
+      <CardTitle icon={ClipboardCheck} description="Kalau disetujui, pendanaan langsung dibuka dan hitung mundurnya mulai berjalan.">
+        Review pengajuan
+      </CardTitle>
+      <div className="flex flex-wrap gap-2">
         <Button loading={tx.busy && action === "approve"} disabled={tx.busy} onClick={() => send("approveCampaign")}>
-          Setujui kampanye
+          Setujui & buka pendanaan
         </Button>
-        <Button variant="danger" loading={tx.busy && action === "reject"} disabled={tx.busy} onClick={() => send("rejectCampaign")}>
-          Tolak
+        <Button variant="secondary" loading={tx.busy && action === "reject"} disabled={tx.busy} onClick={() => send("rejectCampaign")}>
+          Tolak pengajuan
         </Button>
       </div>
-      <div className="mt-2">
-        <TxStatus state={tx.state} successText={action === "approve" ? "Pendanaan dibuka." : "Kampanye ditolak."} />
+      <div className="mt-3">
+        <TxStatus state={tx.state} successText={action === "approve" ? "Pendanaan sudah dibuka." : "Pengajuan ditolak."} />
       </div>
     </Card>
   );
@@ -85,52 +99,69 @@ function FundPanel({ c }: { c: CampaignSummary }) {
   const amount = parseUsdtInput(input);
 
   let problem = "";
-  if (input && (amount === null || amount === 0n)) problem = "Jumlah tidak valid.";
-  else if (amount && amount > remaining) problem = `Maksimal sisa target: ${formatUsdt(remaining)} USDT.`;
-  else if (amount && pos && amount > pos.usdtBalance) problem = "Saldo mUSDT tidak cukup. Gunakan tombol \"Minta mUSDT demo\".";
+  if (input && (amount === null || amount === 0n)) problem = "Jumlahnya belum benar. Contoh: 250 atau 1.000.";
+  else if (amount && amount > remaining) problem = `Paling banyak ${formatUsdt(remaining)} USDT, sesuai sisa target.`;
+  else if (amount && pos && amount > pos.usdtBalance) problem = "Saldo mUSDT-mu kurang. Klik \"Minta mUSDT\" di atas untuk isi saldo demo.";
 
   const ready = Boolean(amount && amount > 0n && !problem);
   const approved = Boolean(ready && pos && pos.allowance >= amount!);
+  const presets = [100n, 250n, 500n].map((v) => v * 10n ** 18n).filter((v) => v < remaining);
 
   return (
-    <Card>
-      <h3 className="font-semibold text-daun-900">Danai kampanye ini</h3>
-      <p className="mt-1 text-sm text-stone-600">
-        Sisa target <strong>{formatUsdt(remaining)} USDT</strong>. Anda menerima token porsi 1:1 untuk setiap USDT.
-      </p>
-      <div className="mt-3 flex flex-col gap-3">
-        <Field label="Jumlah (USDT)" htmlFor="fund-amount" hint={amount ? `≈ ${formatRupiah(amount)} (perkiraan)` : `Saldo Anda: ${pos ? formatUsdt(pos.usdtBalance) : "–"} mUSDT`}>
-          <Input id="fund-amount" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} placeholder="500" />
+    <Card className="border-emas-200">
+      <CardTitle icon={HandCoins} description={`Masih butuh ${formatUsdt(remaining)} USDT. Setiap 1 USDT jadi 1 token porsi atas namamu.`}>
+        Ikut mendanai
+      </CardTitle>
+      <div className="flex flex-col gap-4">
+        <Field
+          label="Mau mendanai berapa?"
+          htmlFor="fund-amount"
+          hint={amount && ready ? `Sekitar ${formatRupiah(amount)}` : `Saldo kamu: ${pos ? formatUsdt(pos.usdtBalance) : "…"} mUSDT`}
+        >
+          <div className="relative">
+            <Input id="fund-amount" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} placeholder="500" className="pr-16 text-base font-semibold" />
+            <span className="absolute top-1/2 right-4 -translate-y-1/2 text-sm font-semibold text-stone-400">USDT</span>
+          </div>
         </Field>
         <div className="flex flex-wrap gap-2">
-          {[100n, 500n].map((v) => v * 10n ** 18n).filter((v) => v <= remaining).map((v) => (
-            <Button key={v.toString()} size="sm" variant="ghost" onClick={() => setInput(usdtToInput(v))}>
+          {presets.map((v) => (
+            <button
+              key={v.toString()}
+              type="button"
+              onClick={() => setInput(usdtToInput(v))}
+              className="rounded-full border border-krem-300 px-3 py-1 text-sm font-medium text-hutan-800 transition hover:border-hutan-300 hover:bg-hutan-50"
+            >
               {formatUsdt(v)}
-            </Button>
+            </button>
           ))}
-          <Button size="sm" variant="ghost" onClick={() => setInput(usdtToInput(remaining))}>
-            Sisa target
-          </Button>
+          <button
+            type="button"
+            onClick={() => setInput(usdtToInput(remaining))}
+            className="rounded-full border border-krem-300 px-3 py-1 text-sm font-medium text-hutan-800 transition hover:border-hutan-300 hover:bg-hutan-50"
+          >
+            Penuhi sisa target
+          </button>
         </div>
         {problem && <Notice tone="warn">{problem}</Notice>}
         <Stepper
           steps={[
-            { label: "Setujui mUSDT", status: approved ? "done" : "active" },
+            { label: "Izinkan mUSDT", status: approved ? "done" : "active" },
             { label: "Danai", status: fundTx.state.status === "success" ? "done" : approved ? "active" : "todo" },
           ]}
         />
         {!approved ? (
           <Button
+            size="lg"
             disabled={!ready}
             loading={approveTx.busy}
-            onClick={() =>
-              approveTx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "approve", args: [c.address, amount!] })
-            }
+            onClick={() => approveTx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "approve", args: [c.address, amount!] })}
           >
-            1. Setujui {amount && ready ? `${formatUsdt(amount)} ` : ""}mUSDT
+            1. Izinkan {amount && ready ? `${formatUsdt(amount)} ` : ""}mUSDT
           </Button>
         ) : (
           <Button
+            size="lg"
+            variant="gold"
             disabled={!ready}
             loading={fundTx.busy}
             onClick={async () => {
@@ -141,8 +172,11 @@ function FundPanel({ c }: { c: CampaignSummary }) {
             2. Danai {formatUsdt(amount!)} USDT
           </Button>
         )}
-        <TxStatus state={approveTx.state} successText="Izin mUSDT diberikan." />
-        <TxStatus state={fundTx.state} successText="Terima kasih! Pendanaan tercatat." />
+        <p className="text-xs leading-relaxed text-stone-500">
+          Langkah pertama hanya memberi izin kontrak memakai mUSDT-mu sebanyak itu. Danamu baru berpindah di langkah kedua.
+        </p>
+        <TxStatus state={approveTx.state} successText="Izin diberikan. Lanjut ke langkah 2." />
+        <TxStatus state={fundTx.state} successText="Terima kasih! Danamu sudah tercatat." />
       </div>
     </Card>
   );
@@ -152,18 +186,16 @@ function FinalizePanel({ c }: { c: CampaignSummary }) {
   const tx = useTx();
   return (
     <Card>
-      <h3 className="font-semibold text-daun-900">Tenggat pendanaan lewat</h3>
-      <p className="mt-1 text-sm text-stone-600">
-        Target {formatUsdt(c.targetAmount)} USDT tidak tercapai. Siapa pun bisa menutup pendanaan agar investor bisa refund 100%.
-      </p>
-      <Button
-        className="mt-3"
-        loading={tx.busy}
-        onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "finalizeFunding" })}
+      <CardTitle
+        icon={Clock}
+        description={`Target ${formatUsdt(c.targetAmount)} USDT tidak tercapai. Siapa pun boleh menutup pendanaan supaya investor bisa mengambil kembali dananya 100%.`}
       >
+        Waktu pendanaan habis
+      </CardTitle>
+      <Button loading={tx.busy} onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "finalizeFunding" })}>
         Tutup pendanaan
       </Button>
-      <div className="mt-2">
+      <div className="mt-3">
         <TxStatus state={tx.state} successText="Pendanaan ditutup. Investor sekarang bisa refund." />
       </div>
     </Card>
@@ -179,51 +211,44 @@ function InvestorPanel({ c, symbol }: PanelProps) {
   const share = supply > 0n ? Number((pos.shares * 10_000n) / supply) / 10_000 : 0;
   const canRefund = c.status === Status.Failed && c.failType === FailType.Funding && pos.shares > 0n;
 
+  const rows: [string, ReactNode][] = [
+    ["Token porsi", `${formatUsdt(pos.shares)} ${symbol}`],
+    ["Bagianmu", formatPercent(share)],
+  ];
+  if (pos.paidOut > 0n) rows.push(["Sudah diklaim", `${formatUsdt(pos.paidOut)} USDT`]);
+
   return (
-    <Card>
-      <h3 className="font-semibold text-daun-900">Porsi saya</h3>
-      <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
-        <dt className="text-stone-500">Token porsi</dt>
-        <dd className="text-right font-semibold">
-          {formatUsdt(pos.shares)} {symbol}
-        </dd>
-        <dt className="text-stone-500">Bagian</dt>
-        <dd className="text-right font-semibold">{formatPercent(share)}</dd>
-        {pos.paidOut > 0n && (
-          <>
-            <dt className="text-stone-500">Sudah diklaim</dt>
-            <dd className="text-right font-semibold">{formatUsdt(pos.paidOut)} USDT</dd>
-          </>
-        )}
-        {pos.claimable > 0n && (
-          <>
-            <dt className="text-stone-500">Bisa diklaim</dt>
-            <dd className="text-right">
-              <Usdt value={pos.claimable} className="items-end" />
-            </dd>
-          </>
-        )}
+    <Card className="bg-linear-to-br from-white to-hutan-50/60">
+      <CardTitle icon={Wallet}>Porsimu</CardTitle>
+      <dl className="flex flex-col divide-y divide-krem-200 text-sm">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-2 py-2">
+            <dt className="text-stone-500">{k}</dt>
+            <dd className="font-semibold text-hutan-950">{v}</dd>
+          </div>
+        ))}
       </dl>
       {pos.claimable > 0n && (
-        <Button
-          className="mt-3 w-full"
-          loading={tx.busy}
-          onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "claim" })}
-        >
-          Klaim {formatUsdt(pos.claimable)} USDT
-        </Button>
+        <div className="mt-3 rounded-2xl bg-emas-50 p-4 ring-1 ring-emas-200">
+          <p className="text-xs font-semibold tracking-wide text-emas-700 uppercase">Siap diklaim</p>
+          <Usdt value={pos.claimable} className="mt-1 text-lg text-hutan-950" />
+          <Button
+            variant="gold"
+            className="mt-3 w-full"
+            loading={tx.busy}
+            onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "claim" })}
+          >
+            Klaim {formatUsdt(pos.claimable)} USDT
+          </Button>
+        </div>
       )}
       {canRefund && (
-        <Button
-          className="mt-3 w-full"
-          loading={tx.busy}
-          onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "refund" })}
-        >
-          Refund {formatUsdt(pos.shares)} USDT
+        <Button className="mt-3 w-full" loading={tx.busy} onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "refund" })}>
+          Ambil refund {formatUsdt(pos.shares)} USDT
         </Button>
       )}
-      <div className="mt-2">
-        <TxStatus state={tx.state} successText="Dana sudah dikirim ke wallet Anda." />
+      <div className="mt-3">
+        <TxStatus state={tx.state} successText="Dana sudah masuk ke dompetmu." />
       </div>
     </Card>
   );
@@ -235,9 +260,14 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const attemptsLeft = 3 - milestone.attempts;
+  const retry = milestone.status === MStatus.Rejected;
 
   if (attemptsLeft <= 0)
-    return <Notice tone="error">Batas 3 percobaan untuk milestone {milestone.name} habis. Menunggu keputusan admin.</Notice>;
+    return (
+      <Notice tone="error">
+        Kesempatan kirim bukti untuk tahap {milestone.name} sudah habis (tiga kali). Sekarang tinggal menunggu keputusan admin.
+      </Notice>
+    );
 
   async function submit() {
     if (!file) return;
@@ -250,33 +280,33 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
       if (ok) setFile(null);
     } catch (e) {
       setUploading(false);
-      setError(e instanceof Error ? e.message : "Gagal mengunggah foto.");
+      setError(e instanceof Error ? e.message : "Fotonya gagal diunggah. Coba lagi.");
     }
   }
 
   return (
-    <Card>
-      <h3 className="font-semibold text-daun-900">
-        {milestone.status === MStatus.Rejected ? "Unggah ulang" : "Unggah"} bukti milestone {milestone.name}
-      </h3>
-      <p className="mt-1 text-sm text-stone-600">
-        Percobaan {milestone.attempts + 1} dari 3. Foto akan dinilai agen AI (lokasi, tanggal, fase tanaman, cuaca) lalu dikonfirmasi koperasi.
-      </p>
-      {milestone.status === MStatus.Rejected && milestone.aiReasonCID && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold text-stone-500 uppercase">Alasan penolakan sebelumnya</p>
-          <VerdictSummary cid={milestone.aiReasonCID} />
+    <Card className="border-emas-200">
+      <CardTitle
+        icon={Camera}
+        description={`Percobaan ${milestone.attempts + 1} dari 3. Agen AI akan mengecek lokasi, tanggal, jenis tanaman, fase, dan cuaca, lalu koperasi ikut memastikan.`}
+      >
+        {retry ? "Kirim ulang" : "Kirim"} bukti tahap {milestone.name}
+      </CardTitle>
+      {retry && milestone.aiReasonCID && (
+        <div className="mb-4 rounded-2xl bg-red-50/60 p-3 ring-1 ring-red-100">
+          <p className="mb-1.5 text-xs font-semibold tracking-wide text-red-700 uppercase">Kenapa sebelumnya ditolak</p>
+          <VerdictSummary cid={milestone.aiReasonCID} ctx={{ commodity: c.commodity, milestone: milestone.name }} />
         </div>
       )}
-      <div className="mt-3 flex flex-col gap-3">
-        <Field label="Foto lahan" htmlFor="proof" hint="Unggah langsung dari galeri kamera HP. Foto yang dikirim lewat WhatsApp kehilangan data GPS & tanggal (EXIF).">
-          <Input id="proof" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <div className="flex flex-col gap-3">
+        <Field label="Foto lahan terbaru" htmlFor="proof" hint="Ambil langsung dari galeri kamera. Foto yang sudah lewat WhatsApp biasanya kehilangan data GPS dan tanggal.">
+          <FilePicker id="proof" file={file} onChange={setFile} label="Pilih foto lahan" />
         </Field>
         {error && <Notice tone="error">{error}</Notice>}
-        <Button disabled={!file} loading={uploading || tx.busy} onClick={submit}>
+        <Button size="lg" disabled={!file} loading={uploading || tx.busy} onClick={submit}>
           {uploading ? "Mengunggah foto…" : "Kirim bukti"}
         </Button>
-        <TxStatus state={tx.state} successText="Bukti terkirim. Menunggu putusan agen AI & koperasi." />
+        <TxStatus state={tx.state} successText="Bukti terkirim. Agen AI sedang memeriksanya." />
       </div>
     </Card>
   );
@@ -308,78 +338,81 @@ function HarvestPanel({ c }: { c: CampaignSummary }) {
     try {
       setReceiptCid((await uploadFile(file)).cid);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal mengunggah nota.");
+      setError(e instanceof Error ? e.message : "Notanya gagal diunggah. Coba lagi.");
     } finally {
       setUploading(false);
     }
   }
 
   return (
-    <Card>
-      <h3 className="font-semibold text-daun-900">Setor hasil panen</h3>
-      <p className="mt-1 text-sm text-stone-600">
-        Semua dana tahap sudah cair. Setor hasil penjualan panen beserta foto nota dari koperasi; kontrak langsung membagi hasilnya.
-      </p>
-      <div className="mt-3 flex flex-col gap-3">
-        <Field label="Hasil penjualan (USDT)" htmlFor="harvest-amount" hint={`Saldo Anda: ${pos ? formatUsdt(pos.usdtBalance) : "–"} mUSDT`}>
-          <Input id="harvest-amount" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} />
+    <Card className="border-emas-200">
+      <CardTitle icon={Receipt} description="Semua dana tahap sudah cair. Setor hasil penjualan beserta foto notanya, kontrak langsung membaginya saat itu juga.">
+        Setor hasil panen
+      </CardTitle>
+      <div className="flex flex-col gap-4">
+        <Field label="Hasil penjualan (USDT)" htmlFor="harvest-amount" hint={`Saldo kamu: ${pos ? formatUsdt(pos.usdtBalance) : "…"} mUSDT`}>
+          <Input id="harvest-amount" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} className="text-base font-semibold" />
         </Field>
         {valid && (
-          <dl className="grid grid-cols-2 gap-1 rounded-xl bg-tanah-50 p-3 text-sm">
+          <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 rounded-2xl bg-krem-50 p-4 text-sm ring-1 ring-krem-200">
             <dt className="text-stone-500">Modal kembali ke investor</dt>
             <dd className="text-right">{formatUsdt(amount! < c.raisedAmount ? amount! : c.raisedAmount)} USDT</dd>
-            <dt className="text-stone-500">Bagian petani (55% untung)</dt>
-            <dd className="text-right">{formatUsdt(farmerShare)} USDT</dd>
+            <dt className="text-stone-500">Bagianmu (55% untung)</dt>
+            <dd className="text-right font-semibold text-hutan-700">{formatUsdt(farmerShare)} USDT</dd>
             <dt className="text-stone-500">Dana cadangan (5%)</dt>
             <dd className="text-right">{formatUsdt(reserveShare)} USDT</dd>
-            <dt className="font-semibold text-stone-700">Pool investor</dt>
-            <dd className="text-right font-semibold">{formatUsdt(investorPool)} USDT</dd>
+            <dt className="border-t border-krem-200 pt-1.5 font-semibold text-hutan-950">Total untuk investor</dt>
+            <dd className="border-t border-krem-200 pt-1.5 text-right font-semibold">{formatUsdt(investorPool)} USDT</dd>
           </dl>
         )}
-        {valid && !enough && <Notice tone="warn">Saldo mUSDT kurang. Gunakan tombol &quot;Minta mUSDT demo&quot; untuk simulasi hasil penjualan.</Notice>}
+        {valid && !enough && <Notice tone="warn">Saldo mUSDT-mu belum cukup. Untuk simulasi, klik &quot;Minta mUSDT&quot; di atas.</Notice>}
         <Field label="Foto nota penjualan" htmlFor="receipt">
-          <Input id="receipt" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setReceiptCid(""); }} />
+          <FilePicker
+            id="receipt"
+            file={file}
+            onChange={(f) => {
+              setFile(f);
+              setReceiptCid("");
+            }}
+            label="Pilih foto nota"
+          />
         </Field>
         {error && <Notice tone="error">{error}</Notice>}
         <Stepper
           steps={[
             { label: "Unggah nota", status: receiptCid ? "done" : "active" },
-            { label: "Setujui mUSDT", status: approved ? "done" : receiptCid ? "active" : "todo" },
-            { label: "Setor hasil panen", status: depositTx.state.status === "success" ? "done" : receiptCid && approved ? "active" : "todo" },
+            { label: "Izinkan mUSDT", status: approved ? "done" : receiptCid ? "active" : "todo" },
+            { label: "Setor", status: depositTx.state.status === "success" ? "done" : receiptCid && approved ? "active" : "todo" },
           ]}
         />
         {!receiptCid ? (
-          <Button disabled={!file} loading={uploading} onClick={uploadReceipt}>
+          <Button size="lg" disabled={!file} loading={uploading} onClick={uploadReceipt}>
             1. Unggah nota
           </Button>
         ) : !approved ? (
           <Button
+            size="lg"
             disabled={!valid || !enough}
             loading={approveTx.busy}
-            onClick={() =>
-              approveTx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "approve", args: [c.address, amount!] })
-            }
+            onClick={() => approveTx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "approve", args: [c.address, amount!] })}
           >
-            2. Setujui {valid ? formatUsdt(amount!) : ""} mUSDT
+            2. Izinkan {valid ? formatUsdt(amount!) : ""} mUSDT
           </Button>
         ) : (
           <Button
+            size="lg"
+            variant="gold"
             disabled={!valid || !enough}
             loading={depositTx.busy}
             onClick={() =>
-              depositTx.write({
-                  address: c.address,
-                  abi: harvestCampaignAbi,
-                  functionName: "depositHarvest",
-                  args: [amount!, receiptCid],
-                })
+              depositTx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "depositHarvest", args: [amount!, receiptCid] })
             }
           >
             3. Setor {valid ? formatUsdt(amount!) : ""} USDT
           </Button>
         )}
-        <TxStatus state={approveTx.state} successText="Izin mUSDT diberikan." />
-        <TxStatus state={depositTx.state} successText="Hasil panen disetor dan sudah dibagi." />
+        <TxStatus state={approveTx.state} successText="Izin diberikan. Lanjut setor." />
+        <TxStatus state={depositTx.state} successText="Hasil panen sudah disetor dan langsung dibagi." />
       </div>
     </Card>
   );
@@ -393,26 +426,31 @@ export function CooperativePanel({ c, milestone }: { c: CampaignSummary; milesto
     return tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "verifierDecision", args: [ok] });
   };
   return (
-    <Card>
-      <h3 className="font-semibold text-daun-900">Verifikasi koperasi: {milestone.name}</h3>
-      <p className="mt-1 text-sm text-stone-600">Dana tahap cair hanya jika agen AI dan koperasi sama-sama setuju.</p>
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <IpfsImage cid={milestone.proofCID} alt={`Bukti ${milestone.name}`} className="h-48" />
-        <div>
-          <p className="text-xs font-semibold text-stone-500 uppercase">Putusan agen AI</p>
-          {milestone.aiDecided ? <VerdictSummary cid={milestone.aiReasonCID} /> : <p className="text-sm text-stone-600">Belum ada — agen sedang memeriksa.</p>}
+    <Card className="border-emas-200">
+      <CardTitle icon={ShieldCheck} description="Dana tahap ini baru cair kalau kamu dan agen AI sama-sama setuju.">
+        Cek bukti tahap {milestone.name}
+      </CardTitle>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <IpfsImage cid={milestone.proofCID} alt={`Foto bukti tahap ${milestone.name}`} className="h-52" />
+        <div className="rounded-2xl bg-krem-50 p-4 ring-1 ring-krem-200">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">Hasil cek agen AI</p>
+          {milestone.aiDecided ? (
+            <VerdictSummary cid={milestone.aiReasonCID} ctx={{ commodity: c.commodity, milestone: milestone.name }} />
+          ) : (
+            <p className="text-sm text-stone-600">Agen AI masih memeriksa foto ini. Kamu boleh memutuskan lebih dulu.</p>
+          )}
         </div>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button loading={tx.busy && choice === true} disabled={tx.busy} onClick={() => decide(true)}>
-          Setujui
+          Setujui bukti
         </Button>
-        <Button variant="danger" loading={tx.busy && choice === false} disabled={tx.busy} onClick={() => decide(false)}>
+        <Button variant="secondary" className={cn("hover:border-red-300 hover:bg-red-50 hover:text-red-800")} loading={tx.busy && choice === false} disabled={tx.busy} onClick={() => decide(false)}>
           Tolak
         </Button>
       </div>
-      <div className="mt-2">
-        <TxStatus state={tx.state} successText="Keputusan koperasi tercatat." />
+      <div className="mt-3">
+        <TxStatus state={tx.state} successText="Keputusanmu sudah tercatat." />
       </div>
     </Card>
   );

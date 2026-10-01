@@ -1,21 +1,22 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { AlertTriangle, Check, CheckCircle2, ExternalLink, ImageUp, Loader2, XCircle } from "lucide-react";
+import { type ReactNode, useEffect, useId, useState } from "react";
 import { getAddress, isAddress } from "viem";
-import { IS_LOCAL, explorerTxUrl } from "@/lib/config";
-import { formatRupiah, formatUsdt, shortHash } from "@/lib/format";
+import { explorerAddressUrl, explorerTxUrl, IS_LOCAL } from "@/lib/config";
+import { formatRupiah, formatUsdt, shortAddress, shortHash } from "@/lib/format";
 import { ipfsUrl } from "@/lib/ipfs";
 import type { TxState } from "@/lib/tx";
 import { FailType, MSTATUS_LABEL, MStatus, STATUS_LABEL, Status } from "@/lib/types";
 import { useToast } from "./Toast";
-import { Badge, Button, cn, Input, Spinner, type Tone } from "./ui";
+import { Badge, Button, type ButtonVariant, cn, Input, type Tone } from "./ui";
 
 /** Jumlah USDT + perkiraan rupiah (kurs tetap). */
 export function Usdt({ value, className, showRupiah = true }: { value: bigint; className?: string; showRupiah?: boolean }) {
   return (
     <span className={cn("inline-flex flex-col", className)}>
       <span className="font-semibold">{formatUsdt(value)} USDT</span>
-      {showRupiah && <span className="text-xs font-normal text-stone-500">≈ {formatRupiah(value)} (perkiraan)</span>}
+      {showRupiah && <span className="text-xs font-normal text-stone-500">sekitar {formatRupiah(value)}</span>}
     </span>
   );
 }
@@ -30,11 +31,18 @@ const STATUS_TONE: Record<number, Tone> = {
   [Status.Defaulted]: "red",
 };
 
-export function StatusBadge({ status, failType }: { status: number; failType?: number }) {
-  let label = STATUS_LABEL[status] ?? "?";
-  if (status === Status.Failed && failType === FailType.Funding) label = "Gagal (target tidak tercapai)";
-  if (status === Status.Failed && failType === FailType.Crop) label = "Gagal panen";
-  return <Badge tone={STATUS_TONE[status]}>{label}</Badge>;
+export function statusLabel(status: number, failType?: number) {
+  if (status === Status.Failed && failType === FailType.Funding) return "Target tak tercapai";
+  if (status === Status.Failed && failType === FailType.Crop) return "Gagal panen";
+  return STATUS_LABEL[status] ?? "?";
+}
+
+export function StatusBadge({ status, failType, glass = false }: { status: number; failType?: number; glass?: boolean }) {
+  return (
+    <Badge tone={glass ? "glass" : STATUS_TONE[status]} dot>
+      {statusLabel(status, failType)}
+    </Badge>
+  );
 }
 
 const MSTATUS_TONE: Record<number, Tone> = {
@@ -47,38 +55,59 @@ const MSTATUS_TONE: Record<number, Tone> = {
 };
 
 export function MilestoneBadge({ status }: { status: number }) {
-  return <Badge tone={MSTATUS_TONE[status]}>{MSTATUS_LABEL[status] ?? "?"}</Badge>;
+  return (
+    <Badge tone={MSTATUS_TONE[status]} dot>
+      {MSTATUS_LABEL[status] ?? "?"}
+    </Badge>
+  );
 }
 
 /** Gambar dari IPFS / penyimpanan lokal. `link` = buka ukuran penuh di tab baru (matikan jika sudah di dalam tautan). */
 export function IpfsImage({ cid, alt, className, link = true }: { cid: string; alt: string; className?: string; link?: boolean }) {
   if (!cid) return null;
   // eslint-disable-next-line @next/next/no-img-element -- file dari IPFS/penyimpanan lokal, bukan aset statis
-  const img = <img src={ipfsUrl(cid)} alt={alt} loading="lazy" className={cn("w-full rounded-xl bg-tanah-100 object-cover", className)} />;
+  const img = <img src={ipfsUrl(cid)} alt={alt} loading="lazy" className={cn("w-full rounded-2xl bg-krem-200 object-cover", className)} />;
   if (!link) return img;
   return (
-    <a href={ipfsUrl(cid)} target="_blank" rel="noreferrer" className="block">
+    <a href={ipfsUrl(cid)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl transition hover:opacity-90" title="Buka ukuran penuh">
       {img}
     </a>
   );
 }
 
 /** Tautan transaksi: BscScan di testnet, hash saja di chain lokal. */
-export function TxLink({ hash }: { hash: string }) {
+export function TxLink({ hash, className }: { hash: string; className?: string }) {
   const url = explorerTxUrl(hash);
-  if (!url) return <span className="font-mono text-xs text-stone-500" title={hash}>tx {shortHash(hash)}</span>;
+  if (!url)
+    return (
+      <span className={cn("font-mono text-xs text-stone-500", className)} title={hash}>
+        tx {shortHash(hash)}
+      </span>
+    );
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="font-mono text-xs text-daun-700 underline">
-      {shortHash(hash)} ↗
+    <a href={url} target="_blank" rel="noreferrer" className={cn("inline-flex items-center gap-1 font-mono text-xs text-hutan-700 hover:text-hutan-900 hover:underline", className)}>
+      {shortHash(hash)} <ExternalLink className="size-3" aria-hidden />
     </a>
   );
 }
 
-/** Status transaksi: menunggu, sukses dengan tautan, atau pesan error yang mudah dipahami. */
+/** Alamat dompet/kontrak, menaut ke BscScan di testnet. */
+export function AddressLink({ address, full = false, className }: { address: string; full?: boolean; className?: string }) {
+  const url = explorerAddressUrl(address);
+  const text = full ? address : shortAddress(address);
+  if (!url) return <span className={cn("font-mono text-xs break-all", className)}>{text}</span>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className={cn("inline-flex items-center gap-1 font-mono text-xs break-all text-hutan-700 hover:underline", className)}>
+      {text} <ExternalLink className="size-3 shrink-0" aria-hidden />
+    </a>
+  );
+}
+
+/** Status transaksi: menunggu tanda tangan, menunggu jaringan, berhasil, atau gagal dengan pesan yang jelas. */
 export function TxStatus({ state, successText = "Transaksi berhasil." }: { state: TxState; successText?: string }) {
   const toast = useToast();
   const successHash = state.status === "success" ? state.hash : undefined;
-  // Pesan sukses juga dikirim sebagai toast: komponen ini bisa hilang setelah data di-refresh.
+  // Pesan sukses juga dikirim sebagai toast, karena komponen ini bisa hilang setelah data diperbarui.
   useEffect(() => {
     if (successHash) toast?.push({ text: successText, hash: successHash });
   }, [successHash, successText, toast]);
@@ -87,47 +116,53 @@ export function TxStatus({ state, successText = "Transaksi berhasil." }: { state
   if (state.status === "signing")
     return (
       <p className="flex items-center gap-2 text-sm text-stone-600">
-        <Spinner /> {IS_LOCAL ? "Mengirim transaksi…" : "Menunggu tanda tangan di wallet…"}
+        <Loader2 className="size-4 animate-spin" aria-hidden /> {IS_LOCAL ? "Mengirim transaksi…" : "Konfirmasi di dompetmu dulu, ya…"}
       </p>
     );
   if (state.status === "pending")
     return (
       <p className="flex flex-wrap items-center gap-2 text-sm text-stone-600">
-        <Spinner /> Menunggu konfirmasi jaringan… <TxLink hash={state.hash} />
+        <Loader2 className="size-4 animate-spin" aria-hidden /> Menunggu jaringan mengonfirmasi… <TxLink hash={state.hash} />
       </p>
     );
   if (state.status === "success")
     return (
-      <p className="flex flex-wrap items-center gap-2 text-sm text-daun-700">
-        ✓ {successText} <TxLink hash={state.hash} />
+      <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-hutan-700">
+        <CheckCircle2 className="size-4" aria-hidden /> {successText} <TxLink hash={state.hash} />
       </p>
     );
   return (
-    <p className="text-sm text-red-700">
-      ✗ {state.message} {state.hash && <TxLink hash={state.hash} />}
+    <p className="flex flex-wrap items-start gap-2 text-sm text-red-700">
+      <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <span className="flex-1">
+        {state.message} {state.hash && <TxLink hash={state.hash} />}
+      </span>
     </p>
   );
 }
 
 export type StepStatus = "todo" | "active" | "done";
 
-/** Stepper transaksi dua langkah (mis. setujui mUSDT → danai). */
+/** Langkah transaksi berurutan (mis. izinkan mUSDT → danai). */
 export function Stepper({ steps }: { steps: { label: string; status: StepStatus }[] }) {
   return (
-    <ol className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+    <ol className="flex flex-wrap items-center gap-x-2 gap-y-2">
       {steps.map((s, i) => (
         <li key={s.label} className="flex items-center gap-2 text-sm">
+          {i > 0 && <span className={cn("h-px w-4 sm:w-6", s.status === "todo" ? "bg-krem-300" : "bg-hutan-300")} aria-hidden />}
           <span
             className={cn(
-              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-              s.status === "done" && "bg-daun-600 text-white",
-              s.status === "active" && "bg-padi-500 text-white",
-              s.status === "todo" && "bg-stone-200 text-stone-600",
+              "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+              s.status === "done" && "bg-hutan-600 text-white",
+              s.status === "active" && "bg-emas-400 text-hutan-950 ring-4 ring-emas-100",
+              s.status === "todo" && "bg-krem-200 text-stone-500",
             )}
           >
-            {s.status === "done" ? "✓" : i + 1}
+            {s.status === "done" ? <Check className="size-3.5" aria-hidden /> : i + 1}
           </span>
-          <span className={cn(s.status === "active" ? "font-semibold text-stone-900" : "text-stone-600")}>{s.label}</span>
+          <span className={cn(s.status === "active" ? "font-semibold text-hutan-950" : s.status === "done" ? "text-hutan-800" : "text-stone-500")}>
+            {s.label}
+          </span>
         </li>
       ))}
     </ol>
@@ -135,12 +170,12 @@ export function Stepper({ steps }: { steps: { label: string; status: StepStatus 
 }
 
 /**
- * Tombol dengan konfirmasi dua langkah untuk aksi yang tidak bisa dibatalkan
+ * Tombol dengan konfirmasi dua kali klik untuk aksi yang tidak bisa dibatalkan
  * (mis. tandai gagal panen). Klik pertama meminta konfirmasi, klik kedua menjalankan.
  */
 export function ConfirmButton({
   children,
-  confirmText = "Klik lagi untuk konfirmasi",
+  confirmText = "Yakin? Klik sekali lagi",
   onConfirm,
   variant = "danger",
   loading,
@@ -150,7 +185,7 @@ export function ConfirmButton({
   children: ReactNode;
   confirmText?: string;
   onConfirm: () => unknown;
-  variant?: "primary" | "secondary" | "danger" | "ghost";
+  variant?: ButtonVariant;
   loading?: boolean;
   disabled?: boolean;
   size?: "sm" | "md";
@@ -173,12 +208,18 @@ export function ConfirmButton({
         void onConfirm();
       }}
     >
-      {armed ? `⚠ ${confirmText}` : children}
+      {armed ? (
+        <>
+          <AlertTriangle className="size-4" aria-hidden /> {confirmText}
+        </>
+      ) : (
+        children
+      )}
     </Button>
   );
 }
 
-/** Validasi alamat wallet dari input pengguna. */
+/** Validasi alamat dompet dari input pengguna. */
 export function parseAddressInput(value: string): `0x${string}` | null {
   const v = value.trim();
   return isAddress(v, { strict: false }) ? getAddress(v) : null;
@@ -189,7 +230,49 @@ export function AddressInput({ id, value, onChange, placeholder = "0x…" }: { i
   return (
     <div className="flex flex-col gap-1">
       <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} spellCheck={false} className="font-mono" />
-      {invalid && <p className="text-xs text-red-700">Alamat wallet tidak valid.</p>}
+      {invalid && <p className="text-xs text-red-700">Alamat dompetnya belum benar. Cek lagi, ya.</p>}
     </div>
+  );
+}
+
+/** Pemilih foto bergaya kotak unggah, dengan nama file terpilih. */
+export function FilePicker({
+  id,
+  file,
+  onChange,
+  label = "Pilih foto",
+  hint = "JPEG, PNG, atau WebP",
+}: {
+  id?: string;
+  file: File | null;
+  onChange: (f: File | null) => void;
+  label?: string;
+  hint?: string;
+}) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  return (
+    <label
+      htmlFor={inputId}
+      className={cn(
+        "flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed px-4 py-3.5 transition",
+        file ? "border-hutan-300 bg-hutan-50/60" : "border-krem-300 bg-krem-50 hover:border-hutan-300 hover:bg-hutan-50/40",
+      )}
+    >
+      <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", file ? "bg-hutan-600 text-white" : "bg-white text-hutan-700 ring-1 ring-krem-300")}>
+        {file ? <Check className="size-5" aria-hidden /> : <ImageUp className="size-5" aria-hidden />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-hutan-950">{file ? file.name : label}</span>
+        <span className="block text-xs text-stone-500">{file ? `${(file.size / 1024 / 1024).toLocaleString("id-ID", { maximumFractionDigits: 1 })} MB · klik untuk ganti` : hint}</span>
+      </span>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+      />
+    </label>
   );
 }

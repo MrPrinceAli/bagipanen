@@ -16,8 +16,8 @@ export type UploadResult = { cid: string; url: string };
 async function parseUpload(res: Response): Promise<UploadResult> {
   const body = await res.json().catch(() => ({}));
   // 413 tanpa pesan dari API kita = ditolak hosting sebelum sampai ke API (Vercel membatasi body ±4,5 MB).
-  if (res.status === 413 && !body.error) throw new Error("File terlalu besar untuk server (maks ±4,5 MB di versi online). Pilih foto yang lebih kecil, atau turunkan resolusi kamera lalu foto ulang.");
-  if (!res.ok) throw new Error(body.error ?? `Unggah gagal (HTTP ${res.status}).`);
+  if (res.status === 413 && !body.error) throw new Error("Fotonya terlalu besar untuk versi online (maksimal sekitar 4,5 MB). Pilih foto yang lebih kecil, atau turunkan resolusi kamera lalu foto ulang.");
+  if (!res.ok) throw new Error(body.error ?? `Unggahan gagal (HTTP ${res.status}). Coba lagi.`);
   return body as UploadResult;
 }
 

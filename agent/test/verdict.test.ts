@@ -18,28 +18,33 @@ const good: VisionResult = {
   red_flags: [],
 };
 const exifOk: ExifCheck = { status: "ok", distanceKm: 0.4, takenAt: "2026-10-03T08:12:00+07:00", notes: [] };
-const exifMissing: ExifCheck = { status: "missing", distanceKm: null, takenAt: null, notes: ["EXIF (GPS & tanggal) tidak ada"] };
-const exifBad: ExifCheck = { status: "mismatch", distanceKm: 45, takenAt: null, notes: ["lokasi foto 45 km dari lahan (maks 2 km)"] };
+const exifMissing: ExifCheck = { status: "missing", distanceKm: null, takenAt: null, notes: ["foto tidak menyimpan data GPS dan tanggal"] };
+const exifBad: ExifCheck = { status: "mismatch", distanceKm: 45, takenAt: null, notes: ["lokasi foto 45 km dari lahan, padahal batasnya 2 km"] };
 
 describe("decide (aturan PRD)", () => {
   it("disetujui jika semua syarat terpenuhi", () => assert.equal(decide(good, exifOk, false, "Tumbuh").approved, true));
   it("EXIF missing tidak langsung ditolak", () => assert.equal(decide(good, exifMissing, false, "Tumbuh").approved, true));
 
   const cases: [string, VisionResult, ExifCheck, boolean, RegExp][] = [
-    ["bukan foto lahan", { ...good, is_farm_photo: false }, exifOk, false, /bukan foto lahan/],
-    ["komoditas beda", { ...good, commodity_match: false, detected_commodity: "jagung" }, exifOk, false, /komoditas tidak sesuai \(terdeteksi: jagung\)/],
-    ["fase beda", { ...good, stage_match: false, detected_stage: "Tanam" }, exifOk, false, /fase tidak sesuai \(terdeteksi Tanam, seharusnya Tumbuh\)/],
-    ["yakin < 0,70", { ...good, confidence: 0.69 }, exifOk, false, /keyakinan AI 0,69 di bawah 0,70/],
+    ["bukan foto lahan", { ...good, is_farm_photo: false }, exifOk, false, /tidak terlihat seperti foto lahan/],
+    ["komoditas beda", { ...good, commodity_match: false, detected_commodity: "jagung" }, exifOk, false, /terlihat seperti jagung, bukan cabai merah/],
+    ["fase beda", { ...good, stage_match: false, detected_stage: "Tanam" }, exifOk, false, /fase tanamannya tanam, padahal tahap ini tumbuh/],
+    ["yakin < 0,70", { ...good, confidence: 0.69 }, exifOk, false, /kurang yakin dengan foto ini \(69%, minimal 70%\)/],
     ["EXIF mismatch", good, exifBad, false, /45 km dari lahan/],
-    ["duplikat", good, exifOk, true, /foto sama/],
+    ["duplikat", good, exifOk, true, /foto yang sama sudah pernah dipakai/],
   ];
   for (const [name, v, e, dup, re] of cases) {
     it(`ditolak: ${name}`, () => {
-      const d = decide(v, e, dup, "Tumbuh");
+      const d = decide(v, e, dup, "Tumbuh", "Cabai merah");
       assert.equal(d.approved, false);
       assert.match(d.reasons.join("; "), re);
     });
   }
+
+  it("jawaban 'tidak dikenali' tidak dipakai sebagai nama tanaman/fase", () => {
+    const d = decide({ ...good, commodity_match: false, detected_commodity: "tidak dikenali", stage_match: false, detected_stage: "Tidak diketahui" }, exifOk, false, "Tanam", "Cabai merah");
+    assert.deepEqual(d.reasons, ["jenis tanamannya tidak bisa dikenali sebagai cabai merah", "fase tanamannya tidak bisa dipastikan, padahal tahap ini tanam"]);
+  });
 
   it("batas keyakinan tepat 0,70 disetujui", () => assert.equal(decide({ ...good, confidence: MIN_CONFIDENCE }, exifOk, false, "Tumbuh").approved, true));
 });
@@ -62,7 +67,7 @@ describe("buildVerdictDocument", () => {
     const doc = buildVerdictDocument({ ...base, decision: decide(good, exifOk, false, "Tumbuh") });
     assert.equal(doc.schema, "bagipanen.verdict.v1");
     assert.equal(doc.approved, true);
-    assert.equal(doc.summary_id, "Disetujui: fase tumbuh, kondisi baik, perkiraan panen ±45 hari lagi.");
+    assert.equal(doc.summary_id, "Foto diterima. Tanaman terlihat di fase tumbuh dengan kondisi baik, perkiraan panen sekitar 45 hari lagi.");
     assert.deepEqual(doc.exif, { status: "ok", distanceKm: 0.4, takenAt: "2026-10-03T08:12:00+07:00" });
     assert.deepEqual(doc.agent, { registry: base.agent.registry, agentId: "12", model: "mock-vision" });
     assert.equal(doc.decidedAt, "2026-10-03T08:13:05+07:00");
@@ -76,11 +81,14 @@ describe("buildVerdictDocument", () => {
     const decision = decide({ ...good, is_farm_photo: false }, exifBad, true, "Tumbuh");
     const doc = buildVerdictDocument({ ...base, decision, exif: exifBad, duplicate: true });
     assert.equal(doc.approved, false);
-    assert.match(doc.summary_id, /^Ditolak: bukan foto lahan pertanian; lokasi foto 45 km dari lahan \(maks 2 km\); foto sama/);
+    assert.equal(
+      doc.summary_id,
+      "Foto ditolak. Foto ini tidak terlihat seperti foto lahan pertanian. Lokasi foto 45 km dari lahan, padahal batasnya 2 km. Foto yang sama sudah pernah dipakai di kampanye atau tahap lain.",
+    );
   });
 
   it("catatan EXIF tidak ada tercantum di ringkasan", () => {
     const doc = buildVerdictDocument({ ...base, exif: exifMissing, decision: decide(good, exifMissing, false, "Tumbuh") });
-    assert.match(doc.summary_id, /Catatan: EXIF tidak ada \(dicatat\)\.$/);
+    assert.match(doc.summary_id, /Foto ini tidak menyimpan data GPS dan tanggal, jadi lokasinya belum bisa dicek otomatis\.$/);
   });
 });

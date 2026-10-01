@@ -13,6 +13,8 @@ Foto berlisensi bebas dari [Wikimedia Commons](https://commons.wikimedia.org), d
 | `foto-salah-jagung.jpg` | Contoh foto salah (komoditas lain: jagung) | [Maize field in Bavaria in Summer 2013.JPG](https://commons.wikimedia.org/wiki/File:Maize_field_in_Bavaria_in_Summer_2013.JPG) | High Contrast | [CC BY 3.0 de](https://creativecommons.org/licenses/by/3.0/de/deed.en) |
 | `nota-penjualan-contoh.jpg` | Foto nota saat setor hasil panen | Dibuat untuk proyek ini, bertanda "CONTOH · DATA DEMO" (nama & angka fiktif, sesuai data demo PRD) | Tim BagiPanen | — |
 
+Foto hero di beranda (`web/public/hero-lahan.jpg`) adalah potongan landscape dari `lahan-awal.jpg`. Atribusinya tercantum di footer situs.
+
 ## Cara pakai
 
 - **Mode lokal (MockVision).** Semua foto disetujui, kecuali `foto-salah-jagung.jpg` (nama filenya mengandung "salah"). Cocok untuk demo alur ditolak lalu diunggah ulang.

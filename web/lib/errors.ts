@@ -7,45 +7,45 @@ import { reservePoolAbi } from "./abi/ReservePool";
 /** Terjemahan custom error kontrak ke Bahasa Indonesia yang mudah dipahami. */
 const MESSAGES: Record<string, string> = {
   // HarvestCampaign
-  NotFactory: "Aksi ini hanya bisa dilakukan lewat factory BagiPanen.",
-  NotFarmer: "Hanya petani pemilik kampanye ini yang bisa melakukan aksi ini.",
+  NotFactory: "Langkah ini hanya bisa dilakukan lewat kontrak utama BagiPanen.",
+  NotFarmer: "Hanya petani pemilik kampanye ini yang bisa melakukannya.",
   NotCooperative: "Hanya koperasi pendamping kampanye ini yang bisa memutuskan.",
-  NotAgent: "Hanya agen AI terdaftar yang bisa mencatat putusan.",
-  NotAdmin: "Hanya admin yang bisa melakukan aksi ini.",
+  NotAgent: "Hanya agen AI resmi yang bisa mencatat putusan.",
+  NotAdmin: "Hanya admin yang bisa melakukannya.",
   NotReservePool: "Kompensasi hanya bisa dikirim dari dana cadangan.",
-  InvalidStatus: "Aksi ini tidak tersedia pada status kampanye saat ini.",
-  InvalidMilestoneStatus: "Aksi ini tidak tersedia pada status milestone saat ini.",
-  NoMilestoneLeft: "Semua milestone sudah selesai.",
-  MilestonesIncomplete: "Hasil panen baru bisa disetor setelah semua milestone cair.",
-  FundingClosed: "Masa pendanaan sudah berakhir.",
-  FundingStillOpen: "Masa pendanaan belum berakhir.",
+  InvalidStatus: "Langkah ini belum bisa dilakukan di tahap kampanye sekarang.",
+  InvalidMilestoneStatus: "Langkah ini belum bisa dilakukan di tahap pencairan sekarang.",
+  NoMilestoneLeft: "Semua tahap pencairan sudah selesai.",
+  MilestonesIncomplete: "Hasil panen baru bisa disetor setelah semua dana tahap cair.",
+  FundingClosed: "Waktu pendanaan kampanye ini sudah habis.",
+  FundingStillOpen: "Pendanaan masih berjalan, jadi belum bisa ditutup.",
   NotAllowedToFund: "Petani dan koperasi kampanye ini tidak boleh ikut mendanai.",
-  ExceedsTarget: "Jumlah melebihi sisa target pendanaan.",
-  ZeroAmount: "Jumlah harus lebih dari 0.",
-  EmptyCID: "File bukti belum diunggah.",
-  TooManyAttempts: "Batas 3 kali percobaan untuk milestone ini sudah habis.",
-  NothingToRefund: "Anda tidak punya dana untuk di-refund di kampanye ini.",
-  NothingToClaim: "Belum ada dana yang bisa Anda klaim.",
+  ExceedsTarget: "Jumlahnya melebihi sisa target pendanaan.",
+  ZeroAmount: "Jumlahnya harus lebih dari 0.",
+  EmptyCID: "Fotonya belum terunggah. Coba pilih ulang fotonya.",
+  TooManyAttempts: "Kesempatan kirim bukti untuk tahap ini sudah habis (tiga kali).",
+  NothingToRefund: "Kamu tidak punya dana yang bisa di-refund di kampanye ini.",
+  NothingToClaim: "Belum ada dana yang bisa kamu klaim.",
   GracePeriodActive: "Masa tenggang 30 hari setelah perkiraan panen belum lewat.",
   NonTransferable: "Token porsi tidak bisa dipindahtangankan.",
   // CampaignFactory
-  ZeroAddress: "Alamat tidak boleh kosong.",
-  EmptyName: "Nama tidak boleh kosong.",
+  ZeroAddress: "Alamat dompetnya belum diisi.",
+  EmptyName: "Namanya belum diisi.",
   AlreadyRegistered: "Alamat ini sudah terdaftar.",
-  RoleConflict: "Alamat ini sudah memegang peran lain (satu wallet satu peran).",
-  NotRegisteredFarmer: "Wallet ini belum didaftarkan sebagai petani oleh koperasi.",
-  FarmerBlocked: "Petani ini diblokir membuat kampanye baru karena pernah gagal bayar.",
-  ModulesNotSet: "Kontrak belum dikonfigurasi lengkap oleh admin.",
+  RoleConflict: "Alamat ini sudah dipakai untuk peran lain. Satu dompet hanya boleh punya satu peran.",
+  NotRegisteredFarmer: "Dompet ini belum didaftarkan sebagai petani oleh koperasi.",
+  FarmerBlocked: "Petani ini tidak bisa mengajukan kampanye baru karena pernah gagal bayar.",
+  ModulesNotSet: "Kontrak belum selesai diatur admin.",
   ModulesAlreadySet: "Modul kontrak sudah pernah diatur.",
   NotCampaign: "Alamat ini bukan kampanye BagiPanen.",
-  InvalidParams: "Data pengajuan tidak valid. Periksa kembali isian formulir.",
-  AgentNotIndependent: "Wallet agen harus berbeda dari admin, koperasi, dan petani.",
-  AgentNotOwner: "Wallet agen bukan pemilik identitas agen tersebut.",
-  OwnableUnauthorizedAccount: "Hanya admin yang bisa melakukan aksi ini.",
+  InvalidParams: "Ada isian pengajuan yang belum benar. Cek lagi formulirnya.",
+  AgentNotIndependent: "Dompet agen harus berbeda dari dompet admin, koperasi, dan petani.",
+  AgentNotOwner: "Dompet ini bukan pemilik identitas agen tersebut.",
+  OwnableUnauthorizedAccount: "Hanya admin yang bisa melakukannya.",
   // MockUSDT / ERC-20
-  MintTooLarge: "Maksimal 10.000 mUSDT per permintaan.",
-  ERC20InsufficientBalance: "Saldo mUSDT tidak cukup. Gunakan tombol \"Minta mUSDT demo\".",
-  ERC20InsufficientAllowance: "Izin penggunaan mUSDT belum cukup. Lakukan langkah \"Setujui mUSDT\" dulu.",
+  MintTooLarge: "Paling banyak 10.000 mUSDT sekali minta.",
+  ERC20InsufficientBalance: "Saldo mUSDT-mu kurang. Klik \"Minta mUSDT\" untuk isi saldo demo.",
+  ERC20InsufficientAllowance: "Izin mUSDT belum cukup. Jalankan langkah \"Izinkan mUSDT\" dulu.",
 };
 
 /** Gabungan definisi error semua kontrak, untuk men-decode revert dari kontrak lain (mis. factory → kampanye). */
@@ -86,15 +86,15 @@ export function translateError(error: unknown): string {
       const name = errorNameFromRevert(reverted);
       if (name && MESSAGES[name]) return MESSAGES[name];
       if (reverted.reason) return `Transaksi ditolak kontrak: ${reverted.reason}`;
-      return "Transaksi ditolak kontrak.";
+      return "Transaksi ditolak kontrak. Cek lagi isiannya, lalu coba lagi.";
     }
-    if (err.walk((e) => hasName(e, "UserRejectedRequestError"))) return "Transaksi dibatalkan di wallet.";
+    if (err.walk((e) => hasName(e, "UserRejectedRequestError"))) return "Transaksinya kamu batalkan di dompet.";
     const text = `${err.shortMessage ?? ""} ${err.details ?? ""}`.toLowerCase();
-    if (text.includes("insufficient funds")) return "Saldo koin gas (tBNB) tidak cukup untuk biaya transaksi.";
+    if (text.includes("insufficient funds")) return "Saldo tBNB untuk biaya gas tidak cukup. Isi dulu dari faucet BNB testnet.";
     if (text.includes("fetch") || text.includes("http request failed"))
-      return "Tidak bisa terhubung ke jaringan. Pastikan chain berjalan (mode lokal: npm run dev:chain).";
+      return "Belum bisa terhubung ke jaringan. Cek koneksi internetmu (di mode lokal, pastikan npm run dev:chain masih jalan).";
     return err.shortMessage ?? err.message;
   }
   if (error instanceof Error) return error.message;
-  return "Terjadi kesalahan yang tidak diketahui.";
+  return "Ada kendala yang belum kami kenali. Coba lagi sebentar.";
 }

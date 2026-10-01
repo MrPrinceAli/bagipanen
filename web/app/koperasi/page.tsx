@@ -1,13 +1,14 @@
 "use client";
 
+import { ClipboardCheck, Inbox, Sprout, UserPlus, Users, Wheat } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { type Address, isAddressEqual } from "viem";
 import { CampaignLink } from "@/components/CampaignLink";
 import { CooperativePanel } from "@/components/campaign/panels";
 import { AddressInput, MilestoneBadge, parseAddressInput, StatusBadge, TxStatus } from "@/components/common";
-import { Button, Card, EmptyState, Field, Input, Notice, SectionTitle, Spinner } from "@/components/ui";
-import { IS_LOCAL } from "@/lib/config";
+import { Button, Card, CardTitle, EmptyState, Field, Input, Loading, PageBody, PageHero, SectionTitle, Stat } from "@/components/ui";
+import { RoleGate } from "@/components/wallet";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { addresses } from "@/lib/addresses";
 import { shortAddress } from "@/lib/format";
@@ -33,21 +34,22 @@ function RegisterFarmer() {
 
   return (
     <Card>
-      <SectionTitle>Daftarkan petani anggota</SectionTitle>
-      <p className="mb-3 text-sm text-stone-600">Petani yang terdaftar bisa mengajukan kampanye. Satu wallet hanya boleh memegang satu peran.</p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Wallet petani" htmlFor="farmer-wallet">
+      <CardTitle icon={UserPlus} description="Petani yang sudah terdaftar bisa langsung mengajukan kampanye. Satu dompet hanya boleh punya satu peran.">
+        Daftarkan petani anggota
+      </CardTitle>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Alamat dompet petani" htmlFor="farmer-wallet">
           <AddressInput id="farmer-wallet" value={wallet} onChange={setWallet} />
         </Field>
         <Field label="Nama petani" htmlFor="farmer-name">
           <Input id="farmer-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Pak Ujang" />
         </Field>
       </div>
-      <div className="mt-3 flex flex-col gap-2">
-        <Button disabled={!ready} loading={tx.busy} onClick={submit}>
+      <div className="mt-4 flex flex-col gap-2">
+        <Button disabled={!ready} loading={tx.busy} onClick={submit} className="self-start">
           Daftarkan petani
         </Button>
-        <TxStatus state={tx.state} successText="Petani terdaftar." />
+        <TxStatus state={tx.state} successText="Petani berhasil didaftarkan." />
       </div>
     </Card>
   );
@@ -58,9 +60,13 @@ export default function KoperasiPage() {
   const { data: campaigns, isLoading } = useAllCampaigns();
   const { data: regs } = useRegistrations();
 
-  if (role === undefined) return <Spinner />;
-  if (role !== "koperasi" || !address)
-    return <Notice tone="info">Halaman ini untuk koperasi terdaftar. {role === "tamu" ? `${IS_LOCAL ? "Pilih akun" : "Hubungkan dompet"} Koperasi di header.` : "Wallet Anda bukan koperasi."}</Notice>;
+  if (role === undefined || role !== "koperasi" || !address)
+    return (
+      <>
+        <PageHero eyebrow="Koperasi" title="Ruang kerja koperasi" description="Tempat koperasi memeriksa bukti lapangan dan mendampingi petani anggotanya." />
+        <PageBody>{role === undefined ? <Loading /> : <RoleGate need="koperasi" role={role} />}</PageBody>
+      </>
+    );
 
   const me = address as Address;
   const coopName = regs?.cooperatives.find((c) => isAddressEqual(c.address, me))?.name;
@@ -76,85 +82,97 @@ export default function KoperasiPage() {
   const members = (regs?.farmers ?? []).filter((f) => f.cooperative && isAddressEqual(f.cooperative, me));
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-daun-900">{coopName ?? "Koperasi"}</h1>
-        <p className="text-sm text-stone-600">Verifikasi lapangan tiap milestone dan pendampingan petani anggota.</p>
-      </div>
-
-      <section>
-        <SectionTitle>Antrean verifikasi ({queue.length})</SectionTitle>
-        {isLoading ? (
-          <Spinner />
-        ) : queue.length === 0 ? (
-          <EmptyState title="Tidak ada milestone yang menunggu keputusan">Bukti baru dari petani akan muncul di sini otomatis.</EmptyState>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {queue.map(({ summary: s, milestones }) => (
-              <div key={s.address} className="flex flex-col gap-1">
-                <CampaignLink c={s} />
-                <CooperativePanel c={s} milestone={milestones[s.currentMilestone]} />
-              </div>
-            ))}
-          </div>
-        )}
-        {waitingAi.length > 0 && (
-          <p className="mt-3 text-sm text-stone-600">
-            {waitingAi.length} milestone sudah Anda putuskan dan sedang menunggu putusan agen AI.
-          </p>
-        )}
-      </section>
-
-      <RegisterFarmer />
-
-      <section>
-        <SectionTitle>Petani anggota ({members.length})</SectionTitle>
-        {members.length === 0 ? (
-          <EmptyState title="Belum ada petani anggota" />
-        ) : (
-          <Card className="p-0 sm:p-0">
-            <ul className="divide-y divide-tanah-100">
-              {members.map((f) => (
-                <li key={f.address} className="flex items-center justify-between gap-2 px-4 py-3">
-                  <div>
-                    <p className="font-medium">{f.name}</p>
-                    <p className="font-mono text-xs text-stone-500">{shortAddress(f.address)}</p>
-                  </div>
-                  <Link href={`/petani/${f.address}`} className="text-sm text-daun-700 underline">
-                    Rapor Petani →
-                  </Link>
-                </li>
+    <>
+      <PageHero
+        eyebrow="Koperasi"
+        title={coopName ?? "Ruang kerja koperasi"}
+        description="Kamu kunci kedua pencairan dana. Cek foto lahan dari petani, bandingkan dengan hasil agen AI, lalu putuskan."
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Stat variant="glass" icon={Inbox} label="Perlu diputuskan" value={queue.length} sub="bukti menunggu keputusanmu" />
+          <Stat variant="glass" icon={Users} label="Petani anggota" value={members.length} />
+          <Stat variant="glass" icon={Wheat} label="Kampanye dampingan" value={mine.length} />
+        </div>
+      </PageHero>
+      <PageBody>
+        <section>
+          <SectionTitle eyebrow="Antrean" description="Bukti baru dari petani muncul di sini otomatis.">
+            Bukti yang perlu kamu cek
+          </SectionTitle>
+          {isLoading ? (
+            <Loading />
+          ) : queue.length === 0 ? (
+            <EmptyState icon={ClipboardCheck} title="Antrean kosong">
+              Belum ada bukti yang menunggu keputusanmu.
+            </EmptyState>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {queue.map(({ summary: s, milestones }) => (
+                <div key={s.address} className="flex flex-col gap-2">
+                  <CampaignLink c={s} />
+                  <CooperativePanel c={s} milestone={milestones[s.currentMilestone]} />
+                </div>
               ))}
-            </ul>
-          </Card>
-        )}
-      </section>
+            </div>
+          )}
+          {waitingAi.length > 0 && (
+            <p className="mt-3 text-sm text-stone-600">
+              {waitingAi.length} bukti sudah kamu putuskan dan tinggal menunggu hasil agen AI.
+            </p>
+          )}
+        </section>
 
-      <section>
-        <SectionTitle>Kampanye dampingan ({mine.length})</SectionTitle>
-        {mine.length === 0 ? (
-          <EmptyState title="Belum ada kampanye" />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {mine.map(({ summary: s, milestones }) => {
-              const m = milestones[s.currentMilestone];
-              return (
-                <Card key={s.address}>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <CampaignLink c={s} />
-                    <StatusBadge status={s.status} failType={s.failType} />
-                  </div>
-                  {s.status === Status.Active && m && (
-                    <p className="mt-2 flex items-center gap-2 text-sm text-stone-600">
-                      Milestone {m.name}: <MilestoneBadge status={m.status} />
-                    </p>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </div>
+        <RegisterFarmer />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardTitle icon={Users}>Petani anggota ({members.length})</CardTitle>
+            {members.length === 0 ? (
+              <p className="text-sm text-stone-500">Belum ada petani yang terdaftar.</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-krem-200">
+                {members.map((f) => (
+                  <li key={f.address} className="flex items-center justify-between gap-2 py-3">
+                    <div>
+                      <p className="font-semibold text-hutan-950">{f.name}</p>
+                      <p className="font-mono text-xs text-stone-500">{shortAddress(f.address)}</p>
+                    </div>
+                    <Link href={`/petani/${f.address}`} className="text-sm font-semibold text-hutan-700 hover:underline">
+                      Rapor →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card>
+            <CardTitle icon={Sprout}>Kampanye dampingan ({mine.length})</CardTitle>
+            {mine.length === 0 ? (
+              <p className="text-sm text-stone-500">Belum ada kampanye dari petani anggota.</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-krem-200">
+                {mine.map(({ summary: s, milestones }) => {
+                  const m = milestones[s.currentMilestone];
+                  return (
+                    <li key={s.address} className="flex flex-col gap-1.5 py-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <CampaignLink c={s} />
+                        <StatusBadge status={s.status} failType={s.failType} />
+                      </div>
+                      {s.status === Status.Active && m && (
+                        <p className="flex items-center gap-2 text-sm text-stone-600">
+                          Tahap {m.name}: <MilestoneBadge status={m.status} />
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        </div>
+      </PageBody>
+    </>
   );
 }

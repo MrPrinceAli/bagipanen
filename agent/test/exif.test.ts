@@ -70,7 +70,7 @@ describe("evaluateExif", () => {
   it("ok dengan catatan jika hanya GPS yang ada", () => {
     const r = evaluateExif({ latitude: -7.35, longitude: 107.8 }, FARM, at("2026-10-02T10:00:00+07:00"));
     assert.equal(r.status, "ok");
-    assert.deepEqual(r.notes, ["tanggal foto tidak ada"]);
+    assert.deepEqual(r.notes, ["foto tidak menyimpan tanggal"]);
   });
 });
 
