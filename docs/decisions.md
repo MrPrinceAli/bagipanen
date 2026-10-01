@@ -300,4 +300,8 @@ Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahas
 7. **Statistik beranda tetap sesuai PRD** (total didanai, kampanye aktif, dana cadangan), ditambah jumlah petani dan statistik agen.
 8. **Form Ajukan:** GPS foto boleh menimpa koordinat dari "Isi contoh data demo", tetapi tidak menimpa koordinat yang diketik manual.
 9. **Tombol dompet memakai `ConnectButton.Custom` RainbowKit**, supaya gayanya sama dengan desain baru. Fungsi dan modal MetaMask tidak berubah.
+10. **Logo baru: petani bercaping memikul dua keranjang hasil panen** (opsi 4 dari 10 konsep, pilihan pemilik proyek).
+    - Dipakai di header dan footer (`LogoMark`).
+    - Ikon tab browser `web/app/icon.svg` memakai versi bergaris lebih tebal supaya tetap terbaca di 16 px.
+    - `favicon.ico` bawaan Next.js dihapus.
 

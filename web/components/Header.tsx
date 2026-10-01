@@ -16,16 +16,19 @@ import { useTx } from "@/lib/tx";
 import { Button, Container, cn, Spinner } from "./ui";
 import { WalletButton } from "./wallet";
 
+/** Logo BagiPanen: petani bercaping memikul dua keranjang hasil panen. */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <rect width="32" height="32" rx="10" fill="#e6b043" />
-      <path d="M16 27V10" stroke="#0b1d15" strokeWidth="2" strokeLinecap="round" />
-      <path d="M16 15c-3.6 0-6.2-2.3-6.7-5.7 3.6 0 6.2 2.3 6.7 5.7Z" fill="#0b1d15" />
-      <path d="M16 15c3.6 0 6.2-2.3 6.7-5.7-3.6 0-6.2 2.3-6.7 5.7Z" fill="#0b1d15" />
-      <path d="M16 21.5c-3.6 0-6.2-2.3-6.7-5.7 3.6 0 6.2 2.3 6.7 5.7Z" fill="#0b1d15" />
-      <path d="M16 21.5c3.6 0 6.2-2.3 6.7-5.7-3.6 0-6.2 2.3-6.7 5.7Z" fill="#0b1d15" />
-      <circle cx="16" cy="6.6" r="2" fill="#0b1d15" />
+    <svg viewBox="0 0 64 64" className={className} aria-hidden>
+      <rect width="64" height="64" rx="20" fill="#e6b043" />
+      <path d="M7 27 Q32 22.5 57 27" stroke="#0b1d15" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+      <path d="M10.5 27 L7.5 40 M14.5 27 L17.5 40 M49.5 27 L46.5 40 M53.5 27 L56.5 40" stroke="#0b1d15" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M5 40 H20 L17.8 50 H7.2 Z" fill="#0b1d15" />
+      <path d="M44 40 H59 L56.8 50 H46.2 Z" fill="#0b1d15" />
+      <path d="M23 17.5 L32 9 L41 17.5 C37 19.6 27 19.6 23 17.5 Z" fill="#0b1d15" />
+      <circle cx="32" cy="21.6" r="3.4" fill="#0b1d15" />
+      <path d="M27 26.5 H37 L35.4 42 H28.6 Z" fill="#0b1d15" />
+      <path d="M29.6 42 L27.4 55.5 M34.4 42 L36.6 55.5" stroke="#0b1d15" strokeWidth="3.4" strokeLinecap="round" />
     </svg>
   );
 }
