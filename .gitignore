@@ -1,4 +1,5 @@
 # Rahasia — jangan pernah di-commit
+.secrets/
 .env
 .env.*
 !.env.example

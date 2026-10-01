@@ -27,9 +27,52 @@ export type VisionContext = {
 
 export type VisionAdapter = {
   name: "mock-vision" | "gemini";
+  /** Model utama (untuk log). Model yang benar-benar menjawab dikembalikan oleh `assess`. */
   model: string;
-  assess(photo: StoredFile, ctx: VisionContext): Promise<VisionResult>;
+  assess(photo: StoredFile, ctx: VisionContext): Promise<{ result: VisionResult; model: string }>;
 };
+
+/**
+ * Coba model satu per satu sampai ada yang berhasil (mis. model utama sedang 503 "high demand",
+ * menggantung, atau sudah tidak tersedia). Melempar galat terakhir jika semuanya gagal.
+ */
+export async function tryModels<T>(
+  models: string[],
+  run: (model: string) => Promise<T>,
+  onFail?: (model: string, error: unknown) => void,
+): Promise<{ value: T; model: string }> {
+  let last: unknown = new Error("Tidak ada model Gemini yang dikonfigurasi.");
+  for (const model of models) {
+    try {
+      return { value: await run(model), model };
+    } catch (e) {
+      last = e;
+      onFail?.(model, e);
+    }
+  }
+  throw last;
+}
+
+/**
+ * Model yang kuotanya habis (429 RESOURCE_EXHAUSTED) dilewati sementara, supaya tiap bukti tidak
+ * membuang satu panggilan (±3 detik) ke model yang pasti menolak. Jika semua model sedang
+ * dilewati, semuanya tetap dicoba.
+ */
+export function quotaCooldown(ms: number, now: () => number = Date.now) {
+  const until = new Map<string, number>();
+  return {
+    available: (models: string[]) => {
+      const ready = models.filter((m) => (until.get(m) ?? 0) <= now());
+      return ready.length > 0 ? ready : models;
+    },
+    /** Mengembalikan true jika model mulai dilewati. */
+    note: (model: string, error: unknown) => {
+      if (!describeGeminiError(error).startsWith("429")) return false;
+      until.set(model, now() + ms);
+      return true;
+    },
+  };
+}
 
 /** Prompt sistem (PRD, Spesifikasi agen AI). */
 export const SYSTEM_PROMPT =
@@ -99,6 +142,11 @@ export const mockVision: VisionAdapter = {
   name: "mock-vision",
   model: "mock-vision",
   async assess(photo, ctx) {
+    return { result: mockAssess(photo, ctx), model: "mock-vision" };
+  },
+};
+
+function mockAssess(photo: StoredFile, ctx: VisionContext): VisionResult {
     const days = Math.max(0, ctx.daysToHarvest);
     if (photo.fileName && MOCK_REJECT_PATTERN.test(photo.fileName)) {
       return {
@@ -126,8 +174,7 @@ export const mockVision: VisionAdapter = {
       reason_id: `Simulasi MockVision: foto dianggap lahan ${ctx.commodity.toLowerCase()} fase ${ctx.milestoneName}, kondisi baik.`,
       red_flags: [],
     };
-  },
-};
+}
 
 /** Normalisasi & validasi output model agar selalu sesuai skema. */
 export function normalizeVision(raw: unknown): VisionResult {
@@ -150,28 +197,58 @@ export function normalizeVision(raw: unknown): VisionResult {
   };
 }
 
-/** Adapter Gemini (mode testnet): gambar dilampirkan, output JSON lewat `responseSchema`. */
-export function geminiVision(apiKey: string, model: string): VisionAdapter {
+/** Ringkasan galat Gemini yang mudah dibaca, mis. "503 UNAVAILABLE" atau "timeout 45 dtk". */
+export function describeGeminiError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/abort|timeout/i.test(msg) || (e as { name?: string })?.name === "TimeoutError") return "timeout";
+  const code = msg.match(/"code":\s*(\d+)/)?.[1];
+  const status = msg.match(/"status":\s*"([A-Z_]+)"/)?.[1];
+  return code || status ? `${code ?? ""} ${status ?? ""}`.trim() : msg.slice(0, 120);
+}
+
+/**
+ * Adapter Gemini (mode testnet): gambar dilampirkan, output JSON lewat `responseSchema`.
+ * `models` = model utama lalu cadangan; tiap panggilan dibatasi `timeoutMs`.
+ */
+export function geminiVision(
+  apiKey: string,
+  models: string[],
+  opts: { timeoutMs?: number; quotaCooldownMs?: number; onFallback?: (model: string, reason: string) => void } = {},
+): VisionAdapter {
   const ai = new GoogleGenAI({ apiKey });
+  const timeoutMs = opts.timeoutMs ?? 45_000;
+  const cooldownMs = opts.quotaCooldownMs ?? 10 * 60_000;
+  const cooldown = quotaCooldown(cooldownMs);
   return {
     name: "gemini",
-    model,
+    model: models[0],
     async assess(photo, ctx) {
-      const response = await ai.models.generateContent({
-        model,
-        contents: createUserContent([
-          createPartFromBase64(Buffer.from(photo.bytes).toString("base64"), photo.mimeType),
-          buildUserPrompt(ctx),
-        ]),
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          temperature: 0.2,
+      const { value, model } = await tryModels(
+        cooldown.available(models),
+        async (m) => {
+          const response = await ai.models.generateContent({
+            model: m,
+            contents: createUserContent([
+              createPartFromBase64(Buffer.from(photo.bytes).toString("base64"), photo.mimeType),
+              buildUserPrompt(ctx),
+            ]),
+            config: {
+              systemInstruction: SYSTEM_PROMPT,
+              responseMimeType: "application/json",
+              responseSchema: RESPONSE_SCHEMA,
+              temperature: 0.2,
+              abortSignal: AbortSignal.timeout(timeoutMs),
+            },
+          });
+          if (!response.text) throw new Error("Gemini tidak mengembalikan jawaban.");
+          return normalizeVision(JSON.parse(response.text));
         },
-      });
-      if (!response.text) throw new Error("Gemini tidak mengembalikan jawaban.");
-      return normalizeVision(JSON.parse(response.text));
+        (m, e) => {
+          const skipped = cooldown.note(m, e);
+          opts.onFallback?.(m, `${describeGeminiError(e)}${skipped ? `, dilewati ${Math.round(cooldownMs / 60_000)} menit` : ""}`);
+        },
+      );
+      return { result: value, model };
     },
   };
 }

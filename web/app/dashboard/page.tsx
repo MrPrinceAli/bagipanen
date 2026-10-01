@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StatusBadge, TxStatus, Usdt } from "@/components/common";
 import { Button, Card, EmptyState, Notice, SectionTitle, Spinner, Stat } from "@/components/ui";
 import { harvestCampaignAbi } from "@/lib/abi/HarvestCampaign";
+import { IS_LOCAL } from "@/lib/config";
 import { useCampaignList, useFarmerCampaigns, useIpfsJson, useMyPositions } from "@/lib/campaigns";
 import { formatPercent, formatTimeLeft, formatUsdt } from "@/lib/format";
 import { useRole } from "@/lib/role";
@@ -190,7 +191,7 @@ export default function DashboardPage() {
       {role === undefined ? (
         <Spinner />
       ) : role === "tamu" ? (
-        <Notice tone="info">Pilih akun demo di header untuk melihat dashboard Anda.</Notice>
+        <Notice tone="info">{IS_LOCAL ? "Pilih akun demo" : "Hubungkan dompet"} di header untuk melihat dashboard Anda.</Notice>
       ) : role === "petani" && address ? (
         <FarmerDashboard address={address} />
       ) : role === "investor" ? (

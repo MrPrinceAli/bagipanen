@@ -7,6 +7,7 @@ import { type Address, parseEventLogs } from "viem";
 import { usePublicClient } from "wagmi";
 import { Stepper, type StepStatus, TxStatus } from "@/components/common";
 import { Button, Card, Field, Input, Notice, SectionTitle, Select, Spinner, Textarea } from "@/components/ui";
+import { IS_LOCAL } from "@/lib/config";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { reputationBookAbi } from "@/lib/abi/ReputationBook";
 import { addresses, CONTRACTS_READY, requireAddresses } from "@/lib/addresses";
@@ -126,6 +127,12 @@ export default function CreatePage() {
       "Pak Darto menanam cabai merah di lahan 0,5 ha di Cikajang, Garut, didampingi Koperasi Tani Makmur. Modal dipakai untuk bibit, pupuk, pestisida, dan tenaga kerja satu musim tanam.",
     );
     setLocationName("Cikajang, Garut");
+    // Koordinat contoh Cikajang (id.wikipedia.org/wiki/Cikajang,_Garut). Tidak menimpa koordinat dari GPS foto.
+    if (!lat && !lon) {
+      setLat("-7.356436");
+      setLon("107.806990");
+      setCoordNote("Koordinat contoh: Cikajang, Garut. Ganti sesuai lokasi lahan jika memakai foto asli ber-GPS.");
+    }
     setLandArea("5000");
     setTarget("1.000");
     setEstimate("1.650");
@@ -217,7 +224,7 @@ export default function CreatePage() {
     return (
       <Notice tone="info">
         Halaman ini untuk petani yang sudah didaftarkan koperasi.{" "}
-        {role === "tamu" ? "Pilih akun Petani di header." : "Wallet Anda saat ini bukan petani."}
+        {role === "tamu" ? `${IS_LOCAL ? "Pilih akun" : "Hubungkan dompet"} Petani di header.` : "Wallet Anda saat ini bukan petani."}
       </Notice>
     );
   if (names.data?.blocked)

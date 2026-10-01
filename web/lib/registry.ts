@@ -7,9 +7,10 @@ import { campaignFactoryAbi } from "./abi/CampaignFactory";
 import { harvestCampaignAbi } from "./abi/HarvestCampaign";
 import { mockAgentIdentityAbi } from "./abi/MockAgentIdentity";
 import { reputationBookAbi } from "./abi/ReputationBook";
-import { CONTRACTS_READY, requireAddresses, START_BLOCK } from "./addresses";
+import { CONTRACTS_READY, requireAddresses } from "./addresses";
 import { IS_LOCAL, REFRESH_MS } from "./config";
 import { fetchIpfsJson, ipfsUrl } from "./ipfs";
+import { getLogsIncremental } from "./logs";
 import type { CampaignSummary, Milestone } from "./types";
 import { deployments } from "./deployments";
 
@@ -48,23 +49,26 @@ export function useRegistrations() {
     refetchInterval: REFRESH_MS,
     queryFn: async () => {
       const { factory } = requireAddresses();
-      const [coopLogs, farmerLogs] = await Promise.all([
-        client!.getContractEvents({ address: factory, abi: campaignFactoryAbi, eventName: "CooperativeRegistered", fromBlock: START_BLOCK }),
-        client!.getContractEvents({ address: factory, abi: campaignFactoryAbi, eventName: "FarmerRegistered", fromBlock: START_BLOCK }),
-      ]);
-      const cooperatives: Registration[] = coopLogs.map((l) => ({
-        address: l.args.cooperative!,
-        name: l.args.name ?? "",
-        txHash: l.transactionHash,
-        blockNumber: l.blockNumber,
-      }));
-      const farmers: Registration[] = farmerLogs.map((l) => ({
-        address: l.args.farmer!,
-        name: l.args.name ?? "",
-        cooperative: l.args.cooperative,
-        txHash: l.transactionHash,
-        blockNumber: l.blockNumber,
-      }));
+      const latest = await client!.getBlockNumber();
+      // Cache yang sama dengan riwayat transaksi kampanye (semua event factory)
+      const logs = await getLogsIncremental(`factory:${factory}`, latest, (fromBlock, toBlock) =>
+        client!.getContractEvents({ address: factory, abi: campaignFactoryAbi, fromBlock, toBlock }),
+      );
+      const cooperatives: Registration[] = [];
+      const farmers: Registration[] = [];
+      for (const l of logs) {
+        if (l.eventName === "CooperativeRegistered") {
+          cooperatives.push({ address: l.args.cooperative!, name: l.args.name ?? "", txHash: l.transactionHash, blockNumber: l.blockNumber });
+        } else if (l.eventName === "FarmerRegistered") {
+          farmers.push({
+            address: l.args.farmer!,
+            name: l.args.name ?? "",
+            cooperative: l.args.cooperative,
+            txHash: l.transactionHash,
+            blockNumber: l.blockNumber,
+          });
+        }
+      }
       return { cooperatives, farmers };
     },
   });
@@ -193,7 +197,14 @@ export function useRecentVerdicts(limit = 10) {
     refetchInterval: REFRESH_MS,
     queryFn: async (): Promise<VerdictEntry[]> => {
       const { factory } = requireAddresses();
-      const logs = await client!.getLogs({ event: verdictEvent, fromBlock: START_BLOCK });
+      // RPC publik BSC testnet menolak getLogs tanpa alamat → filter dengan daftar kampanye resmi.
+      // Kunci cache memuat jumlah kampanye agar kampanye baru memicu pembacaan ulang dari awal.
+      const campaignList = await client!.readContract({ address: factory, abi: campaignFactoryAbi, functionName: "getCampaigns" });
+      if (campaignList.length === 0) return [];
+      const latest = await client!.getBlockNumber();
+      const logs = await getLogsIncremental(`verdicts:${campaignList.length}`, latest, (fromBlock, toBlock) =>
+        client!.getLogs({ address: [...campaignList], event: verdictEvent, fromBlock, toBlock }),
+      );
       const recent = logs
         .sort((a, b) => (a.blockNumber === b.blockNumber ? b.logIndex - a.logIndex : Number(b.blockNumber - a.blockNumber)))
         .slice(0, limit * 3);

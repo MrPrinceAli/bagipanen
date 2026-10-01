@@ -51,6 +51,11 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
   const { summary } = data;
   log("BUKTI", label);
 
+  // Cuaca (langkah 5) diambil bersamaan dengan unduhan foto supaya putusan lebih cepat.
+  const farm = { latitude: summary.latE6 / 1e6, longitude: summary.lonE6 / 1e6 };
+  const weatherPromise = getWeather(farm.latitude, farm.longitude, config.mode === "local");
+  weatherPromise.catch(() => {}); // galatnya ditangani saat di-await di langkah 5
+
   // 2. Unduh foto + SHA-256
   const photo = await storage.getFile(p.cid);
   const hash = sha256Hex(photo.bytes);
@@ -61,7 +66,6 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
   if (dup) log("FOTO", fmt.red(`duplikat: sudah dipakai di kampanye ${shortAddr(dup.campaign)} milestone #${dup.milestoneIndex + 1}`));
 
   // 4. EXIF: GPS ≤ 2 km, tanggal ≤ 7 hari
-  const farm = { latitude: summary.latE6 / 1e6, longitude: summary.lonE6 / 1e6 };
   const exif = evaluateExif(await readExif(photo.bytes), farm, Number(m.submittedAt));
   const exifDetail = [
     exif.distanceKm !== null ? `GPS ${n1(exif.distanceKm)} km dari lahan` : null,
@@ -72,12 +76,12 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
   log("EXIF", `${exif.status}${exifDetail ? ` (${exifDetail})` : ""}${exif.status === "mismatch" ? ` — ${exif.notes.join("; ")}` : ""}`);
 
   // 5. Cuaca Open-Meteo
-  const weather = await getWeather(farm.latitude, farm.longitude, config.mode === "local");
+  const weather = await weatherPromise;
   log("CUACA", `14 hari: ${weatherText(weather)}`);
 
   // 6. Nilai foto (MockVision / Gemini)
   const daysToHarvest = Math.ceil((Number(summary.expectedHarvestDate) - Date.now() / 1000) / 86_400);
-  const result = await vision.assess(photo, {
+  const { result, model } = await vision.assess(photo, {
     commodity: summary.commodity,
     locationName: summary.locationName,
     milestoneName: m.name,
@@ -85,7 +89,7 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
     daysToHarvest,
     weatherSummary: weatherText(weather),
   });
-  log("AI", `${result.detected_commodity}, fase ${result.detected_stage}, kondisi ${result.plant_condition}, yakin ${n2(result.confidence)} (${vision.model})`);
+  log("AI", `${result.detected_commodity}, fase ${result.detected_stage}, kondisi ${result.plant_condition}, yakin ${n2(result.confidence)} (${model})`);
 
   // 7. JSON putusan → IPFS → recordVerdict
   const decision = decide(result, exif, dup !== null, m.name);
@@ -100,7 +104,7 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
     exif,
     weather,
     duplicate: dup !== null,
-    agent: { registry: agent.identityRegistry, agentId: agent.agentId, model: vision.model },
+    agent: { registry: agent.identityRegistry, agentId: agent.agentId, model },
   });
   const reasonCID = await storage.putJson(doc, `verdict-${p.campaign.slice(2, 10)}-m${p.index + 1}-a${p.attempt}.json`);
 

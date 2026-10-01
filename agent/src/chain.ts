@@ -2,6 +2,7 @@ import { type Address, createPublicClient, createWalletClient, getAbiItem, getAd
 import { campaignFactoryAbi } from "./abi/CampaignFactory.js";
 import { harvestCampaignAbi } from "./abi/HarvestCampaign.js";
 import { chain, config } from "./config.js";
+import { log } from "./log.js";
 
 export const publicClient = createPublicClient({ chain, transport: http(config.rpcUrl) });
 export const walletClient = createWalletClient({ account: config.account, chain, transport: http(config.rpcUrl) });
@@ -20,15 +21,49 @@ export type ProofLog = {
 };
 
 /**
- * Semua log ProofSubmitted di rentang blok, TANPA filter alamat (filter berdasarkan
- * signature event). Rentang dibagi per `maxLogRange` karena RPC publik membatasinya.
+ * RPC yang menolak eth_getLogs tanpa alamat (mis. publicnode: "Please specify an address") membuat
+ * agen beralih ke filter daftar kampanye resmi `factory.getCampaigns()`. Hasilnya setara, karena
+ * bukti dari alamat lain toh dilewati oleh cek `isCampaign`.
+ */
+let useAddressFilter = false;
+
+type RawProofLog = Awaited<ReturnType<typeof getProofLogsRaw>>[number];
+
+async function getProofLogsRaw(fromBlock: bigint, toBlock: bigint, address?: Address[]) {
+  return publicClient.getLogs({ address, event: proofSubmittedEvent, fromBlock, toBlock });
+}
+
+async function getProofLogsRange(fromBlock: bigint, toBlock: bigint): Promise<RawProofLog[]> {
+  if (!useAddressFilter) {
+    try {
+      return await getProofLogsRaw(fromBlock, toBlock);
+    } catch (e) {
+      // Galat jaringan biasa akan gagal juga di bawah dan dicoba lagi di tick berikutnya.
+      const campaigns = await getCampaigns();
+      const logs = campaigns.length > 0 ? await getProofLogsRaw(fromBlock, toBlock, campaigns) : [];
+      useAddressFilter = true;
+      log("AGEN", `RPC menolak getLogs tanpa alamat (${(e as { shortMessage?: string }).shortMessage ?? "galat"}) → memakai filter daftar kampanye resmi`);
+      return logs;
+    }
+  }
+  const campaigns = await getCampaigns();
+  return campaigns.length > 0 ? getProofLogsRaw(fromBlock, toBlock, campaigns) : [];
+}
+
+async function getCampaigns(): Promise<Address[]> {
+  return [...(await publicClient.readContract({ address: config.factory, abi: campaignFactoryAbi, functionName: "getCampaigns" }))];
+}
+
+/**
+ * Semua log ProofSubmitted di rentang blok. Sesuai PRD, difilter berdasarkan signature event saja
+ * (tanpa filter alamat), kecuali RPC mewajibkan alamat (lihat `useAddressFilter`).
+ * Rentang dibagi per `maxLogRange` karena RPC publik membatasinya.
  */
 export async function getProofLogs(fromBlock: bigint, toBlock: bigint): Promise<ProofLog[]> {
   const out: ProofLog[] = [];
   for (let start = fromBlock; start <= toBlock; start += config.maxLogRange) {
     const end = start + config.maxLogRange - 1n < toBlock ? start + config.maxLogRange - 1n : toBlock;
-    const logs = await publicClient.getLogs({ event: proofSubmittedEvent, fromBlock: start, toBlock: end });
-    for (const l of logs) {
+    for (const l of await getProofLogsRange(start, end)) {
       out.push({
         campaign: getAddress(l.address),
         index: Number(l.args.index),

@@ -91,6 +91,9 @@ export const config = {
   pollMs: Number(env("POLL_INTERVAL_MS") ?? 10_000),
   retryAttempts: 3,
   retryDelayMs: Number(env("RETRY_DELAY_MS") ?? 15_000),
-  /** Rentang blok maksimal per getLogs (RPC publik membatasi rentang). */
-  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 5_000)),
+  /**
+   * Rentang blok maksimal per getLogs. RPC publik resmi BNB menolak eth_getLogs; RPC publik
+   * pihak ketiga (mis. publicnode) membatasi 50.000 blok per panggilan (docs/erc8004-notes.md).
+   */
+  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 50_000)),
 };

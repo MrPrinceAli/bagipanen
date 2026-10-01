@@ -17,3 +17,7 @@ fs_permissions = [{ access = "read-write", path = "../deployments" }]
 [rpc_endpoints]
 anvil = "http://127.0.0.1:8545"
 bscTestnet = "${BSC_TESTNET_RPC}"
+
+# Verifikasi BscScan testnet lewat Etherscan API V2 (docs.etherscan.io/contract-verification/verify-with-foundry)
+[etherscan]
+bscTestnet = { key = "${BSCSCAN_API_KEY}", chain = 97, url = "https://api.etherscan.io/v2/api?chainid=97" }

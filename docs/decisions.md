@@ -196,7 +196,7 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 6. **Halaman `/agent`.**
    - Registri ditulis jujur: "MockAgentIdentity (fallback)" jika memakai registri mock hasil deploy, atau "ERC-8004" jika admin mengarahkan `setAgent` ke registri lain.
    - Agent card dibaca dari `tokenURI(agentId)`, fungsi standar ERC-721. Bentuk URI yang didukung: `ipfs://`, `https://`, dan `data:`.
-7. **10 putusan terakhir** diambil dari event `VerdictRecorded` tanpa filter alamat, lalu disaring ke kampanye resmi (`isCampaign`). Ringkasan tiap putusan dibaca dari JSON `reasonCID`.
+7. **10 putusan terakhir** diambil dari event `VerdictRecorded` tanpa filter alamat, lalu disaring ke kampanye resmi (`isCampaign`). *(Diubah di Gelombang 8 butir 3: sekarang langsung difilter dengan alamat kampanye resmi.)* Ringkasan tiap putusan dibaca dari JSON `reasonCID`.
 8. **Rumus Rapor Petani.**
    - Tepat waktu = `onTimeHarvests ÷ harvestsCompleted`.
    - Akurasi estimasi = `totalReported ÷ totalEstimated`; hanya kampanye yang sudah panen yang ikut dihitung (sesuai `ReputationBook`).
@@ -211,3 +211,46 @@ Keputusan untuk hal yang ambigu di PRD. Aturannya: pilih opsi paling sederhana, 
 3. **Notifikasi (toast) global untuk transaksi sukses.** `TxStatus` tetap menampilkan status di tempat, dan sekarang juga mengirim toast. Tujuannya agar pesan sukses tetap terlihat walaupun komponennya hilang setelah data di-refresh.
 4. **Waktu acuan untuk aturan tenggat dan masa tenggang di UI** = `max(jam perangkat, timestamp blok terbaru)` (`useEffectiveNow`). Hitung mundur di kartu beranda tetap memakai jam perangkat, karena hanya bersifat tampilan.
 5. **Error boundary Next 16** memakai prop `retry` (bukan `reset` seperti versi lama), sesuai dokumentasi yang terpasang.
+
+## Gelombang 8 — Konfigurasi & BSC testnet
+
+1. **Wallet testnet dibuat lokal dengan Foundry** (`cast wallet new-mnemonic`): satu seed phrase 12 kata, 7 akun dengan urutan sama seperti mode lokal (0 Admin … 6 Agen, path MetaMask `m/44'/60'/0'/0/i`).
+   - Seed phrase disimpan di `.secrets/testnet-wallet.txt` (folder diabaikan git, izin 600) dan sebagai `TESTNET_MNEMONIC` di `contracts/.env`.
+   - Key Admin ada di `contracts/.env` (`DEPLOYER_PRIVATE_KEY`), key Agen di `agent/.env` (`AGENT_PRIVATE_KEY`).
+   - Tidak ada rahasia yang ditampilkan di chat. MetaMask cukup mengimpor seed phrase ini untuk demo di browser.
+2. **RPC.**
+   - Deploy memakai RPC resmi BNB (`https://bsc-testnet-dataseed.bnbchain.org`).
+   - Agen & web memakai `https://bsc-testnet-rpc.publicnode.com`, karena RPC publik resmi BNB menolak `eth_getLogs` ("limit exceeded" bahkan untuk 10 blok), sedangkan publicnode melayani sampai 50.000 blok per panggilan (diuji; lihat [erc8004-notes.md](erc8004-notes.md)).
+   - BSC testnet ≈ 0,45 detik/blok ≈ 192.000 blok/hari.
+3. **`getLogs` bertahap.** Agen: `MAX_LOG_RANGE` bawaan 50.000 di testnet. Web: `lib/logs.ts` membagi rentang per 50.000 blok (4 paralel) dan, di testnet, menyimpan log yang sudah dibaca sehingga refresh 10 detik hanya membaca blok baru. Di mode lokal tanpa cache, karena chain bisa di-reset.
+   - **Filter alamat di `getLogs`.** publicnode menolak `eth_getLogs` tanpa `address` ("Please specify an address in your request"). Masalah ini baru terlihat di testnet sungguhan, tidak di gladi resik fork Anvil.
+     - **Agen** tetap mengikuti PRD (polling `ProofSubmitted` tanpa filter alamat) dan memakai RPC `https://rpc.sentio.xyz/bsc-testnet`, yang mengizinkannya (diuji sampai 100.000 blok). Jika RPC yang dipakai menolak, agen otomatis beralih ke filter daftar kampanye resmi `factory.getCampaigns()` dan mencatatnya di log. Hasilnya sama, karena bukti dari alamat lain toh dilewati cek `isCampaign`. Kedua jalur sudah diuji ke RPC sungguhan.
+     - Sentio menyarankan gas 1 gwei (publicnode/RPC resmi 0,1 gwei), jadi satu putusan agen ≈ 0,00017 tBNB. Ini masih sangat kecil.
+     - **Web** (`VerdictRecorded`, 10 putusan terakhir) tetap memakai publicnode dan langsung memfilter dengan alamat kampanye resmi. Cara ini menggantikan Gelombang 6 butir 7 dan bukan ketentuan PRD.
+4. **Registri ERC-8004 resmi** `0x8004A818BFB912233c491871b3d84c89A494BD9e` (dikonfirmasi SDK resmi BNB Chain + repo tim ERC-8004 + pengecekan di chain).
+   - ABI agen diambil dari ABI implementasi terverifikasi BscScan.
+   - Kontrak BagiPanen tidak berubah (`isAgent` memakai `ownerOf` standar ERC-721).
+5. **`agent-card.json` mengikuti format registration file ERC-8004** (`type` registration-v1, `services`, `x402Support`, `active`, `registrations`, `supportedTrust`), ditambah field PRD (`agentWallet`, `bagipanen`).
+   - Registri resmi: daftar, lalu `setAgentURI` dengan `registrations` berisi `agentId`.
+   - Mock: `agentId` diprediksi dari `totalAgents()+1`.
+   - Hasil pendaftaran disimpan di `agent/data/registration.json`, supaya menjalankan ulang tidak mendaftar dua kali.
+6. **`script/SeedTestnet.s.sol`** (`npm run seed:testnet`):
+   - Admin mengisi ulang tBNB tiap akun demo sampai 0,02 tBNB, setelah mengecek saldonya cukup.
+   - Admin mendaftarkan koperasi dan mint mUSDT (investor 5.000, petani 1.000); koperasi mendaftarkan petani.
+   - Aman dijalankan ulang.
+7. **Verifikasi kontrak** lewat Etherscan API V2: `foundry.toml` `[etherscan] bscTestnet = { key = "${BSCSCAN_API_KEY}", chain = 97, url = "https://api.etherscan.io/v2/api?chainid=97" }`, dipakai oleh `npm run deploy:testnet` (`--verify --slow`). Key gratis bisa memakai endpoint verifikasi di chain 97 (diuji).
+8. **Gemini.**
+   - Model utama `gemini-3.8-flash` (Flash stabil terbaru, gratis).
+   - **Model cadangan** `GEMINI_FALLBACK_MODELS=gemini-3.6-flash,gemini-flash-latest` dicoba berurutan jika model utama sibuk (503), timeout, atau tidak tersedia.
+   - **Batas waktu 45 detik per panggilan**, karena saat uji ada model yang menggantung 5 menit.
+   - Model yang benar-benar menjawab dicatat di JSON putusan.
+   - **Model yang kuota hariannya habis (429 RESOURCE_EXHAUSTED) dilewati 10 menit** (`GEMINI_QUOTA_COOLDOWN_MS`), supaya tiap bukti tidak membuang ±3 detik ke model yang pasti menolak. Model yang 503 tetap dicoba lagi, karena sifatnya sementara.
+   - Cuaca Open-Meteo diambil bersamaan dengan unduhan foto (±1–2 detik lebih cepat). Urutan langkah di log tetap seperti PRD.
+   - **`thinkingLevel: LOW` diuji, tapi tidak diaktifkan.** Pada foto Tumbuh, waktu jawab turun dari 9,1 ke 6,1 detik dengan putusan yang sama. Uji penolakan foto jagung tidak bisa diselesaikan karena kuota harian habis. Penolakan foto salah adalah inti demo, jadi model tetap memakai tingkat *thinking* bawaannya.
+9. **Antrean bukti tertunda** (`agent/data/deferred.json`). Bukti yang gagal 3× (aturan PRD) tidak dibuang, tetapi dijadwalkan ulang dengan jeda 1, 2, 4, … menit (maksimal 10 menit) sampai berhasil atau milestone-nya tidak lagi menunggu putusan. Alasannya: tanpa putusan AI, milestone macet di "Bukti dikirim" dan petani tidak bisa mengunggah ulang.
+10. **Gladi resik di fork BSC testnet** (Anvil `--fork-url`) sebelum memakai tBNB sungguhan: deploy dengan registri resmi (biaya ±0,00076 tBNB), seed, pendaftaran agen di registri resmi, agen dengan Gemini + Pinata, dan web mode testnet. Semua berjalan; sisa artefak latihan dihapus.
+11. **Uji skenario penuh di BSC testnet** (1 Oktober 2026). Detail ada di [acceptance.md](acceptance.md#bsc-testnet-gelombang-8).
+    - Semua transaksi dikirim dengan `cast` dari akun demo, karena MetaMask tidak bisa diotomasi. Foto diunggah lewat API web ke Pinata, dan putusan dibuat oleh agen dengan Gemini.
+    - Node RPC publik di belakang load balancer kadang tertinggal satu blok. Akibatnya `fund` langsung setelah `approve` sesekali gagal estimasi gas. Skrip uji mengulang transaksi. Di web risikonya kecil: tombol "Danai" baru aktif setelah allowance baru terbaca, dan jika simulasi tetap gagal, pesan galat tampil dan pengguna cukup menekan ulang.
+12. **Petunjuk dompet mengikuti mode.** Di testnet, teks "pilih akun demo di header" diganti "Hubungkan dompet … di header" (tidak ada pemilih akun demo di testnet).
+

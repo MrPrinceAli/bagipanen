@@ -8,6 +8,7 @@ import { AdminReviewPanel } from "@/components/campaign/panels";
 import { VerdictSummary } from "@/components/campaign/Timeline";
 import { AddressInput, ConfirmButton, IpfsImage, parseAddressInput, StatusBadge, TxStatus, Usdt } from "@/components/common";
 import { Badge, Button, Card, EmptyState, Field, Input, Notice, SectionTitle, Select, Spinner, Stat } from "@/components/ui";
+import { IS_LOCAL } from "@/lib/config";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { harvestCampaignAbi } from "@/lib/abi/HarvestCampaign";
 import { reservePoolAbi } from "@/lib/abi/ReservePool";
@@ -297,7 +298,7 @@ export default function AdminPage() {
   const now = useEffectiveNow();
 
   if (role === undefined) return <Spinner />;
-  if (role !== "admin") return <Notice tone="info">Halaman ini khusus admin. {role === "tamu" ? "Pilih akun Admin di header." : "Wallet Anda bukan admin."}</Notice>;
+  if (role !== "admin") return <Notice tone="info">Halaman ini khusus admin. {role === "tamu" ? `${IS_LOCAL ? "Pilih akun" : "Hubungkan dompet"} Admin di header.` : "Wallet Anda bukan admin."}</Notice>;
 
   const all = rows ?? [];
   const drafts = all.filter((r) => r.summary.status === Status.Draft);

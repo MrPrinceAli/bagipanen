@@ -7,6 +7,7 @@ import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { harvestCampaignAbi } from "@/lib/abi/HarvestCampaign";
 import { mockUSDTAbi } from "@/lib/abi/MockUSDT";
 import { addresses } from "@/lib/addresses";
+import { IS_LOCAL } from "@/lib/config";
 import { usePosition } from "@/lib/campaigns";
 import { formatPercent, formatRupiah, formatUsdt, parseUsdtInput, usdtToInput } from "@/lib/format";
 import { uploadFile } from "@/lib/ipfs";
@@ -30,7 +31,7 @@ export function ActionPanels(props: PanelProps) {
   const current = milestones[c.currentMilestone];
   const allReleased = c.currentMilestone >= c.milestoneCount;
 
-  if (!isConnected) return <Notice tone="info">Hubungkan wallet (pilih akun demo di header) untuk mendanai atau melakukan aksi.</Notice>;
+  if (!isConnected) return <Notice tone="info">Hubungkan wallet ({IS_LOCAL ? "pilih akun demo" : "tombol Hubungkan Dompet"} di header) untuk mendanai atau melakukan aksi.</Notice>;
 
   const panels = [];
   if (role === "admin" && c.status === Status.Draft) panels.push(<AdminReviewPanel key="admin" c={c} />);

@@ -97,3 +97,65 @@ export class SeenHashes {
     writeJson(this.file, this.data);
   }
 }
+
+/** Bukti yang dijadwalkan ulang (disimpan sebagai string agar bigint aman di JSON). */
+export type DeferredItem = {
+  key: string;
+  campaign: string;
+  index: number;
+  cid: string;
+  attempt: number;
+  blockNumber: string;
+  txHash: string;
+  logIndex: number;
+  tries: number;
+  nextAt: number;
+};
+
+/**
+ * data/deferred.json — bukti yang gagal diproses 3× (mis. API sedang sibuk). Tidak dibuang,
+ * melainkan dicoba ulang berkala dengan jeda bertambah, agar milestone tidak macet tanpa putusan.
+ */
+export class DeferredProofs {
+  private readonly file: string;
+  private data: DeferredItem[];
+
+  constructor(dir: string) {
+    this.file = path.join(dir, "deferred.json");
+    this.data = readJson<DeferredItem[]>(this.file, []);
+  }
+
+  static key(p: { campaign: string; index: number; attempt: number }): string {
+    return `${p.campaign.toLowerCase()}-${p.index}-${p.attempt}`;
+  }
+
+  /** Jadwalkan (ulang) dengan jeda 1, 2, 4, … menit, maksimal 10 menit. */
+  schedule(p: Omit<DeferredItem, "key" | "tries" | "nextAt">, now = Date.now()): DeferredItem {
+    const key = DeferredProofs.key(p);
+    const prev = this.data.find((d) => d.key === key);
+    const tries = (prev?.tries ?? 0) + 1;
+    const delay = Math.min(60_000 * 2 ** (tries - 1), 600_000);
+    const item: DeferredItem = { ...p, key, tries, nextAt: now + delay };
+    this.data = [...this.data.filter((d) => d.key !== key), item];
+    writeJson(this.file, this.data);
+    return item;
+  }
+
+  due(now = Date.now()): DeferredItem[] {
+    return this.data.filter((d) => d.nextAt <= now);
+  }
+
+  remove(key: string) {
+    this.data = this.data.filter((d) => d.key !== key);
+    writeJson(this.file, this.data);
+  }
+
+  get size(): number {
+    return this.data.length;
+  }
+
+  clear() {
+    this.data = [];
+    writeJson(this.file, this.data);
+  }
+}

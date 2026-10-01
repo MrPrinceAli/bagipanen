@@ -7,6 +7,7 @@ import { CampaignLink } from "@/components/CampaignLink";
 import { CooperativePanel } from "@/components/campaign/panels";
 import { AddressInput, MilestoneBadge, parseAddressInput, StatusBadge, TxStatus } from "@/components/common";
 import { Button, Card, EmptyState, Field, Input, Notice, SectionTitle, Spinner } from "@/components/ui";
+import { IS_LOCAL } from "@/lib/config";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { addresses } from "@/lib/addresses";
 import { shortAddress } from "@/lib/format";
@@ -59,7 +60,7 @@ export default function KoperasiPage() {
 
   if (role === undefined) return <Spinner />;
   if (role !== "koperasi" || !address)
-    return <Notice tone="info">Halaman ini untuk koperasi terdaftar. {role === "tamu" ? "Pilih akun Koperasi di header." : "Wallet Anda bukan koperasi."}</Notice>;
+    return <Notice tone="info">Halaman ini untuk koperasi terdaftar. {role === "tamu" ? `${IS_LOCAL ? "Pilih akun" : "Hubungkan dompet"} Koperasi di header.` : "Wallet Anda bukan koperasi."}</Notice>;
 
   const me = address as Address;
   const coopName = regs?.cooperatives.find((c) => isAddressEqual(c.address, me))?.name;

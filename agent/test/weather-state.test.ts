@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { localFileStorage, sha256Hex } from "../src/ipfs.js";
-import { AgentState, SeenHashes } from "../src/state.js";
+import { AgentState, DeferredProofs, SeenHashes } from "../src/state.js";
 import { openMeteoUrl, summarizeDaily, todayWib, weatherText } from "../src/weather.js";
 
 describe("cuaca (Open-Meteo)", () => {
@@ -60,6 +60,32 @@ describe("state & deteksi duplikat", () => {
     assert.equal(again.isStale(id), false);
     assert.equal(again.lastBlock, 20n);
     assert.equal(again.isStale({ ...id, genesisHash: "0xbbb" }), true);
+  });
+});
+
+describe("antrean bukti tertunda", () => {
+  const proof = { campaign: "0x98A01f8FF48B849CcaF4d8D987eE200683a1a11e", index: 0, cid: "bafy", attempt: 1, blockNumber: "10", txHash: "0xabc", logIndex: 0 };
+
+  it("jeda bertambah 1, 2, 4 menit … maksimal 10 menit, dan tersimpan di disk", () => {
+    const d = mkdtempSync(path.join(tmpdir(), "bagipanen-deferred-"));
+    const q = new DeferredProofs(d);
+    const t0 = 1_000_000;
+    assert.equal(q.schedule(proof, t0).nextAt - t0, 60_000);
+    assert.equal(q.schedule(proof, t0).nextAt - t0, 120_000);
+    assert.equal(q.schedule(proof, t0).nextAt - t0, 240_000);
+    for (let i = 0; i < 5; i++) q.schedule(proof, t0);
+    assert.equal(q.schedule(proof, t0).nextAt - t0, 600_000);
+    assert.equal(q.size, 1, "satu entri per (kampanye, milestone, percobaan)");
+    assert.equal(new DeferredProofs(d).size, 1, "bertahan setelah restart");
+  });
+
+  it("due() hanya yang sudah waktunya; remove() menghapus", () => {
+    const q = new DeferredProofs(mkdtempSync(path.join(tmpdir(), "bagipanen-deferred-")));
+    const item = q.schedule(proof, 0);
+    assert.equal(q.due(item.nextAt - 1).length, 0);
+    assert.equal(q.due(item.nextAt).length, 1);
+    q.remove(item.key);
+    assert.equal(q.size, 0);
   });
 });
 
