@@ -103,8 +103,9 @@ export default function HomePage() {
                 <span className="bg-linear-to-r from-emas-200 via-emas-300 to-emas-500 bg-clip-text text-transparent italic">Panen dibagi adil.</span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-pretty text-white/75">
-                Kamu ikut mendanai satu musim tanam petani. Uangnya dikunci di smart contract dan baru cair per tahap setelah foto lahan
-                dicek agen AI dan koperasi. Begitu panen terjual, modalmu kembali duluan, lalu untungnya dibagi.
+                Pendanaan modal tanam berbasis RWA di BNB Chain. Investor mendanai petani sejak awal musim tanam dan mendapat bagian hasil
+                panen saat proyek berhasil. Agen AI beridentitas ERC-8004 bersama koperasi memverifikasi setiap tahap, sehingga penggunaan
+                modal sampai pembagian hasil tercatat transparan.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <ButtonLink href="/#kampanye" variant="gold" size="lg">
