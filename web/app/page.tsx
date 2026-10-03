@@ -750,7 +750,7 @@ function AgentSection() {
 
 /* ======================================================= Kartu unggulan */
 
-const SLIDE_MS = 5000;
+const SLIDE_MS = 3000;
 
 /** Slide otomatis kartu proyek di hero; berhenti saat disorot/difokus atau bila reduced motion. */
 function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
