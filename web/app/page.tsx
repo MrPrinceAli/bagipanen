@@ -3,16 +3,18 @@
 import {
   ArrowRight,
   BadgeCheck,
+  Blocks,
   Bot,
+  Boxes,
   Camera,
+  Coins,
   FileSignature,
   HandCoins,
   Landmark,
-  LockKeyhole,
   MapPin,
   PieChart,
   Scale,
-  ScrollText,
+  ScanEye,
   ShieldCheck,
   Sprout,
   Users,
@@ -31,6 +33,16 @@ import { identityIsMock, useAgentProfile, useRegistrations } from "@/lib/registr
 import { useRole } from "@/lib/role";
 import { type CampaignMetadata, type CampaignSummary, FailType, Status } from "@/lib/types";
 import heroImage from "@/public/hero-lahan.jpg";
+
+/** Teknologi utama di hero; di mode lokal adapter AI & penyimpanan memakai mock. */
+const TECH_STACK = [
+  { icon: Wheat, label: "Real World Asset" },
+  { icon: Blocks, label: IS_LOCAL ? "Anvil (lokal)" : "BSC Testnet" },
+  { icon: BadgeCheck, label: "Agen AI ERC-8004" },
+  { icon: ScanEye, label: IS_LOCAL ? "AI Vision (mock)" : "Gemini Vision" },
+  { icon: Boxes, label: IS_LOCAL ? "Penyimpanan lokal" : "IPFS · Pinata" },
+  { icon: Coins, label: "Stablecoin" },
+];
 
 const FILTERS = [
   { key: "all", label: "Semua" },
@@ -123,16 +135,15 @@ export default function HomePage() {
                   </ButtonLink>
                 )}
               </div>
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/65">
-                <li className="flex items-center gap-2">
-                  <LockKeyhole className="size-4 text-emas-300" aria-hidden /> Dana dikunci di kontrak
-                </li>
-                <li className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-emas-300" aria-hidden /> Dicek AI dan koperasi
-                </li>
-                <li className="flex items-center gap-2">
-                  <ScrollText className="size-4 text-emas-300" aria-hidden /> Semua tercatat terbuka
-                </li>
+              <ul aria-label="Teknologi yang dipakai" className="mt-8 flex flex-wrap gap-2">
+                {TECH_STACK.map(({ icon: Icon, label }) => (
+                  <li
+                    key={label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur sm:text-sm"
+                  >
+                    <Icon className="size-3.5 text-emas-300 sm:size-4" aria-hidden /> {label}
+                  </li>
+                ))}
               </ul>
             </div>
 
