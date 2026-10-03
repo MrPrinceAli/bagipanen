@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
 import { StatusBadge } from "@/components/common";
 import { Reveal, useActiveIndex, useReducedMotion, useScrollProgress } from "@/components/scroll";
@@ -84,8 +84,9 @@ export default function HomePage() {
   const activeCount = all.filter((c) => c.status === Status.Funding || c.status === Status.Active).length;
   const drafts = all.filter((c) => c.status === Status.Draft);
   const shown = visible.filter((c) => matches(c, filter));
-  const featured =
-    visible.find((c) => c.status === Status.Funding) ?? visible.find((c) => c.status === Status.Active) ?? visible[0];
+  // Slide hero: cari dana dulu, lalu berjalan, lalu yang sudah selesai.
+  const featured = [Status.Funding, Status.Active].flatMap((st) => visible.filter((c) => c.status === st));
+  featured.push(...visible.filter((c) => !featured.includes(c)));
 
   return (
     <>
@@ -154,7 +155,7 @@ export default function HomePage() {
             </div>
 
             <div className="animate-fade-up [animation-delay:150ms]">
-              {featured ? <FeaturedCampaign c={featured} /> : <Skeleton className="h-96 bg-white/10" />}
+              {featured.length > 0 ? <FeaturedCarousel items={featured.slice(0, 6)} /> : <Skeleton className="h-96 bg-white/10" />}
             </div>
           </div>
         </Container>
@@ -744,6 +745,77 @@ function AgentSection() {
 }
 
 /* ======================================================= Kartu unggulan */
+
+const SLIDE_MS = 5000;
+
+/** Slide otomatis kartu proyek di hero; berhenti saat disorot/difokus atau bila reduced motion. */
+function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
+  const reduced = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const current = index % items.length;
+
+  useEffect(() => {
+    if (reduced || paused || items.length < 2) return;
+    const t = setTimeout(() => setIndex((i) => (i + 1) % items.length), SLIDE_MS);
+    return () => clearTimeout(t);
+  }, [index, reduced, paused, items.length]);
+
+  return (
+    <div
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Proyek tanam pilihan"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      {/* Semua kartu ditumpuk di sel grid yang sama → tinggi stabil, berganti dengan crossfade */}
+      <div className="grid">
+        {items.map((c, i) => (
+          <div
+            key={c.address}
+            aria-roledescription="slide"
+            aria-label={`${i + 1} dari ${items.length}`}
+            aria-hidden={i !== current}
+            inert={i !== current}
+            className={cn(
+              // Kartu kaca transparan → jangan tumpang tindih: yang lama keluar dulu, yang baru menyusul.
+              "[grid-area:1/1] transition ease-out",
+              i === current
+                ? "translate-x-0 opacity-100 delay-300 duration-500"
+                : "pointer-events-none -translate-x-3 opacity-0 duration-300",
+            )}
+          >
+            <FeaturedCampaign c={c} />
+          </div>
+        ))}
+      </div>
+      {items.length > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {items.map((c, i) => (
+            <button
+              key={c.address}
+              type="button"
+              onClick={() => setIndex(i)}
+              aria-label={`Tampilkan proyek ${i + 1}`}
+              aria-current={i === current}
+              className="grid h-6 place-items-center px-0.5"
+            >
+              <span
+                className={cn(
+                  "block h-1.5 rounded-full transition-all duration-500",
+                  i === current ? "w-8 bg-emas-300" : "w-3 bg-white/30 hover:bg-white/50",
+                )}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Kartu proyek unggulan di hero (gaya kaca). */
 function FeaturedCampaign({ c }: { c: CampaignSummary }) {
