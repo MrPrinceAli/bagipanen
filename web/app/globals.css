@@ -388,10 +388,29 @@ body {
   }
 }
 
+/* Loader: tetes air yang jatuh ke tunas */
+.loader-drop {
+  animation: loader-drop 1.05s ease-in infinite;
+}
+@keyframes loader-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .scroll-cue,
-  .scan-line {
+  .scan-line,
+  .loader-drop {
     animation: none;
   }
   .reveal,

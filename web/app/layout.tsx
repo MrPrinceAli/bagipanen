@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { InitialLoader, NavigationLoader } from "@/components/PageLoader";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -22,6 +23,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${jakarta.variable} ${fraunces.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
+        {/* Tanpa JavaScript, layar pembuka tidak pernah selesai → sembunyikan. */}
+        <noscript>
+          <style>{"#page-loader{display:none}"}</style>
+        </noscript>
+        <InitialLoader />
+        <NavigationLoader />
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>

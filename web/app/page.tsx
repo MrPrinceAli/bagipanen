@@ -748,13 +748,18 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
         onPointerDown={(e) => {
           if (n < 2) return;
           moved.current = false;
+          e.currentTarget.dataset.moved = "0";
           setDrag({ x0: e.clientX, dx: 0 });
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
           if (!drag) return;
           const dx = e.clientX - drag.x0;
-          if (Math.abs(dx) > 6) moved.current = true;
+          if (Math.abs(dx) > 6) {
+            moved.current = true;
+            // Ditandai di DOM agar loader navigasi tidak menganggap seretan sebagai klik tautan.
+            e.currentTarget.dataset.moved = "1";
+          }
           setDrag({ ...drag, dx });
         }}
         onPointerUp={release}
