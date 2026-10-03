@@ -1,8 +1,9 @@
 /**
- * Enam proyek tanam contoh di BSC testnet, dua per status (Cari dana, Berjalan, Selesai), di daerah
- * yang berbeda. Setiap daerah punya koperasi & petani sendiri (wallet dari TESTNET_MNEMONIC, indeks 7+).
+ * Proyek tanam contoh di BSC testnet, dua per status (Cari dana, Berjalan, Selesai), di daerah
+ * yang berbeda, ditambah dua skenario perlindungan investor: gagal pendanaan (refund 100%) dan gagal
+ * panen (sisa dana + kompensasi dana cadangan). Setiap daerah punya koperasi & petani sendiri (wallet dari TESTNET_MNEMONIC, indeks 7+).
  *
- *   npm run seed:showcase            (APP_MODE=testnet di agent/.env; agen harus sedang berjalan)
+ *   npm run seed:showcase [kunci ...]   (APP_MODE=testnet di agent/.env; agen harus sedang berjalan)
  *
  * Semua langkah lewat transaksi sungguhan, sama seperti lewat UI. Foto bukti dinilai agen AI yang
  * sedang berjalan (Gemini); script ini hanya menunggu putusannya, lalu koperasi mengonfirmasi.
@@ -17,6 +18,7 @@ import { type HDAccount, mnemonicToAccount } from "viem/accounts";
 import { campaignFactoryAbi } from "../src/abi/CampaignFactory.js";
 import { harvestCampaignAbi } from "../src/abi/HarvestCampaign.js";
 import { mockUSDTAbi } from "../src/abi/MockUSDT.js";
+import { reservePoolAbi } from "../src/abi/ReservePool.js";
 import { AGENT_ROOT, chain, config, IS_LOCAL, requireEnv } from "../src/config.js";
 import { deployments } from "../src/deployments.js";
 
@@ -50,12 +52,18 @@ type Project = {
   estimate: number;
   harvestInDays: number;
   fundingDays: number;
+  /** Tenggat pendanaan dalam menit (menggantikan fundingDays) — untuk skenario gagal pendanaan. */
+  fundingMinutes?: number;
   costPlan: { item: string; usdt: number }[];
   funding: Partial<Record<Investor, number>>;
   /** Foto bukti per milestone yang dikirim (urut). */
   proofs: string[];
   harvest?: { amount: number; receipt: string };
   claim?: boolean;
+  /** Target tidak tercapai sampai tenggat → finalizeFunding, investor refund 100%. */
+  failFunding?: boolean;
+  /** Setelah bukti di `proofs` cair, admin menandai gagal panen + kompensasi dari dana cadangan. */
+  cropFailure?: { compensate: number };
 };
 
 // Koordinat: perkiraan pusat kecamatan (Wikipedia). Nama orang & koperasi fiktif.
@@ -213,11 +221,65 @@ const PROJECTS: Project[] = [
     proofs: ["tanahlaut-tanam.jpg", "tanahlaut-tumbuh.jpg", "tanahlaut-pra-panen.jpg"],
     harvest: { amount: 1700, receipt: "tanahlaut-nota.jpg" },
   },
+  {
+    key: "dieng",
+    idx: 19,
+    cooperative: "Koperasi Tani Dataran Tinggi Dieng, Wonosobo",
+    farmer: "Pak Slamet",
+    commodity: "Kentang",
+    title: "Kentang granola di dataran tinggi Dieng",
+    story:
+      "Pak Slamet menanam kentang granola di lahan 0,35 ha di Kejajar, dataran tinggi Dieng. Modalnya untuk bibit, pupuk kandang, fungisida, dan upah tenaga kerja.",
+    locationName: "Kejajar, Wonosobo, Jawa Tengah",
+    lat: -7.2069,
+    lon: 109.9067,
+    areaM2: 3500,
+    target: 1000,
+    estimate: 1500,
+    harvestInDays: 110,
+    fundingDays: 0,
+    fundingMinutes: 8,
+    costPlan: [
+      { item: "Bibit kentang granola", usdt: 500 },
+      { item: "Pupuk kandang & fungisida", usdt: 300 },
+      { item: "Upah tenaga kerja", usdt: 200 },
+    ],
+    funding: { rina: 100, budi: 150 },
+    proofs: [],
+    failFunding: true,
+  },
+  {
+    key: "demak",
+    idx: 21,
+    cooperative: "Koperasi Tani Wonosalam, Demak",
+    farmer: "Pak Kasmuri",
+    commodity: "Padi",
+    title: "Padi sawah musim hujan di Karanganyar, Demak",
+    story:
+      "Pak Kasmuri menggarap sawah 0,7 ha di Karanganyar, Demak. Modal musim hujan ini untuk benih, pupuk, dan upah tenaga kerja.",
+    locationName: "Karanganyar, Demak, Jawa Tengah",
+    lat: -6.8317,
+    lon: 110.7236,
+    areaM2: 7000,
+    target: 900,
+    estimate: 1350,
+    harvestInDays: 100,
+    fundingDays: 30,
+    costPlan: [
+      { item: "Benih & olah lahan", usdt: 250 },
+      { item: "Pupuk & pestisida", usdt: 350 },
+      { item: "Upah tenaga kerja", usdt: 300 },
+    ],
+    funding: { rina: 400, budi: 300, sari: 200 },
+    proofs: ["demak-tanam.jpg"],
+    cropFailure: { compensate: 30 },
+    claim: true,
+  },
 ];
 
 // ---------------------------------------------------------------- klien & akun
 
-const testnet = deployments.bscTestnet as unknown as { factory: Address; usdt: Address };
+const testnet = deployments.bscTestnet as unknown as { factory: Address; usdt: Address; reservePool: Address };
 const mnemonic = contractsEnv.TESTNET_MNEMONIC;
 if (!mnemonic) throw new Error("TESTNET_MNEMONIC belum diisi di contracts/.env.");
 const acct = (i: number) => mnemonicToAccount(mnemonic, { addressIndex: i });
@@ -288,7 +350,7 @@ const pinPhoto = async (file: string) => pin(new Blob([await readFile(path.join(
 
 // ---------------------------------------------------------------- state
 
-type State = Record<string, { campaign?: Address }>;
+type State = Record<string, { campaign?: Address; compensated?: boolean }>;
 const state: State = JSON.parse(await readFile(STATE_FILE, "utf8").catch(() => "{}"));
 const saveState = () => writeFile(STATE_FILE, JSON.stringify(state, null, 2));
 
@@ -347,7 +409,7 @@ async function create(p: Project, farmer: HDAccount): Promise<Address> {
           landAreaM2: p.areaM2,
           targetAmount: usdt(p.target),
           estimatedRevenue: usdt(p.estimate),
-          fundingDuration: BigInt(p.fundingDays * DAY),
+          fundingDuration: BigInt(p.fundingMinutes ? p.fundingMinutes * 60 : p.fundingDays * DAY),
           expectedHarvestDate: BigInt(now + p.harvestInDays * DAY),
           metadataCID,
           milestoneNames: MILESTONES.names,
@@ -414,6 +476,39 @@ async function claimAll(addr: Address) {
   }
 }
 
+/** Tunggu tenggat lewat (waktu blok), finalisasi gagal, lalu setiap investor menarik dananya. */
+async function failFunding(p: Project, addr: Address) {
+  const deadline = await pub.readContract({ address: addr, abi: harvestCampaignAbi, functionName: "fundingDeadline" });
+  for (;;) {
+    const { timestamp } = await pub.getBlock();
+    if (timestamp > deadline) break;
+    log(`  … menunggu tenggat pendanaan (${Number(deadline - timestamp)} detik lagi)`);
+    await sleep(Math.min(60_000, Number(deadline - timestamp) * 1000 + 5_000));
+  }
+  if ((await readCampaign(addr)).summary.status === 1)
+    await send(admin, { address: addr, abi: harvestCampaignAbi, functionName: "finalizeFunding" }, "tutup pendanaan (target tidak tercapai)");
+  for (const name of Object.keys(p.funding) as Investor[]) {
+    const inv = investors[name];
+    const share = await pub.readContract({ address: addr, abi: harvestCampaignAbi, functionName: "balanceOf", args: [inv.address] });
+    if (share > 0n) await send(inv, { address: addr, abi: harvestCampaignAbi, functionName: "refund" }, `${name} refund ${formatEther(share)} mUSDT`);
+  }
+}
+
+/** Admin menandai gagal panen; sisa escrow jadi pool investor, ditambah kompensasi dana cadangan. */
+async function cropFailure(p: Project, addr: Address) {
+  if (!p.cropFailure) return;
+  if ((await readCampaign(addr)).summary.status === 2)
+    await send(admin, { address: addr, abi: harvestCampaignAbi, functionName: "markFailed" }, "admin tandai gagal panen");
+  if (!state[p.key]?.compensated) {
+    const amount = usdt(p.cropFailure.compensate);
+    const reserve = await pub.readContract({ address: testnet.reservePool, abi: reservePoolAbi, functionName: "balance" });
+    if (reserve < amount) throw new Error(`Dana cadangan ${formatEther(reserve)} mUSDT, kurang untuk kompensasi ${p.cropFailure.compensate}.`);
+    await send(admin, { address: testnet.reservePool, abi: reservePoolAbi, functionName: "compensate", args: [addr, amount] }, `kompensasi dana cadangan ${p.cropFailure.compensate} mUSDT`);
+    state[p.key] = { ...state[p.key], compensated: true };
+    await saveState();
+  }
+}
+
 async function run(p: Project) {
   const coop = acct(p.idx);
   const farmer = acct(p.idx + 1);
@@ -425,12 +520,14 @@ async function run(p: Project) {
   if ((await readCampaign(addr)).summary.status === 0)
     await send(admin, { ...factory, functionName: "approveCampaign", args: [addr] }, "admin setujui proyek");
   await fund(p, addr);
+  if (p.failFunding) await failFunding(p, addr);
   for (let i = 0; i < p.proofs.length; i++) await milestone(p, addr, i, farmer, coop);
+  await cropFailure(p, addr);
 
   let { summary } = await readCampaign(addr);
   if (summary.status === 2 && p.harvest && summary.currentMilestone === MILESTONES.names.length) await harvest(p, addr, farmer);
   ({ summary } = await readCampaign(addr));
-  if (summary.status === 3 && p.claim) await claimAll(addr);
+  if ((summary.status === 3 || (summary.status === 4 && p.cropFailure)) && p.claim) await claimAll(addr);
   ({ summary } = await readCampaign(addr));
   log(`  status: ${STATUS[summary.status]}`);
 }

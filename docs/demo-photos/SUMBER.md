@@ -28,7 +28,7 @@ Foto hero di beranda (`web/public/hero-lahan.jpg`) adalah potongan landscape dar
 
 ## Foto enam proyek contoh (`showcase/`)
 
-Dipakai oleh `agent/scripts/seed-showcase.ts` untuk enam proyek contoh di BSC testnet (Nganjuk, Karo, Kulon Progo, Lombok Tengah, Sidrap, Tanah Laut). Semuanya dari Wikimedia Commons, diperkecil menjadi lebar 1.280 px oleh Wikimedia (tanpa perubahan lain). Sebelum dikirim ke kontrak, setiap foto bukti diuji dulu ke Gemini dengan `npm run cek-foto` agar kesempatan unggah tidak terbuang. Contohnya, foto jagung bertunas bunga ditolak untuk tahap Tumbuh karena fasenya sudah pra-panen, lalu diganti. Nama petani & koperasi fiktif; koordinat lahan adalah perkiraan pusat kecamatan.
+Dipakai oleh `agent/scripts/seed-showcase.ts` untuk proyek contoh di BSC testnet (Nganjuk, Karo, Kulon Progo, Lombok Tengah, Sidrap, Tanah Laut, ditambah skenario gagal pendanaan di Dieng dan gagal panen di Demak). Semuanya dari Wikimedia Commons, diperkecil menjadi lebar 1.280 px oleh Wikimedia (tanpa perubahan lain). Sebelum dikirim ke kontrak, setiap foto bukti diuji dulu ke Gemini dengan `npm run cek-foto` agar kesempatan unggah tidak terbuang. Contohnya, foto jagung bertunas bunga ditolak untuk tahap Tumbuh karena fasenya sudah pra-panen, lalu diganti. Nama petani & koperasi fiktif; koordinat lahan adalah perkiraan pusat kecamatan.
 
 | File | Dipakai untuk | Judul asli | Pembuat | Lisensi |
 | --- | --- | --- | --- | --- |
@@ -45,4 +45,7 @@ Dipakai oleh `agent/scripts/seed-showcase.ts` untuk enam proyek contoh di BSC te
 | `tanahlaut-tanam.jpg` | Bukti Tanam, Tanah Laut | [Corn shoots - Mısır filizleri 01.jpg](https://commons.wikimedia.org/wiki/File:Corn_shoots_-_M%C4%B1s%C4%B1r_filizleri_01.jpg) | Zeynel Cebeci | CC BY-SA 4.0 |
 | `tanahlaut-tumbuh.jpg` | Bukti Tumbuh, Tanah Laut | [A maize and cassava farm.jpg](https://commons.wikimedia.org/wiki/File:A_maize_and_cassava_farm.jpg) | Phina001 | CC BY-SA 4.0 |
 | `tanahlaut-pra-panen.jpg` | Bukti Pra-panen, Tanah Laut | [Jagung Yang Sudah Siap Di Panen.jpg](https://commons.wikimedia.org/wiki/File:Jagung_Yang_Sudah_Siap_Di_Panen.jpg) | SATELITBM | CC BY-SA 4.0 |
+| `dieng-sampul.jpg` | Sampul kentang, Dieng (skenario gagal pendanaan) | [Gubuk kecil ditengah hamparan ladang kentang.jpg](https://commons.wikimedia.org/wiki/File:Gubuk_kecil_ditengah_hamparan_ladang_kentang.jpg) | Ahmadwahyudi7 | CC BY-SA 4.0 |
+| `demak-sampul.jpg` | Sampul padi, Demak (skenario gagal panen) | [Hamparan Sawah Desa Ngampel.jpg](https://commons.wikimedia.org/wiki/File:Hamparan_Sawah_Desa_Ngampel.jpg) | Dzaky Badawi | CC BY-SA 4.0 |
+| `demak-tanam.jpg` | Bukti Tanam, Demak | [Young rice seedlings in muddy rice field, Indonesia.jpg](https://commons.wikimedia.org/wiki/File:Young_rice_seedlings_in_muddy_rice_field,_Indonesia.jpg) | Undeka 11 | CC BY-SA 4.0 |
 | `sidrap-nota.jpg`, `tanahlaut-nota.jpg` | Nota setor hasil panen | Dibuat untuk proyek ini, bertanda "CONTOH · DATA DEMO" (nama & angka fiktif) | Tim BagiPanen | — |
