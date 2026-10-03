@@ -4,6 +4,7 @@ import { ArrowRight, CloudRainWind, HandCoins, MapPin, ShieldCheck, Users, Wheat
 import Link from "next/link";
 import { type Address, isAddressEqual } from "viem";
 import { AddressLink } from "@/components/common";
+import { FarmerAvatar } from "@/components/FarmerAvatar";
 import { Reveal } from "@/components/scroll";
 import { Badge, Card, EmptyState, Loading, PageBody, PageHero, SectionTitle, Stat } from "@/components/ui";
 import { useCampaignList } from "@/lib/campaigns";
@@ -12,15 +13,6 @@ import { useFarmerDirectory } from "@/lib/registry";
 import type { CampaignSummary } from "@/lib/types";
 
 type FarmerRow = NonNullable<ReturnType<typeof useFarmerDirectory>["data"]>["farmers"][number];
-
-function initials(name: string) {
-  return name
-    .replace(/^(Pak|Bu|Bapak|Ibu)\s+/i, "")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 function FarmerCard({ f, campaigns }: { f: FarmerRow; campaigns: CampaignSummary[] }) {
   const s = f.stats;
@@ -33,9 +25,7 @@ function FarmerCard({ f, campaigns }: { f: FarmerRow; campaigns: CampaignSummary
       className="group flex h-full flex-col gap-4 rounded-3xl border border-krem-200 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift"
     >
       <div className="flex items-start gap-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-hutan-900 font-display text-lg font-semibold text-emas-300">
-          {initials(f.name) || "P"}
-        </span>
+        <FarmerAvatar name={f.name || "Petani"} seed={f.address} commodity={campaigns[0]?.commodity} className="size-16 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="font-display text-lg leading-snug font-semibold text-hutan-950">{f.name || "Petani"}</p>
           <p className="truncate text-sm text-stone-500">{f.cooperativeName || "Koperasi"}</p>

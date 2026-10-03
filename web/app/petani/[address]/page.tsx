@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { type Address, isAddress } from "viem";
 import { CampaignCover } from "@/components/CampaignCard";
+import { FarmerAvatar } from "@/components/FarmerAvatar";
 import { AddressLink, StatusBadge } from "@/components/common";
 import { Badge, Card, EmptyState, Loading, Notice, PageBody, PageHero, SectionTitle, Stat } from "@/components/ui";
 import { useFarmerCampaigns, useIpfsJson } from "@/lib/campaigns";
@@ -77,7 +78,17 @@ export default function FarmerReportPage() {
     <>
       <PageHero
         eyebrow="Rapor Petani"
-        title={report.name}
+        title={
+          <span className="flex items-center gap-4">
+            <FarmerAvatar
+              name={report.name}
+              seed={farmer}
+              commodity={campaigns?.[0]?.summary.commodity}
+              className="size-16 shrink-0 drop-shadow-lg sm:size-20"
+            />
+            {report.name}
+          </span>
+        }
         description={
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             Didampingi {report.cooperativeName} · <AddressLink address={farmer} className="text-sm text-emas-200" />

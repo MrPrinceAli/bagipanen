@@ -2,6 +2,7 @@
 
 import { ArrowLeft, CalendarDays, ExternalLink, History, Landmark, MapPin, Receipt, Ruler, Sprout, TrendingUp, Wheat } from "lucide-react";
 import Link from "next/link";
+import { FarmerAvatar } from "@/components/FarmerAvatar";
 import { useParams } from "next/navigation";
 import { type Address, isAddress } from "viem";
 import { CampaignCover, fundedPercent } from "@/components/CampaignCard";
@@ -17,16 +18,6 @@ import { useRole } from "@/lib/role";
 import { useEffectiveNow } from "@/lib/time";
 import { type CampaignMetadata, type CampaignSummary, FailType, Status } from "@/lib/types";
 
-function initials(name: string) {
-  return (
-    name
-      .replace(/^(pak|bu|ibu|bapak)\s+/i, "")
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? "")
-      .join("") || "P"
-  );
-}
 
 function fundingNote(c: CampaignSummary, now: bigint) {
   if (c.status === Status.Funding)
@@ -111,9 +102,7 @@ export default function CampaignPage() {
                 ))}
               </div>
               <div className="mt-6 flex items-center gap-3">
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-emas-400 font-display text-lg font-semibold text-hutan-950">
-                  {initials(farmerName)}
-                </span>
+                <FarmerAvatar name={farmerName || "Petani"} seed={c.farmer} commodity={c.commodity} className="size-14 shrink-0 drop-shadow-md" />
                 <div className="text-sm">
                   <p>
                     <Link href={`/petani/${c.farmer}`} className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-emas-300">
