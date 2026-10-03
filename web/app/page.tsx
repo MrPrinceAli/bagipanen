@@ -790,26 +790,26 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      {/* Semua kartu ditumpuk di sel grid yang sama → tinggi stabil, berganti dengan crossfade */}
-      <div className="grid">
-        {items.map((c, i) => (
-          <div
-            key={c.address}
-            aria-roledescription="slide"
-            aria-label={`${i + 1} dari ${items.length}`}
-            aria-hidden={i !== current}
-            inert={i !== current}
-            className={cn(
-              // Kartu kaca transparan → jangan tumpang tindih: yang lama keluar dulu, yang baru menyusul.
-              "[grid-area:1/1] transition ease-out",
-              i === current
-                ? "translate-x-0 opacity-100 delay-300 duration-500"
-                : "pointer-events-none -translate-x-3 opacity-0 duration-300",
-            )}
-          >
-            <FeaturedCampaign c={c} />
-          </div>
-        ))}
+      {/* Lintasan geser: kartu lama keluar ke kiri bersamaan kartu baru masuk, tanpa jeda kosong.
+          Padding + margin negatif agar bayangan kartu tidak terpotong; jarak antar-kartu > padding. */}
+      <div className="-m-4 overflow-hidden p-4">
+        <div
+          className="flex items-stretch gap-8 transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] motion-reduce:transition-none"
+          style={{ transform: `translateX(calc(${-current} * (100% + 2rem)))` }}
+        >
+          {items.map((c, i) => (
+            <div
+              key={c.address}
+              aria-roledescription="slide"
+              aria-label={`${i + 1} dari ${items.length}`}
+              aria-hidden={i !== current}
+              inert={i !== current}
+              className="w-full shrink-0"
+            >
+              <FeaturedCampaign c={c} />
+            </div>
+          ))}
+        </div>
       </div>
       {items.length > 1 && (
         <div className="mt-4 flex items-center justify-center gap-2">
@@ -843,7 +843,7 @@ function FeaturedCampaign({ c }: { c: CampaignSummary }) {
   return (
     <Link
       href={`/campaign/${c.address}`}
-      className="group block overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.07] p-3 shadow-lift backdrop-blur-xl transition hover:bg-white/10"
+      className="group block h-full overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.07] p-3 shadow-lift backdrop-blur-xl transition hover:bg-white/10"
     >
       <div className="relative h-56 overflow-hidden rounded-3xl sm:h-64">
         <CampaignCover cid={meta?.coverImageCID} commodity={c.commodity} className="transition duration-700 group-hover:scale-105" />
