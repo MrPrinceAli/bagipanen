@@ -27,7 +27,7 @@ import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
 import { StepBadge, StepVisual } from "@/components/HowItWorksVisuals";
 import { StatusBadge } from "@/components/common";
-import { Reveal, useActiveIndex, useReducedMotion, useScrollProgress } from "@/components/scroll";
+import { Reveal, useReducedMotion, useScrollProgress } from "@/components/scroll";
 import { ButtonLink, Card, Container, cn, EmptyState, Notice, ProgressBar, SectionTitle, Skeleton, Stat } from "@/components/ui";
 import { useCampaignList, useIpfsJson, useReserveBalance } from "@/lib/campaigns";
 import { HIDDEN_FROM_HOME, IS_LOCAL } from "@/lib/config";
@@ -487,11 +487,38 @@ const STEPS: { title: string; body: string }[] = [
   },
 ];
 
+/** Latar & warna teks tiap adegan layar penuh (selaras dengan gaya panelnya). */
+const SCENES = [
+  { bg: "scene-paper", title: "text-[#2c1d0c]", body: "text-[#4a3418]", num: "text-[#2c1d0c]/[0.09]", nav: "dark" },
+  { bg: "scene-neon", title: "text-white", body: "text-white/70", num: "text-emas-300/[0.07]", nav: "light" },
+  { bg: "scene-field", title: "text-hutan-950", body: "text-hutan-900/80", num: "text-hutan-900/[0.08]", nav: "dark" },
+  { bg: "scene-brutal", title: "text-hutan-950", body: "text-hutan-950/80", num: "text-transparent [-webkit-text-stroke:3px_rgb(11_29_21/0.2)]", nav: "dark" },
+] as const;
+
+/**
+ * Cara kerja sebagai pengalaman layar penuh: panggung menempel selama 4 layar gulir; tiap langkah
+ * adalah adegan dengan latarnya sendiri yang menyapu naik menutupi adegan sebelumnya. Panel
+ * bergerak sedikit mengikuti gulir, dan navigasi titik di kanan bisa diklik untuk lompat.
+ */
 function HowItWorks() {
-  const [register, active] = useActiveIndex(STEPS.length);
+  const reduced = useReducedMotion();
+  const [ref, progress] = useScrollProgress<HTMLDivElement>(400);
+  const n = STEPS.length;
+  const active = Math.min(n - 1, Math.floor(progress * n));
+  const local = progress * n - active;
+  const lightNav = SCENES[active].nav === "light";
+
+  const jump = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const span = el.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: top + (span * (i + 0.2)) / n, behavior: reduced ? "auto" : "smooth" });
+  };
+
   return (
-    <section id="cara-kerja" className="scroll-mt-24 border-y border-krem-200 bg-white py-16 sm:py-24">
-      <Container>
+    <section id="cara-kerja" className="scroll-mt-24 bg-white">
+      <Container className="pt-16 pb-10 sm:pt-24 sm:pb-14">
         <Reveal>
           <SectionTitle
             eyebrow="Cara kerja"
@@ -500,59 +527,83 @@ function HowItWorks() {
             Dari lahan sampai bagi hasil
           </SectionTitle>
         </Reveal>
+      </Container>
 
-        <div className="mt-10 lg:grid lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-          {/* Visual menempel (desktop) — berganti sesuai langkah yang sedang dibaca */}
-          <div className="hidden lg:block">
-            <div className="sticky top-24 flex h-[calc(100svh-8rem)] flex-col justify-center gap-6">
-              {/* Semua visual ditumpuk di sel grid yang sama → tinggi mengikuti yang terpanjang */}
-              <div className="grid w-full">
-                {STEPS.map((s, i) => (
+      <div ref={ref} className="relative" style={{ height: `${n * 100}svh` }}>
+        <div className="sticky top-28 h-[calc(100svh-7rem)] overflow-hidden lg:top-16 lg:h-[calc(100svh-4rem)]">
+          {STEPS.map((s, i) => {
+            const t = SCENES[i];
+            const state = i === active ? "on" : i < active ? "past" : "next";
+            return (
+              <div
+                key={s.title}
+                data-state={state}
+                aria-hidden={i !== active}
+                className={cn("scene absolute inset-0", t.bg)}
+                style={{ zIndex: i + 1 }}
+              >
+                <span
+                  aria-hidden
+                  className={cn("scene-number pointer-events-none absolute -right-2 -bottom-4 font-display font-black select-none sm:-right-6 sm:-bottom-10", t.num)}
+                >
+                  0{i + 1}
+                </span>
+                <Container className="relative grid h-full grid-cols-1 content-center items-center gap-5 py-5 pr-12 sm:gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16 lg:pr-20">
+                  <div>
+                    <StepBadge index={i} />
+                    <h3 className={cn("mt-3 font-display text-3xl leading-[1.05] font-semibold tracking-tight text-balance sm:mt-5 sm:text-5xl xl:text-6xl", t.title)}>
+                      {s.title}
+                    </h3>
+                    <p className={cn("mt-3 max-w-md text-sm leading-relaxed text-pretty sm:mt-5 sm:text-lg", t.body)}>{s.body}</p>
+                  </div>
                   <div
-                    key={s.title}
-                    aria-hidden={i !== active}
-                    className={cn(
-                      "[grid-area:1/1] transition duration-700 ease-out",
-                      i === active ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-6 scale-[0.97] opacity-0",
-                    )}
+                    className="mx-auto w-full max-w-xl transition-transform duration-300 ease-out max-sm:[&_.how-panel]:min-h-[20rem] max-sm:[&_.how-panel]:p-4"
+                    style={i === active && !reduced ? { transform: `translateY(${(0.5 - local) * 48}px)` } : undefined}
                   >
                     <StepVisual index={i} active={i === active} />
                   </div>
-                ))}
+                </Container>
               </div>
-              <div className="flex items-center gap-2" aria-hidden>
-                {STEPS.map((s, i) => (
-                  <span
-                    key={s.title}
-                    className={cn("h-1.5 rounded-full transition-all duration-500", i === active ? "w-10 bg-hutan-700" : i < active ? "w-5 bg-hutan-300" : "w-5 bg-krem-300")}
-                  />
-                ))}
-                <span className="ml-2 text-xs font-semibold text-stone-500">
-                  {active + 1} / {STEPS.length}
-                </span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
 
-          <ol className="flex flex-col gap-10 lg:gap-0">
+          {/* Navigasi titik: posisi langkah & lompat langsung */}
+          <nav aria-label="Langkah cara kerja" className="absolute top-1/2 right-3 z-20 flex -translate-y-1/2 flex-col gap-2.5 sm:right-6">
             {STEPS.map((s, i) => (
-              <li key={s.title} ref={register(i)} className="lg:flex lg:min-h-[72svh] lg:items-center lg:last:min-h-[56svh]">
-                <Reveal className="w-full">
-                  <div className="mb-6 lg:hidden">
-                    {/* Di HP animasi panel dipicu saat muncul di layar (data-shown dari Reveal). */}
-                    <StepVisual index={i} active={false} />
-                  </div>
-                  <div className={cn("transition-opacity duration-500", i === active ? "lg:opacity-100" : "lg:opacity-30")}>
-                    <StepBadge index={i} />
-                    <h3 className="mt-4 font-display text-2xl font-semibold text-balance text-hutan-950 sm:text-3xl">{s.title}</h3>
-                    <p className="mt-3 max-w-md leading-relaxed text-pretty text-stone-600">{s.body}</p>
-                  </div>
-                </Reveal>
-              </li>
+              <button
+                key={s.title}
+                type="button"
+                onClick={() => jump(i)}
+                aria-label={`Langkah ${i + 1}: ${s.title}`}
+                aria-current={i === active ? "step" : undefined}
+                className="group flex items-center justify-end gap-2"
+              >
+                <span
+                  className={cn(
+                    "hidden text-xs font-semibold whitespace-nowrap opacity-0 transition group-hover:opacity-100 lg:inline",
+                    i === active && "opacity-100",
+                    lightNav ? "text-white/80" : "text-hutan-950/70",
+                  )}
+                >
+                  {s.title}
+                </span>
+                <span
+                  className={cn(
+                    "block rounded-full transition-all duration-500",
+                    i === active ? "h-8 w-2.5" : "size-2.5",
+                    lightNav ? (i === active ? "bg-emas-300" : "bg-white/35") : i === active ? "bg-hutan-900" : "bg-hutan-900/30",
+                  )}
+                />
+              </button>
             ))}
-          </ol>
+          </nav>
+
+          {/* Garis progres di dasar panggung */}
+          <div className="absolute inset-x-0 bottom-0 z-20 h-1 bg-black/10">
+            <div className={cn("h-full transition-[width] duration-150", lightNav ? "bg-emas-300" : "bg-hutan-800")} style={{ width: `${progress * 100}%` }} />
+          </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 }
