@@ -81,7 +81,7 @@ function FundingPanel({ on }: PanelProps) {
           </div>
           {[
             { t: "+500 BPS", cls: "-top-3 left-0", d: "0s" },
-            { t: "+300 BPS", cls: "top-[45%] -left-10", d: "0.8s" },
+            { t: "+300 BPS", cls: "top-[42%] -left-4", d: "0.8s" },
             { t: "+200 BPS", cls: "-bottom-3 left-6", d: "1.6s" },
           ].map((k) => (
             <span
