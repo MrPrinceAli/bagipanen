@@ -72,28 +72,20 @@ export function PlantProgress({ value, className }: { value: number; className?:
 
 /* ------------------------------------------------------- Loader awal (layar penuh) */
 
-const INTRO_MS = 5000; // kunjungan pertama dalam satu sesi: animasi penuh
-const REPEAT_MS = 900; // muat ulang di sesi yang sama: singkat saja
-const MAX_MS = 10_000; // pengaman bila event load tidak kunjung datang
+const INTRO_MS = 7000; // durasi animasi pembuka, sama untuk kunjungan pertama maupun refresh
+const MAX_MS = 12_000; // pengaman bila event load tidak kunjung datang
 
 /**
- * Layar pembuka saat web dibuka: persentase naik mulus mengikuti waktu (5 detik pada kunjungan
- * pertama dalam satu sesi browser, ±0,9 detik bila dimuat ulang), tetapi tertahan di 92% sampai
- * font & semua sumber halaman benar-benar selesai dimuat. Tidak muncul pada navigasi antarhalaman.
+ * Layar pembuka setiap kali web dibuka atau di-refresh: persentase naik mulus mengikuti waktu
+ * selama ±7 detik, tetapi tertahan di 92% sampai font & semua sumber halaman benar-benar selesai
+ * dimuat. Tidak muncul pada navigasi antarhalaman.
  */
 export function InitialLoader() {
   const [value, setValue] = useState(0);
   const [phase, setPhase] = useState<"load" | "fade" | "gone">("load");
 
   useEffect(() => {
-    let first = true;
-    try {
-      first = !sessionStorage.getItem("bp-intro");
-      sessionStorage.setItem("bp-intro", "1");
-    } catch {
-      // penyimpanan diblokir (mode privat) → tetap tampilkan animasi penuh
-    }
-    const minMs = first ? INTRO_MS : REPEAT_MS;
+    const minMs = INTRO_MS;
     let loaded = false;
     Promise.all([
       document.readyState === "complete" ? Promise.resolve() : new Promise((r) => window.addEventListener("load", r, { once: true })),
@@ -101,7 +93,7 @@ export function InitialLoader() {
     ]).then(() => (loaded = true));
 
     // Dihitung sejak halaman mulai dibuka (performance.now() = waktu sejak navigasi), bukan sejak
-    // JavaScript siap, supaya total durasi pembuka tetap ±5 detik.
+    // JavaScript siap, supaya total durasi pembuka tetap ±7 detik.
     const started = 0;
     let v = 0;
     let raf = 0;
