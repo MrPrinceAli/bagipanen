@@ -100,7 +100,9 @@ export function InitialLoader() {
       document.fonts?.ready ?? Promise.resolve(),
     ]).then(() => (loaded = true));
 
-    const started = performance.now();
+    // Dihitung sejak halaman mulai dibuka (performance.now() = waktu sejak navigasi), bukan sejak
+    // JavaScript siap, supaya total durasi pembuka tetap ±5 detik.
+    const started = 0;
     let v = 0;
     let raf = 0;
     const tick = () => {
