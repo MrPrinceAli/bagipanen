@@ -268,7 +268,7 @@ export default function ProjectsPage() {
     <>
       <PageHero
         eyebrow="Proyek tanam"
-        title="Lahan yang didanai, dari Sumatra sampai Sulawesi"
+        title="Lahan yang didanai, dari berbagai penjuru Indonesia"
         description="Setiap pin adalah satu musim tanam satu petani. Arahkan kursor ke pin untuk melihat proyeknya, atau klik untuk membuka detailnya."
       />
       <PageBody>
