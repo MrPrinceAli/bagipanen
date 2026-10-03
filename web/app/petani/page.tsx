@@ -25,7 +25,7 @@ function FarmerCard({ f, campaigns }: { f: FarmerRow; campaigns: CampaignSummary
       className="group flex h-full flex-col gap-4 rounded-3xl border border-krem-200 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift"
     >
       <div className="flex items-start gap-3">
-        <FarmerAvatar name={f.name || "Petani"} seed={f.address} commodity={campaigns[0]?.commodity} className="size-16 shrink-0" />
+        <FarmerAvatar name={f.name || "Petani"} seed={f.address} commodity={campaigns[0]?.commodity} className="size-20 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="font-display text-lg leading-snug font-semibold text-hutan-950">{f.name || "Petani"}</p>
           <p className="truncate text-sm text-stone-500">{f.cooperativeName || "Koperasi"}</p>
