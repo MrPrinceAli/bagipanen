@@ -18,7 +18,7 @@ const sentence = (v: string) => `${v.charAt(0).toUpperCase()}${v.slice(1)}.`;
  *              && exif.status != "mismatch" && !duplicate
  * Alasan ditulis sebagai kalimat utuh karena langsung tampil di UI.
  */
-export function decide(vision: VisionResult, exif: ExifCheck, duplicate: boolean, milestoneName: string, commodity = "komoditas kampanye ini"): Decision {
+export function decide(vision: VisionResult, exif: ExifCheck, duplicate: boolean, milestoneName: string, commodity = "komoditas proyek ini"): Decision {
   const reasons: string[] = [];
   if (!vision.is_farm_photo) reasons.push("foto ini tidak terlihat seperti foto lahan pertanian");
   if (!vision.commodity_match)
@@ -36,7 +36,7 @@ export function decide(vision: VisionResult, exif: ExifCheck, duplicate: boolean
   if (vision.confidence < MIN_CONFIDENCE)
     reasons.push(`agen kurang yakin dengan foto ini (${Math.round(vision.confidence * 100)}%, minimal ${Math.round(MIN_CONFIDENCE * 100)}%)`);
   if (exif.status === "mismatch") reasons.push(...exif.notes);
-  if (duplicate) reasons.push("foto yang sama sudah pernah dipakai di kampanye atau tahap lain");
+  if (duplicate) reasons.push("foto yang sama sudah pernah dipakai di proyek atau tahap lain");
   return { approved: reasons.length === 0, reasons };
 }
 

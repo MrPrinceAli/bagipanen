@@ -29,7 +29,7 @@ const n2 = (v: number) => v.toFixed(2);
 export function pendingReason({ summary, milestones }: CampaignData, p: ProofLog): string | null {
   const m = milestones[p.index];
   if (!m) return "milestone tidak ditemukan";
-  if (summary.status !== STATUS_ACTIVE) return "kampanye tidak lagi berstatus Berjalan";
+  if (summary.status !== STATUS_ACTIVE) return "proyek tidak lagi berstatus Berjalan";
   if (summary.currentMilestone !== p.index) return `milestone ${m.name} sudah selesai`;
   if (m.attempts !== p.attempt) return `percobaan ${p.attempt} sudah digantikan percobaan ${m.attempts}`;
   if (m.aiDecided) return "sudah diputus agen";
@@ -40,13 +40,13 @@ export function pendingReason({ summary, milestones }: CampaignData, p: ProofLog
 
 /** Pipeline 7 langkah untuk satu bukti (PRD, Spesifikasi agen AI). */
 export async function processProof(p: ProofLog, { storage, vision, seen }: Deps): Promise<Outcome> {
-  if (!(await isCampaign(p.campaign))) return { kind: "skipped", reason: `${shortAddr(p.campaign)} bukan kampanye BagiPanen` };
+  if (!(await isCampaign(p.campaign))) return { kind: "skipped", reason: `${shortAddr(p.campaign)} bukan proyek BagiPanen` };
 
   // 1. Konteks dari kontrak
   const data = await readCampaign(p.campaign);
   const stale = pendingReason(data, p);
   const m = data.milestones[p.index];
-  const label = `Kampanye ${shortAddr(p.campaign)} milestone ${m?.name ?? `#${p.index + 1}`} (percobaan ${p.attempt})`;
+  const label = `Proyek ${shortAddr(p.campaign)} milestone ${m?.name ?? `#${p.index + 1}`} (percobaan ${p.attempt})`;
   if (stale) return { kind: "skipped", reason: `${label}: ${stale}` };
   const { summary } = data;
   log("BUKTI", label);
@@ -63,7 +63,7 @@ export async function processProof(p: ProofLog, { storage, vision, seen }: Deps)
 
   // 3. Cek duplikat
   const dup = seen.findDuplicate(hash, p.campaign, p.index);
-  if (dup) log("FOTO", fmt.red(`duplikat: sudah dipakai di kampanye ${shortAddr(dup.campaign)} milestone #${dup.milestoneIndex + 1}`));
+  if (dup) log("FOTO", fmt.red(`duplikat: sudah dipakai di proyek ${shortAddr(dup.campaign)} milestone #${dup.milestoneIndex + 1}`));
 
   // 4. EXIF: GPS ≤ 2 km, tanggal ≤ 7 hari
   const exif = evaluateExif(await readExif(photo.bytes), farm, Number(m.submittedAt));

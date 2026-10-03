@@ -52,21 +52,21 @@ export default function CampaignPage() {
       <>
         <section className="glow-hutan bg-hutan-950 pt-10 pb-24">
           <Container>
-            <Link href="/#kampanye" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
-              <ArrowLeft className="size-4" aria-hidden /> Semua kampanye
+            <Link href="/#proyek" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
+              <ArrowLeft className="size-4" aria-hidden /> Semua proyek
             </Link>
             {isLoading && <Skeleton className="mt-6 h-12 max-w-xl bg-white/10" />}
           </Container>
         </section>
         <PageBody>
           {!address ? (
-            <Notice tone="error">Alamat kampanyenya tidak valid. Cek lagi tautannya, ya.</Notice>
+            <Notice tone="error">Alamat proyeknya tidak valid. Cek lagi tautannya, ya.</Notice>
           ) : isLoading ? (
-            <Loading>Memuat kampanye dari blockchain…</Loading>
+            <Loading>Memuat proyek dari blockchain…</Loading>
           ) : isError ? (
-            <Notice tone="error">Kampanye ini belum bisa dibaca dari blockchain. Coba muat ulang halaman.</Notice>
+            <Notice tone="error">Proyek ini belum bisa dibaca dari blockchain. Coba muat ulang halaman.</Notice>
           ) : (
-            <Notice tone="error">Kampanye ini tidak terdaftar di BagiPanen.</Notice>
+            <Notice tone="error">Proyek ini tidak terdaftar di BagiPanen.</Notice>
           )}
         </PageBody>
       </>
@@ -87,15 +87,15 @@ export default function CampaignPage() {
       <section className="glow-hutan relative overflow-hidden bg-hutan-950 text-white">
         <div className="pola-bedengan absolute inset-0" aria-hidden />
         <Container className="relative pt-8 pb-24 sm:pb-28">
-          <Link href="/#kampanye" className="inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white">
-            <ArrowLeft className="size-4" aria-hidden /> Semua kampanye
+          <Link href="/#proyek" className="inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white">
+            <ArrowLeft className="size-4" aria-hidden /> Semua proyek
           </Link>
           <div className="mt-6 grid items-center gap-8 lg:grid-cols-[1.15fr_1fr]">
             <div className="animate-fade-up">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={c.status} failType={c.failType} glass />
                 <span className="text-xs text-white/50">
-                  Kampanye #{c.campaignId.toString()} · token {symbol}
+                  Proyek #{c.campaignId.toString()} · token {symbol}
                 </span>
               </div>
               <h1 className="mt-4 font-display text-3xl leading-[1.1] font-semibold text-balance sm:text-5xl">{meta?.title ?? `${c.commodity} di ${c.locationName}`}</h1>

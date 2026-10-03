@@ -41,9 +41,9 @@ function nextAction(c: CampaignSummary, milestones: readonly Milestone[]): { tex
     case Status.Harvested:
       return { text: "Selesai. Hasil panen sudah dibagi ke semua pihak.", urgent: false };
     case Status.Failed:
-      return { text: c.failType === FailType.Funding ? "Target pendanaan tidak tercapai." : "Kampanye ini ditandai gagal panen.", urgent: false };
+      return { text: c.failType === FailType.Funding ? "Target pendanaan tidak tercapai." : "Proyek ini ditandai gagal panen.", urgent: false };
     case Status.Defaulted:
-      return { text: "Kampanye ini ditandai gagal bayar.", urgent: false };
+      return { text: "Proyek ini ditandai gagal bayar.", urgent: false };
     default:
       return { text: "Pengajuan ini tidak disetujui admin.", urgent: false };
   }
@@ -73,23 +73,23 @@ function CampaignRow({ c, children }: { c: CampaignSummary; children: ReactNode 
 
 function FarmerDashboard({ address }: { address: `0x${string}` }) {
   const { data, isLoading } = useFarmerCampaigns(address);
-  if (isLoading) return <Loading>Memuat kampanyemu…</Loading>;
+  if (isLoading) return <Loading>Memuat proyekmu…</Loading>;
   return (
     <section>
       <SectionTitle
-        eyebrow="Kampanye saya"
+        eyebrow="Proyek tanam saya"
         description="Pantau tahap pencairan dan langkah berikutnya di sini."
         action={
           <ButtonLink href="/create" variant="primary">
-            <Plus className="size-4" aria-hidden /> Ajukan kampanye
+            <Plus className="size-4" aria-hidden /> Ajukan proyek tanam
           </ButtonLink>
         }
       >
         Lahan yang sedang kamu kelola
       </SectionTitle>
       {!data?.length ? (
-        <EmptyState icon={Sprout} title="Belum ada kampanye">
-          Ajukan kampanye pertamamu untuk mendapatkan modal tanam.
+        <EmptyState icon={Sprout} title="Belum ada proyek tanam">
+          Ajukan proyek tanam pertamamu untuk mendapatkan modal tanam.
         </EmptyState>
       ) : (
         <div className="flex flex-col gap-4">
@@ -107,7 +107,7 @@ function FarmerDashboard({ address }: { address: `0x${string}` }) {
                 <Notice tone={next.urgent ? "warn" : "info"}>
                   <span className="font-semibold">Berikutnya:</span> {next.text}{" "}
                   <Link href={`/campaign/${c.address}`} className="font-semibold underline">
-                    Buka kampanye
+                    Buka proyek
                   </Link>
                 </Notice>
               </CampaignRow>
@@ -153,18 +153,18 @@ function InvestorDashboard() {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Stat icon={HandCoins} label="Total kamu danai" value={formatUsdt(invested)} sub="USDT di semua kampanye" />
+        <Stat icon={HandCoins} label="Total kamu danai" value={formatUsdt(invested)} sub="USDT di semua proyek" />
         <Stat icon={PiggyBank} label="Siap diklaim" value={formatUsdt(claimable)} sub="USDT, tinggal klaim" />
         <Stat icon={Wallet} label="Sudah diterima" value={formatUsdt(received)} sub="USDT masuk ke dompetmu" />
       </div>
       <section>
         <SectionTitle eyebrow="Porsi saya" description="Setiap porsi tercatat sebagai token atas namamu dan tidak bisa dipindahtangankan.">
-          Kampanye yang kamu dukung
+          Proyek yang kamu dukung
         </SectionTitle>
         {!positions?.length ? (
-          <EmptyState icon={HandCoins} title="Kamu belum mendanai kampanye apa pun">
-            <Link href="/#kampanye" className="inline-flex items-center gap-1 font-semibold text-hutan-700 underline">
-              Lihat kampanye yang sedang cari dana <ArrowRight className="size-3.5" aria-hidden />
+          <EmptyState icon={HandCoins} title="Kamu belum mendanai proyek apa pun">
+            <Link href="/#proyek" className="inline-flex items-center gap-1 font-semibold text-hutan-700 underline">
+              Lihat proyek yang sedang cari dana <ArrowRight className="size-3.5" aria-hidden />
             </Link>
           </EmptyState>
         ) : (
@@ -213,8 +213,8 @@ export default function DashboardPage() {
         title={isFarmer ? "Halo, semoga panennya melimpah" : "Pantau danamu tumbuh bersama petani"}
         description={
           isFarmer
-            ? "Semua kampanyemu ada di sini, lengkap dengan langkah yang perlu kamu lakukan berikutnya."
-            : "Lihat porsimu di setiap kampanye, perkembangan tahap pencairannya, dan hasil yang siap diklaim."
+            ? "Semua proyekmu ada di sini, lengkap dengan langkah yang perlu kamu lakukan berikutnya."
+            : "Lihat porsimu di setiap proyek, perkembangan tahap pencairannya, dan hasil yang siap diklaim."
         }
       />
       <PageBody>

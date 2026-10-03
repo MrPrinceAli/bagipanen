@@ -81,7 +81,7 @@ export const SYSTEM_PROMPT =
 /** Prompt pengguna dengan konteks kampanye (PRD, Spesifikasi agen AI). */
 export function buildUserPrompt(ctx: VisionContext): string {
   return [
-    `Konteks kampanye: komoditas ${ctx.commodity}, lokasi ${ctx.locationName}, milestone "${ctx.milestoneName}"`,
+    `Konteks proyek: komoditas ${ctx.commodity}, lokasi ${ctx.locationName}, milestone "${ctx.milestoneName}"`,
     "(Tanam = bibit baru ditanam/lahan baru diolah; Tumbuh = tanaman vegetatif, daun berkembang;",
     `Pra-panen = tanaman berbunga/berbuah, mendekati panen). Perkiraan panen: ${ctx.expectedHarvestDate}.`,
     `Ringkasan cuaca 14 hari terakhir: ${ctx.weatherSummary}.`,

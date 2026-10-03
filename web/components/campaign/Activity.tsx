@@ -29,7 +29,7 @@ function describe(e: ActivityEntry, milestones: readonly Milestone[], commodity:
   const usdt = (v: unknown) => `${formatUsdt(v as bigint)} USDT`;
   switch (e.eventName) {
     case "CampaignCreated":
-      return { text: "Petani mengajukan kampanye", kind: "info" };
+      return { text: "Petani mengajukan proyek tanam", kind: "info" };
     case "CampaignApproved":
       return { text: "Admin menyetujui, pendanaan dibuka", kind: "good" };
     case "CampaignRejected":
@@ -37,7 +37,7 @@ function describe(e: ActivityEntry, milestones: readonly Milestone[], commodity:
     case "Funded":
       return { text: `${who(a.investor)} mendanai ${usdt(a.amount)}`, kind: "money" };
     case "FundingSucceeded":
-      return { text: "Target tercapai, kampanye mulai berjalan", kind: "good" };
+      return { text: "Target tercapai, proyek mulai berjalan", kind: "good" };
     case "FundingFailed":
       return { text: "Pendanaan ditutup karena target tak tercapai", kind: "bad" };
     case "Refunded":

@@ -35,7 +35,7 @@ export function ActionPanels(props: PanelProps) {
   if (!isConnected)
     return (
       <Card className="flex flex-col gap-3">
-        <CardTitle icon={Wallet} description={c.status === Status.Funding ? "Hubungkan dompetmu dulu untuk ikut mendanai kampanye ini." : "Hubungkan dompetmu untuk melihat porsi atau mengklaim hasil."}>
+        <CardTitle icon={Wallet} description={c.status === Status.Funding ? "Hubungkan dompetmu dulu untuk ikut mendanai proyek ini." : "Hubungkan dompetmu untuk melihat porsi atau mengklaim hasil."}>
           {c.status === Status.Funding ? "Mau ikut mendanai?" : "Punya porsi di sini?"}
         </CardTitle>
         <ConnectPrompt />

@@ -90,7 +90,7 @@ export default function FarmerReportPage() {
           </span>
           {blocked && (
             <Badge tone="red" dot>
-              Tidak bisa mengajukan kampanye baru (pernah gagal bayar)
+              Tidak bisa mengajukan proyek baru (pernah gagal bayar)
             </Badge>
           )}
         </div>
@@ -104,7 +104,7 @@ export default function FarmerReportPage() {
         </Card>
 
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-          <Stat icon={HandCoins} label="Kampanye didanai" value={s.campaignsFunded} />
+          <Stat icon={HandCoins} label="Proyek didanai" value={s.campaignsFunded} />
           <Stat icon={Wheat} label="Panen selesai" value={s.harvestsCompleted} />
           <Stat
             icon={CalendarCheck}
@@ -127,10 +127,10 @@ export default function FarmerReportPage() {
             eyebrow="Riwayat"
             description={s.totalReported > 0n ? `Total hasil penjualan yang sudah disetor: ${formatUsdt(s.totalReported)} USDT (sekitar ${formatRupiah(s.totalReported)}).` : undefined}
           >
-            Kampanye yang pernah diajukan
+            Proyek yang pernah diajukan
           </SectionTitle>
           {!campaigns?.length ? (
-            <EmptyState icon={Wheat} title="Belum ada kampanye" />
+            <EmptyState icon={Wheat} title="Belum ada proyek tanam" />
           ) : (
             <div className="flex flex-col gap-4">
               {campaigns.map(({ summary: c }) => (

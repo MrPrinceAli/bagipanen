@@ -47,7 +47,7 @@ export function Header() {
   const pathname = usePathname();
   const nav = [
     { href: "/", label: "Beranda", show: true },
-    { href: "/create", label: "Ajukan kampanye", short: "Ajukan", show: role === "petani" },
+    { href: "/create", label: "Ajukan proyek tanam", short: "Ajukan", show: role === "petani" },
     { href: "/dashboard", label: "Dashboard", show: role === "petani" || role === "investor" },
     { href: `/petani/${address}`, label: "Rapor saya", show: role === "petani" && Boolean(address) },
     { href: "/koperasi", label: "Koperasi", show: role === "koperasi" },

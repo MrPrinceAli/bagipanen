@@ -42,7 +42,7 @@ async function getProofLogsRange(fromBlock: bigint, toBlock: bigint): Promise<Ra
       const campaigns = await getCampaigns();
       const logs = campaigns.length > 0 ? await getProofLogsRaw(fromBlock, toBlock, campaigns) : [];
       useAddressFilter = true;
-      log("AGEN", `RPC menolak getLogs tanpa alamat (${(e as { shortMessage?: string }).shortMessage ?? "galat"}) → memakai filter daftar kampanye resmi`);
+      log("AGEN", `RPC menolak getLogs tanpa alamat (${(e as { shortMessage?: string }).shortMessage ?? "galat"}) → memakai filter daftar proyek resmi`);
       return logs;
     }
   }

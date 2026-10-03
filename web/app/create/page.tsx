@@ -240,7 +240,7 @@ export default function CreatePage() {
   }
 
   const hero = (description?: ReactNode, actions?: ReactNode) => (
-    <PageHero eyebrow="Ajukan kampanye" title="Ceritakan lahanmu, biar investor ikut menanam" description={description} actions={actions} />
+    <PageHero eyebrow="Ajukan proyek tanam" title="Ceritakan lahanmu, biar investor ikut menanam" description={description} actions={actions} />
   );
 
   if (!CONTRACTS_READY)
@@ -264,7 +264,7 @@ export default function CreatePage() {
   if (role !== "petani")
     return (
       <>
-        {hero("Kampanye diajukan oleh petani yang sudah didaftarkan koperasinya.")}
+        {hero("Proyek tanam diajukan oleh petani yang sudah didaftarkan koperasinya.")}
         <PageBody>
           <RoleGate need="petani" role={role} />
         </PageBody>
@@ -298,7 +298,7 @@ export default function CreatePage() {
       )}
       <PageBody>
         {names.data?.blocked ? (
-          <Notice tone="error">Dompet ini tidak bisa mengajukan kampanye baru karena pernah gagal bayar. Catatannya ada di Rapor Petani.</Notice>
+          <Notice tone="error">Dompet ini tidak bisa mengajukan proyek baru karena pernah gagal bayar. Catatannya ada di Rapor Petani.</Notice>
         ) : (
           <form onSubmit={onSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="flex min-w-0 flex-col gap-6">
@@ -314,7 +314,7 @@ export default function CreatePage() {
                       <option value="Jagung" />
                     </datalist>
                   </Field>
-                  <Field label="Judul kampanye" htmlFor="title">
+                  <Field label="Judul proyek" htmlFor="title">
                     <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modal tanam cabai merah musim hujan" />
                   </Field>
                   <div className="sm:col-span-2">
@@ -451,7 +451,7 @@ export default function CreatePage() {
                 <div className="flex flex-col gap-4 p-5">
                   <div>
                     <p className="text-xs font-semibold tracking-wide text-emas-700 uppercase">Pratinjau</p>
-                    <p className="mt-1 font-display text-lg leading-snug font-semibold text-hutan-950">{title || "Judul kampanyemu"}</p>
+                    <p className="mt-1 font-display text-lg leading-snug font-semibold text-hutan-950">{title || "Judul proyekmu"}</p>
                     <p className="text-sm text-stone-500">{[commodity, locationName].filter(Boolean).join(" · ") || "Komoditas · lokasi"}</p>
                   </div>
                   <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -487,10 +487,10 @@ export default function CreatePage() {
                   )}
                   {formError && <Notice tone="error">{formError}</Notice>}
                   <Button type="submit" size="lg" variant="gold" loading={busy}>
-                    Ajukan kampanye
+                    Ajukan proyek tanam
                   </Button>
-                  <TxStatus state={tx.state} successText="Kampanye dibuat. Membuka halamannya…" />
-                  <p className="text-xs leading-relaxed text-stone-500">Setelah diajukan, kampanyemu direview admin dulu sebelum pendanaan dibuka.</p>
+                  <TxStatus state={tx.state} successText="Proyek dibuat. Membuka halamannya…" />
+                  <p className="text-xs leading-relaxed text-stone-500">Setelah diajukan, proyekmu direview admin dulu sebelum pendanaan dibuka.</p>
                 </div>
               </Card>
             </aside>

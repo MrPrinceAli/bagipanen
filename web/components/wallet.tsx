@@ -117,12 +117,12 @@ const NEED_TEXT: Record<string, { title: string; guest: string; wrong: string }>
   },
   petani: {
     title: "Khusus petani anggota koperasi",
-    guest: IS_LOCAL ? "Pilih akun Petani di atas untuk mengajukan kampanye." : "Hubungkan dompet petani yang sudah didaftarkan koperasi.",
+    guest: IS_LOCAL ? "Pilih akun Petani di atas untuk mengajukan proyek tanam." : "Hubungkan dompet petani yang sudah didaftarkan koperasi.",
     wrong: "Dompet ini belum terdaftar sebagai petani. Koperasimu yang bisa mendaftarkannya.",
   },
   dashboard: {
     title: "Masuk dulu, yuk",
-    guest: IS_LOCAL ? "Pilih akun demo di atas untuk melihat dashboard-mu." : "Hubungkan dompetmu untuk melihat porsi dan kampanyemu.",
+    guest: IS_LOCAL ? "Pilih akun demo di atas untuk melihat dashboard-mu." : "Hubungkan dompetmu untuk melihat porsi dan proyekmu.",
     wrong: "Dashboard ini untuk petani dan investor.",
   },
 };

@@ -83,7 +83,7 @@ describe("buildVerdictDocument", () => {
     assert.equal(doc.approved, false);
     assert.equal(
       doc.summary_id,
-      "Foto ditolak. Foto ini tidak terlihat seperti foto lahan pertanian. Lokasi foto 45 km dari lahan, padahal batasnya 2 km. Foto yang sama sudah pernah dipakai di kampanye atau tahap lain.",
+      "Foto ditolak. Foto ini tidak terlihat seperti foto lahan pertanian. Lokasi foto 45 km dari lahan, padahal batasnya 2 km. Foto yang sama sudah pernah dipakai di proyek atau tahap lain.",
     );
   });
 

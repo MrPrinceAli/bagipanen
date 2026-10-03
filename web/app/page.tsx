@@ -110,12 +110,12 @@ export default function HomePage() {
                 modal sampai pembagian hasil tercatat transparan.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <ButtonLink href="/#kampanye" variant="gold" size="lg">
-                  Lihat kampanye <ArrowRight className="size-4" aria-hidden />
+                <ButtonLink href="/#proyek" variant="gold" size="lg">
+                  Lihat proyek tanam <ArrowRight className="size-4" aria-hidden />
                 </ButtonLink>
                 {role === "petani" ? (
                   <ButtonLink href="/create" variant="light" size="lg">
-                    Ajukan kampanye
+                    Ajukan proyek tanam
                   </ButtonLink>
                 ) : (
                   <ButtonLink href="/#cara-kerja" variant="light" size="lg">
@@ -152,9 +152,9 @@ export default function HomePage() {
             <Stat
               variant="glass"
               icon={Wheat}
-              label="Kampanye aktif"
+              label="Proyek aktif"
               value={campaigns ? activeCount : "…"}
-              sub={campaigns ? `cari dana atau berjalan, dari ${visible.length} kampanye` : "memuat…"}
+              sub={campaigns ? `cari dana atau berjalan, dari ${visible.length} proyek` : "memuat…"}
             />
             <Stat
               variant="glass"
@@ -174,12 +174,12 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* ------------------------------------------------------- Kampanye */}
-      <section id="kampanye" className="scroll-mt-24 py-16 sm:py-20">
+      {/* ------------------------------------------------------- Proyek */}
+      <section id="proyek" className="scroll-mt-24 py-16 sm:py-20">
         <Container>
           <SectionTitle
-            eyebrow="Kampanye"
-            description="Setiap kampanye adalah satu musim tanam satu petani, lengkap dengan rencana biaya dan perkiraan panennya."
+            eyebrow="Proyek tanam"
+            description="Setiap proyek adalah satu musim tanam satu petani, lengkap dengan rencana biaya dan perkiraan panennya."
             action={
               <div className="flex flex-wrap gap-1 rounded-full border border-krem-200 bg-white p-1 shadow-soft">
                 {FILTERS.map((f) => {
@@ -211,15 +211,15 @@ export default function HomePage() {
               ))}
             </div>
           ) : isError ? (
-            <Notice tone="error">Data kampanye belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.</Notice>
+            <Notice tone="error">Data proyek belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.</Notice>
           ) : shown.length === 0 ? (
-            <EmptyState icon={Sprout} title={visible.length === 0 ? "Belum ada kampanye yang dibuka" : "Belum ada kampanye di kategori ini"}>
+            <EmptyState icon={Sprout} title={visible.length === 0 ? "Belum ada proyek tanam yang dibuka" : "Belum ada proyek di kategori ini"}>
               {role === "petani" ? (
                 <Link href="/create" className="font-semibold text-hutan-700 underline">
-                  Ajukan kampanye pertamamu
+                  Ajukan proyek tanam pertamamu
                 </Link>
               ) : (
-                "Kampanye baru muncul di sini setelah petani mengajukan dan admin menyetujuinya."
+                "Proyek baru muncul di sini setelah petani mengajukan dan admin menyetujuinya."
               )}
             </EmptyState>
           ) : (
@@ -325,7 +325,7 @@ export default function HomePage() {
               <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Bagi hasil</p>
               <h2 className="mt-2 font-display text-3xl font-semibold text-hutan-950">Modal kembali dulu, baru untung dibagi</h2>
               <p className="mt-2 text-stone-600">
-                Contoh dari kampanye demo cabai merah: modal 1.000 USDT, panen terjual 1.650 USDT, jadi untungnya 650 USDT.
+                Contoh dari proyek demo cabai merah: modal 1.000 USDT, panen terjual 1.650 USDT, jadi untungnya 650 USDT.
               </p>
             </div>
             <div className="flex h-12 overflow-hidden rounded-2xl text-xs font-semibold sm:text-sm">
@@ -414,12 +414,12 @@ export default function HomePage() {
               Mulai dari nominal kecil. Semua langkahnya bisa kamu pantau sendiri, dari foto lahan sampai nota penjualan.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <ButtonLink href="/#kampanye" variant="primary" size="lg">
-                Pilih kampanye <ArrowRight className="size-4" aria-hidden />
+              <ButtonLink href="/#proyek" variant="primary" size="lg">
+                Pilih proyek tanam <ArrowRight className="size-4" aria-hidden />
               </ButtonLink>
               {role === "petani" && (
                 <ButtonLink href="/create" variant="secondary" size="lg">
-                  Ajukan kampanye
+                  Ajukan proyek tanam
                 </ButtonLink>
               )}
             </div>
@@ -450,7 +450,7 @@ function FeaturedCampaign({ c }: { c: CampaignSummary }) {
         </p>
       </div>
       <div className="flex flex-col gap-3 p-3 pt-4">
-        <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Kampanye pilihan</p>
+        <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Proyek pilihan</p>
         <h3 className="font-display text-xl leading-snug font-semibold">{meta?.title ?? `${c.commodity} di ${c.locationName}`}</h3>
         <ProgressBar value={c.raisedAmount} max={c.targetAmount} dark />
         <div className="flex items-baseline justify-between text-sm text-white/70">

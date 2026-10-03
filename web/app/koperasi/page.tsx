@@ -34,7 +34,7 @@ function RegisterFarmer() {
 
   return (
     <Card>
-      <CardTitle icon={UserPlus} description="Petani yang sudah terdaftar bisa langsung mengajukan kampanye. Satu dompet hanya boleh punya satu peran.">
+      <CardTitle icon={UserPlus} description="Petani yang sudah terdaftar bisa langsung mengajukan proyek tanam. Satu dompet hanya boleh punya satu peran.">
         Daftarkan petani anggota
       </CardTitle>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -91,7 +91,7 @@ export default function KoperasiPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Stat variant="glass" icon={Inbox} label="Perlu diputuskan" value={queue.length} sub="bukti menunggu keputusanmu" />
           <Stat variant="glass" icon={Users} label="Petani anggota" value={members.length} />
-          <Stat variant="glass" icon={Wheat} label="Kampanye dampingan" value={mine.length} />
+          <Stat variant="glass" icon={Wheat} label="Proyek dampingan" value={mine.length} />
         </div>
       </PageHero>
       <PageBody>
@@ -147,9 +147,9 @@ export default function KoperasiPage() {
           </Card>
 
           <Card>
-            <CardTitle icon={Sprout}>Kampanye dampingan ({mine.length})</CardTitle>
+            <CardTitle icon={Sprout}>Proyek dampingan ({mine.length})</CardTitle>
             {mine.length === 0 ? (
-              <p className="text-sm text-stone-500">Belum ada kampanye dari petani anggota.</p>
+              <p className="text-sm text-stone-500">Belum ada proyek dari petani anggota.</p>
             ) : (
               <ul className="flex flex-col divide-y divide-krem-200">
                 {mine.map(({ summary: s, milestones }) => {

@@ -27,9 +27,9 @@ function Tags({ items, map }: { items?: string[]; map?: Record<string, string> }
 }
 
 const STEPS = [
-  "Membaca data kampanye: komoditas, lokasi, tahap, dan perkiraan panen.",
+  "Membaca data proyek: komoditas, lokasi, tahap, dan perkiraan panen.",
   "Mengunduh foto bukti dan menghitung sidik jarinya (SHA-256).",
-  "Memastikan foto yang sama belum pernah dipakai di kampanye atau tahap lain.",
+  "Memastikan foto yang sama belum pernah dipakai di proyek atau tahap lain.",
   "Mencocokkan GPS dan tanggal foto: maksimal 2 km dari lahan dan 7 hari sebelum dikirim.",
   "Mengambil data hujan dan suhu 14 hari terakhir di lokasi lahan.",
   "Meminta model AI menilai isi foto: jenis tanaman, fase, kondisi, dan tingkat keyakinan.",
@@ -200,7 +200,7 @@ export default function AgentPage() {
                         {v.commodity} · tahap {v.milestoneName}
                       </Link>
                       <p className="text-xs text-stone-500">
-                        Kampanye {shortAddress(v.campaign)} · {formatDateTime(v.timestamp)}
+                        Proyek {shortAddress(v.campaign)} · {formatDateTime(v.timestamp)}
                       </p>
                     </div>
                     {v.approved ? (

@@ -106,7 +106,7 @@ function ActiveCard({ summary: c, milestones, now }: Row & { now: bigint }) {
       )}
       <div className="mt-3 flex flex-col gap-1">
         <TxStatus state={failTx.state} successText="Ditandai gagal panen. Sisa dana sekarang bisa diklaim investor." />
-        <TxStatus state={defaultTx.state} successText="Ditandai gagal bayar. Petani tidak bisa mengajukan kampanye baru." />
+        <TxStatus state={defaultTx.state} successText="Ditandai gagal bayar. Petani tidak bisa mengajukan proyek baru." />
       </div>
     </Card>
   );
@@ -146,7 +146,7 @@ function ReserveSection({ eligible }: { eligible: Row[] }) {
     <Card>
       <CardTitle
         icon={Landmark}
-        description="Kompensasi hanya bisa dikirim ke kampanye yang gagal panen atau gagal bayar, dan langsung menambah dana yang bisa diklaim investor."
+        description="Kompensasi hanya bisa dikirim ke proyek yang gagal panen atau gagal bayar, dan langsung menambah dana yang bisa diklaim investor."
       >
         Dana cadangan
       </CardTitle>
@@ -155,13 +155,13 @@ function ReserveSection({ eligible }: { eligible: Row[] }) {
         <Usdt value={balance ?? 0n} className="mt-1 font-display text-3xl [&>span:last-child]:font-sans [&>span:last-child]:text-white/60" />
       </div>
       {eligible.length === 0 ? (
-        <EmptyState title="Belum ada kampanye yang perlu kompensasi" />
+        <EmptyState title="Belum ada proyek yang perlu kompensasi" />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Kampanye" htmlFor="comp-campaign">
+            <Field label="Proyek" htmlFor="comp-campaign">
               <Select id="comp-campaign" value={target} onChange={(e) => setTarget(e.target.value)}>
-                <option value="">Pilih kampanye…</option>
+                <option value="">Pilih proyek…</option>
                 {eligible.map(({ summary: c }) => (
                   <option key={c.address} value={c.address}>
                     #{c.campaignId.toString()} {c.commodity} · {c.status === Status.Defaulted ? "gagal bayar" : "gagal panen"} · {formatUsdt(c.investorPool)} USDT untuk investor
@@ -383,7 +383,7 @@ export default function AdminPage() {
 
         <section id="persetujuan" className="scroll-mt-40">
           <SectionTitle eyebrow="Pengajuan" description="Periksa angka dan ceritanya sebelum pendanaan dibuka.">
-            Kampanye yang menunggu review
+            Proyek yang menunggu review
           </SectionTitle>
           {drafts.length === 0 ? (
             <EmptyState icon={ClipboardList} title="Tidak ada pengajuan baru" />
@@ -421,10 +421,10 @@ export default function AdminPage() {
 
         <section id="berjalan" className="scroll-mt-40">
           <SectionTitle eyebrow="Berjalan" description="Tandai gagal panen atau gagal bayar hanya kalau memang terjadi. Keduanya tidak bisa dibatalkan.">
-            Kampanye yang sedang berjalan
+            Proyek yang sedang berjalan
           </SectionTitle>
           {active.length === 0 && expired.length === 0 ? (
-            <EmptyState icon={Sprout} title="Tidak ada kampanye berjalan" />
+            <EmptyState icon={Sprout} title="Tidak ada proyek berjalan" />
           ) : (
             <div className="flex flex-col gap-4">
               {expired.map((r) => (

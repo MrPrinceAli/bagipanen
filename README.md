@@ -27,17 +27,17 @@ Yang dibutuhkan: MetaMask dan sedikit tBNB untuk gas. **Tidak ada uang sungguhan
 1. Buka **[bagipanen.vercel.app](https://bagipanen.vercel.app)**, klik **Hubungkan dompet**, lalu pilih MetaMask. Kalau diminta pindah jaringan, setujui pindah ke **BSC Testnet** (chain 97). Di HP, buka tautannya dari browser di dalam aplikasi MetaMask.
 2. Ambil tBNB gratis dari [faucet QuickNode](https://faucet.quicknode.com/binance-smart-chain/bnb-testnet) atau [faucet BNB Chain](https://www.bnbchain.org/en/testnet-faucet). Faucet BNB Chain mensyaratkan saldo BNB mainnet. 0,005 tBNB sudah cukup untuk puluhan transaksi.
 3. Klik **Minta mUSDT** di header untuk mendapat 1.000 mUSDT.
-4. Buka kampanye **"Modal tanam cabai merah musim kemarau 2027"** (pendanaan terbuka sampai 15 Oktober 2026). Danai lewat dua langkah, *Izinkan mUSDT → Danai*. Token porsi (BPS) langsung muncul di dashboard.
+4. Buka proyek **"Modal tanam cabai merah musim kemarau 2027"** (pendanaan terbuka sampai 15 Oktober 2026). Danai lewat dua langkah, *Izinkan mUSDT → Danai*. Token porsi (BPS) langsung muncul di dashboard.
 
 Yang bisa dilihat tanpa wallet:
 
-- **Kampanye yang sudah selesai** — "Modal tanam cabai merah musim hujan 2026":
+- **Proyek yang sudah selesai** — "Modal tanam cabai merah musim hujan 2026":
   - timeline milestone dengan foto bukti;
   - putusan Gemini (termasuk foto jagung yang **ditolak**);
   - nota panen, bagi hasil, dan riwayat transaksi lengkap dengan tautan BscScan.
 - **Rapor Petani:** klik nama petani "Pak Darto".
 - **Agen AI** (`/agent`): identitas onchain, isi agent card, statistik, dan 10 putusan terakhir.
-- **Kampanye kedua** "Perluasan lahan cabai merah 0,3 ha": foto bukti yang sama diunggah ulang, lalu **ditolak sebagai duplikat**.
+- **Proyek kedua** "Perluasan lahan cabai merah 0,3 ha": foto bukti yang sama diunggah ulang, lalu **ditolak sebagai duplikat**.
 
 Peran Petani, Koperasi, dan Admin terikat ke wallet demo kami. Alurnya ditunjukkan di video demo dan bisa dicoba penuh di [mode lokal](#menjalankan-di-lokal) tanpa akun apa pun.
 
@@ -108,11 +108,11 @@ flowchart LR
 
 ## Agen AI verifikator
 
-Agen memantau event `ProofSubmitted` dari semua kampanye (polling 10 detik) dan menilai setiap bukti dalam 7 langkah:
+Agen memantau event `ProofSubmitted` dari semua proyek (polling 10 detik) dan menilai setiap bukti dalam 7 langkah:
 
 1. ambil konteks dari kontrak (komoditas, lokasi, milestone, perkiraan panen);
 2. unduh foto dari IPFS dan hitung SHA-256;
-3. cek duplikat: foto yang sama di kampanye atau milestone lain;
+3. cek duplikat: foto yang sama di proyek atau milestone lain;
 4. cek EXIF: GPS ≤ 2 km dari lahan, tanggal ≤ 7 hari sebelum bukti dikirim;
 5. ambil cuaca 14 hari dari Open-Meteo;
 6. nilai foto dengan **Gemini** (output JSON terstruktur: foto lahan?, komoditas, fase, kondisi, keyakinan, catatan);
@@ -125,7 +125,7 @@ Foto disetujui hanya jika semua syarat ini terpenuhi:
 - EXIF tidak bertentangan;
 - bukan duplikat.
 
-Alasannya tampil dalam bahasa Indonesia di timeline kampanye, antrean koperasi, dan halaman `/agent`.
+Alasannya tampil dalam bahasa Indonesia di timeline proyek, antrean koperasi, dan halaman `/agent`.
 
 **Identitas ERC-8004.**
 - Agen terdaftar di IdentityRegistry resmi BSC testnet [`0x8004A818…BD9e`](https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) sebagai **agen #2544**.
@@ -144,11 +144,11 @@ Semua kontrak ada di [contracts/src/](contracts/src/).
 
 | Kontrak | Fungsi |
 | --- | --- |
-| `CampaignFactory` | Registri koperasi & petani, pembuat kampanye, persetujuan admin, konfigurasi agen |
-| `HarvestCampaign` | Satu per kampanye: escrow mUSDT, token porsi 1:1 (tidak bisa dipindahtangankan), milestone dua kunci, sengketa, gagal panen, gagal bayar, bagi hasil, klaim kumulatif |
-| `CampaignDeployer` | Memuat bytecode kampanye agar factory tetap di bawah batas ukuran kontrak (EIP-170) |
-| `ReservePool` | Dana cadangan 5%; kompensasi hanya bisa dikirim ke kampanye resmi |
-| `ReputationBook` | Rapor Petani dan statistik putusan agen, hanya bisa ditulis oleh kampanye resmi |
+| `CampaignFactory` | Registri koperasi & petani, pembuat proyek, persetujuan admin, konfigurasi agen |
+| `HarvestCampaign` | Satu per proyek: escrow mUSDT, token porsi 1:1 (tidak bisa dipindahtangankan), milestone dua kunci, sengketa, gagal panen, gagal bayar, bagi hasil, klaim kumulatif |
+| `CampaignDeployer` | Memuat bytecode proyek agar factory tetap di bawah batas ukuran kontrak (EIP-170) |
+| `ReservePool` | Dana cadangan 5%; kompensasi hanya bisa dikirim ke proyek resmi |
+| `ReputationBook` | Rapor Petani dan statistik putusan agen, hanya bisa ditulis oleh proyek resmi |
 | `MockUSDT` | Stablecoin demo (18 desimal, `mint` terbuka maks 10.000 per panggilan) |
 | `MockAgentIdentity` | Fallback registri identitas agen untuk mode lokal (ERC-721 minimal) |
 
@@ -166,9 +166,9 @@ Semua kontrak ada di [contracts/src/](contracts/src/).
 | IdentityRegistry ERC-8004 (resmi, bukan milik BagiPanen) | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | Wallet agen AI (#2544) | [`0x0837FE45C0faf7a101C98d70D71476db81806022`](https://testnet.bscscan.com/address/0x0837FE45C0faf7a101C98d70D71476db81806022) |
 
-Kampanye demo di testnet:
+Proyek demo di testnet:
 
-| Kampanye | Status | Isi |
+| Proyek | Status | Isi |
 | --- | --- | --- |
 | [`0xa13f…58bE`](https://testnet.bscscan.com/address/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) | Panen (selesai) | Skenario penuh: foto jagung ditolak Gemini → unggah ulang → 3 milestone cair → setor panen 1.650 → klaim 630/378/252 |
 | [`0xB0C1…cb75`](https://testnet.bscscan.com/address/0xB0C1d27dd190d3d95327676f689E06D18930cb75) | Berjalan | Foto bukti yang sama dipakai ulang → ditolak sebagai duplikat |
@@ -204,9 +204,9 @@ Pilih peran lewat **pemilih akun demo** di header. Setiap akun adalah akun bawaa
 
 ### Skenario demo
 
-1. **Petani → Ajukan.** Klik *Isi contoh data demo*, lalu pilih foto lahan. Koordinat terisi otomatis dari GPS foto, atau memakai koordinat contoh kalau fotonya tidak punya GPS. Klik *Ajukan kampanye*.
+1. **Petani → Ajukan.** Klik *Isi contoh data demo*, lalu pilih foto lahan. Koordinat terisi otomatis dari GPS foto, atau memakai koordinat contoh kalau fotonya tidak punya GPS. Klik *Ajukan proyek tanam*.
 2. **Admin → Admin.** Klik *Setujui & buka pendanaan*. Hitung mundur pendanaan 10 menit dimulai.
-3. **Rina, Budi, Sari** buka halaman kampanye dan danai 500, 300, dan 200 lewat *Izinkan mUSDT → Danai*. Begitu target tercapai, statusnya berubah menjadi **Berjalan**.
+3. **Rina, Budi, Sari** buka halaman proyek dan danai 500, 300, dan 200 lewat *Izinkan mUSDT → Danai*. Begitu target tercapai, statusnya berubah menjadi **Berjalan**.
 4. **Petani** mengirim bukti tahap Tanam berupa foto yang salah. Agen menolaknya dalam ±10 detik dan menjelaskan alasannya. **Koperasi → Koperasi** ikut memutuskan dari antrean. Petani lalu mengirim ulang foto yang benar. Setelah agen dan koperasi setuju, 400 USDT cair.
 5. Ulangi untuk **Tumbuh** (350) dan **Pra-panen** (250).
 6. **Petani** setor hasil panen 1.650 beserta foto nota (*Unggah nota → Izinkan mUSDT → Setor*). Bagian petani 357,5 dan dana cadangan 32,5 langsung terkirim.

@@ -50,7 +50,7 @@ export function verdictText(v: VerdictDocument, ctx: VerdictContext = {}): strin
       reasons.push(`Lokasi foto ${km(v.exif.distanceKm)} km dari lahan, padahal batasnya ${MAX_DISTANCE_KM} km.`);
     else reasons.push(`Tanggal foto terlalu jauh dari waktu kirim (batasnya ${MAX_AGE_DAYS} hari).`);
   }
-  if (v.duplicate) reasons.push("Foto yang sama sudah pernah dipakai di kampanye atau tahap lain.");
+  if (v.duplicate) reasons.push("Foto yang sama sudah pernah dipakai di proyek atau tahap lain.");
   if (reasons.length === 0) return v.summary_id;
   return `Foto ditolak. ${reasons.join(" ")}${tail}`;
 }
