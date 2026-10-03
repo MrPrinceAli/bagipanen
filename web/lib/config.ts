@@ -23,6 +23,20 @@ export const testnetChain = defineChain({
 /** Chain tujuan sesuai mode. */
 export const targetChain = IS_LOCAL ? localChain : testnetChain;
 
+/**
+ * Proyek uji coba awal di BSC testnet (Garut, gelombang 8) yang tidak ditampilkan di beranda.
+ * Datanya tetap onchain dan halamannya masih bisa dibuka lewat tautan langsung (mis. demo foto duplikat).
+ */
+export const HIDDEN_FROM_HOME: ReadonlySet<string> = new Set(
+  IS_LOCAL
+    ? []
+    : [
+        "0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE",
+        "0xB0C1d27dd190d3d95327676f689E06D18930cb75",
+        "0xff66E4Ce4f4cD4e98619dE0524390c3581Eb74b9",
+      ].map((a) => a.toLowerCase()),
+);
+
 /** Kurs tetap untuk perkiraan rupiah (PRD: Rp16.000 per USDT). */
 export const IDR_PER_USDT = Number(process.env.NEXT_PUBLIC_IDR_PER_USDT) || 16_000;
 

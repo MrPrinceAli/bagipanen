@@ -76,8 +76,83 @@ body {
   color: var(--color-hutan-950);
 }
 
+/* ---------- Beranda: animasi yang mengikuti gulir ---------- */
+
+/* Muncul saat terlihat (komponen Reveal). */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms);
+}
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Bar yang memanjang dari kiri saat induknya muncul. */
+.grow-x {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s;
+}
+[data-shown] .grow-x {
+  transform: none;
+}
+
+/* Hero: foto membesar & isi memudar mengikuti gulir (browser yang mendukung scroll timeline). */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-zoom {
+      animation: hero-zoom linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+    .hero-exit {
+      animation: hero-exit linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 85vh;
+    }
+  }
+}
+@keyframes hero-zoom {
+  to {
+    transform: scale(1.18);
+  }
+}
+@keyframes hero-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-72px);
+  }
+}
+
+/* Petunjuk gulir di dasar hero. */
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 1;
+  }
+}
+.scroll-cue {
+  animation: scroll-cue 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up {
+  .animate-fade-up,
+  .scroll-cue {
     animation: none;
+  }
+  .reveal,
+  .grow-x {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

@@ -109,8 +109,8 @@ export function SectionTitle({
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="max-w-2xl">
         {eyebrow && <p className="mb-1.5 text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">{eyebrow}</p>}
-        <h2 className="font-display text-2xl font-semibold text-hutan-950 sm:text-3xl">{children}</h2>
-        {description && <p className="mt-1.5 text-pretty text-stone-600">{description}</p>}
+        <h2 className="font-display text-2xl font-semibold text-balance text-hutan-950 sm:text-3xl">{children}</h2>
+        {description && <p className="mt-1.5 text-balance text-stone-600">{description}</p>}
       </div>
       {action}
     </div>
