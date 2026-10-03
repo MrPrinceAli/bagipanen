@@ -8,7 +8,7 @@ Diriset 1 Oktober 2026. Setiap butir dicek dari sumber primer, dan alamat/ABI ju
 | --- | --- |
 | **IdentityRegistry** (proxy) | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
 | Implementasi saat ini (slot EIP-1967) | `0x7274e874ca62410a93bd8bf61c69d8045e399c02` |
-| ReputationRegistry (tidak dipakai BagiPanen) | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
+| **ReputationRegistry** (proxy, dipakai sejak 3 Okt 2026) | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
 
 Sumber alamat:
 
@@ -53,7 +53,7 @@ Dari [spesifikasi EIP-8004](https://eips.ethereum.org/EIPS/eip-8004):
   2. `register(ipfs://<cid>)` dari wallet agen (wallet ini otomatis menjadi pemilik dan `agentWallet`) dan baca `agentId` dari event `Registered`;
   3. unggah ulang agent card dengan `registrations[{agentId, agentRegistry: "eip155:97:0x8004A818…BD9e"}]`, lalu `setAgentURI`;
   4. admin memanggil `factory.setAgent(registry, agentId, agentWallet)`.
-- **Reputasi** tetap dicatat di `ReputationBook` milik BagiPanen. Reputation Registry resmi tidak dipakai (sesuai PRD: di luar lingkup MVP).
+- **Reputasi** Rapor Petani dan statistik agen tetap di `ReputationBook` milik BagiPanen (kontrak membacanya untuk memblokir petani gagal bayar). Sejak 3 Okt 2026, koperasi **juga** menilai agen di Reputation Registry resmi, lihat bagian di bawah.
 - **Label di UI:** halaman `/agent` otomatis menampilkan "Registri identitas ERC-8004" karena registri yang dipakai bukan mock hasil deploy.
 
 ## Temuan infrastruktur terkait
@@ -82,3 +82,27 @@ Keputusan:
 
 - **Dikonfirmasi pemilik proyek (1 Oktober 2026):** pakai registri resmi `0x8004A818BFB912233c491871b3d84c89A494BD9e`. Nilainya sudah diisi di `ERC8004_IDENTITY_REGISTRY` pada `contracts/.env`.
 - Fallback `MockAgentIdentity` tetap tersedia jika diperlukan: kosongkan `ERC8004_IDENTITY_REGISTRY`.
+
+## Reputation Registry (diriset 3 Oktober 2026)
+
+Dicek dari sumber primer dan di chain dengan pola yang sama seperti Identity Registry.
+
+- **Alamat:** proxy `0x8004B663056A597Dffe9eCcC1965A193B7388713`, sama dengan tabel BSC Testnet di README [`erc-8004/erc-8004-contracts`](https://github.com/erc-8004/erc-8004-contracts) (commit `b9e466c`). Implementasi di slot EIP-1967: `0x16e0fa7f7c56b9a767e34b192b51f921be31da34` (`ReputationRegistryUpgradeable`, UUPS, terverifikasi di BscScan). `getIdentityRegistry()` = `0x8004A818…BD9e`, `getVersion()` = `"2.0.0"`.
+- **ABI:** ABI terverifikasi identik dengan `abis/ReputationRegistry.json` di repo itu. `bnbagent-sdk` (commit `7a7a431`) belum punya helper reputasi, jadi dipakai lewat viem langsung ([`web/lib/abi/ERC8004ReputationRegistry.ts`](../web/lib/abi/ERC8004ReputationRegistry.ts)).
+
+```solidity
+function giveFeedback(uint256 agentId, int128 value, uint8 valueDecimals, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash)
+function getSummary(uint256 agentId, address[] clientAddresses, string tag1, string tag2) view returns (uint64 count, int128 summaryValue, uint8 summaryValueDecimals)
+function readAllFeedback(uint256 agentId, address[] clientAddresses, string tag1, string tag2, bool includeRevoked) view returns (address[], uint64[], int128[], uint8[], string[], string[], bool[])
+```
+
+- **Aturan** (source + [spesifikasi EIP-8004](https://github.com/ethereum/ERCs/blob/master/ERCS/erc-8004.md), commit `503591a`, status Draft):
+  - tidak ada `feedbackAuth` (dihapus sejak draf 7 Jan 2026), siapa pun boleh memberi feedback;
+  - **self-feedback ditolak**: wallet agen `0x0837…6022` revert `"Self-feedback not allowed"` (dicek dengan `estimateGas`), wallet koperasi lolos (±216 ribu gas);
+  - `valueDecimals` ≤ 18; tag kosong di `getSummary`/`readAllFeedback` berarti "semua"; `getSummary` wajib diberi daftar klien.
+- **Pemakaian di BagiPanen:**
+  - koperasi, setelah agen dan koperasi sama-sama memutus satu tahap, memanggil `giveFeedback(2544, 100 atau 0, 0, "verdictAgreement", "<kampanye>:m<tahap>:a<percobaan>", "", "ipfs://<berkas feedback>", 0x0)` — 100 jika sepakat dengan putusan agen, 0 jika tidak;
+  - berkas feedback di IPFS memuat field wajib spesifikasi (`agentRegistry`, `agentId`, `clientAddress`, `createdAt`, `value`, `valueDecimals`) plus konteks putusan;
+  - halaman `/agent` memanggil `getSummary` **hanya untuk koperasi terdaftar** (registri publik bisa diisi siapa saja);
+  - isi awal dari putusan lama: `cd agent && npm run feedback:backfill`.
+- **Risiko:** registri bisa di-upgrade oleh pemiliknya (`0x1611…64DC`) dan spesifikasinya masih Draft, jadi ABI bisa berubah.

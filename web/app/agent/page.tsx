@@ -1,12 +1,14 @@
 "use client";
 
-import { BadgeCheck, Bot, Check, ExternalLink, FileJson, Fingerprint, Scale, X } from "lucide-react";
+import { Award, BadgeCheck, Bot, Check, ExternalLink, FileJson, Fingerprint, Scale, X } from "lucide-react";
 import Link from "next/link";
 import { VerdictSummary } from "@/components/campaign/Timeline";
 import { AddressLink, TxLink } from "@/components/common";
 import { Badge, Card, CardTitle, cn, EmptyState, Loading, Notice, PageBody, PageHero, SectionTitle, Stat } from "@/components/ui";
 import { formatDateTime, formatPercent, shortAddress } from "@/lib/format";
-import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts } from "@/lib/registry";
+import { REPUTATION_REGISTRY } from "@/lib/addresses";
+import { useAgentReputation } from "@/lib/agentReputation";
+import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts, useRegistrations } from "@/lib/registry";
 
 const METHOD_LABEL: Record<string, string> = {
   "vision-llm": "Penilaian foto dengan AI",
@@ -93,6 +95,8 @@ export default function AgentPage() {
           <Stat icon={X} label="Ditolak" value={s.rejections} sub={s.verdicts ? `${formatPercent(s.rejections / s.verdicts)} dari semua foto` : undefined} />
           <Stat icon={Scale} label="Dikoreksi admin" value={s.overturned} sub="putusan AI yang dibatalkan saat sengketa" />
         </section>
+
+        {REPUTATION_REGISTRY && <Erc8004Reputation agentId={agent.agentId} />}
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
@@ -222,5 +226,33 @@ export default function AgentPage() {
         </section>
       </PageBody>
     </>
+  );
+}
+
+/** Reputasi agen di ERC-8004 ReputationRegistry resmi, hanya dari koperasi terdaftar (klien tepercaya). */
+function Erc8004Reputation({ agentId }: { agentId: bigint }) {
+  const { data: regs } = useRegistrations();
+  const coops = regs?.cooperatives.map((c) => c.address);
+  const { data: rep, isLoading } = useAgentReputation(agentId, coops);
+  return (
+    <Card className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="max-w-xl">
+        <CardTitle
+          icon={Award}
+          description="Setiap kali koperasi memutuskan satu tahap, koperasi mencatat apakah ia sepakat dengan putusan agen. Catatannya tersimpan di registri reputasi ERC-8004 resmi, terpisah dari BagiPanen, dan bisa dibaca aplikasi lain."
+        >
+          Reputasi di ERC-8004
+        </CardTitle>
+        <p className="text-xs text-stone-500">
+          Registri <AddressLink address={REPUTATION_REGISTRY!} /> · hanya menghitung penilaian dari {coops?.length ?? "…"} koperasi terdaftar.
+        </p>
+      </div>
+      <div className="shrink-0 rounded-3xl bg-hutan-50 px-6 py-4 text-center ring-1 ring-hutan-100">
+        <p className="font-display text-4xl font-semibold text-hutan-900">
+          {isLoading || !rep ? "…" : rep.agreement === null ? "–" : formatPercent(rep.agreement)}
+        </p>
+        <p className="mt-1 text-xs text-stone-600">{rep ? (rep.count > 0 ? `kesepakatan dari ${rep.count} penilaian koperasi` : "belum ada penilaian") : "memuat…"}</p>
+      </div>
+    </Card>
   );
 }

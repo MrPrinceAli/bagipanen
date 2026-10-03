@@ -18,7 +18,7 @@ BagiPanen adalah platform pendanaan modal tanam untuk petani Indonesia di BNB Ch
 <details>
 <summary><b>English summary</b></summary>
 
-BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season of a smallholder farmer with a stablecoin (MockUSDT on testnet). The money sits in a per-campaign escrow contract and is released in three tranches (planting 40%, growing 35%, pre-harvest 25%) only when **both** an AI agent and the farmer's cooperative approve a field photo. The AI agent has an on-chain identity in the official **ERC-8004 Identity Registry** (agent #2544) and a public verdict record. It checks EXIF GPS/date, duplicate photos, 14-day weather (Open-Meteo), and asks **Gemini** to assess the photo. Each verdict is stored as JSON on IPFS (Pinata). After harvest, the contract repays investors' principal first, then splits profit 55% farmer / 40% investors / 5% reserve pool. Every season builds an on-chain **farmer report card** that can serve as an alternative credit history. The UI is in Indonesian. It is live on BSC testnet with all contracts verified; the AI agent runs autonomously in the cloud (GitHub Actions, every ~5 minutes), and eight demo projects across Indonesia cover every state, including failed funding (100% refund) and crop failure (reserve-pool compensation).
+BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season of a smallholder farmer with a stablecoin (MockUSDT on testnet). The money sits in a per-campaign escrow contract and is released in three tranches (planting 40%, growing 35%, pre-harvest 25%) only when **both** an AI agent and the farmer's cooperative approve a field photo. The AI agent has an on-chain identity in the official **ERC-8004 Identity Registry** (agent #2544), and cooperatives rate each of its verdicts in the official **ERC-8004 Reputation Registry**. It checks EXIF GPS/date, duplicate photos, 14-day weather (Open-Meteo), and asks **Gemini** to assess the photo. Each verdict is stored as JSON on IPFS (Pinata). After harvest, the contract repays investors' principal first, then splits profit 55% farmer / 40% investors / 5% reserve pool. Every season builds an on-chain **farmer report card** that can serve as an alternative credit history. The UI is in Indonesian. It is live on BSC testnet with all contracts verified; the AI agent runs autonomously in the cloud (GitHub Actions, every ~5 minutes), and eight demo projects across Indonesia cover every state, including failed funding (100% refund) and crop failure (reserve-pool compensation).
 </details>
 
 ## Coba sekarang (untuk juri)
@@ -36,7 +36,7 @@ Yang bisa dilihat tanpa wallet:
 - **Gagal panen** — [Padi Demak](https://bagipanen.vercel.app/campaign/0x0f31dCAFb0770788a05CA2820D3Fe07B2690Eb47): tahap Tanam cair, lalu admin menandai gagal panen. Sisa dana 540 mUSDT + kompensasi dana cadangan 30 mUSDT dibagi ke investor sesuai porsi.
 - **Gagal pendanaan** — [Kentang Dieng](https://bagipanen.vercel.app/campaign/0x2e67FB4A9349a73F5a82bcb5751ddf370f5891F9): target tidak tercapai sampai tenggat, investor refund 100%.
 - **Rapor Petani:** klik nama petani di halaman proyek, misalnya [Pak Andi Baso](https://bagipanen.vercel.app/petani/0x7aE6ae33d47b40b9d7afd5DC23c98af3b40DcB73) (Sidrap) atau [Pak Kasmuri](https://bagipanen.vercel.app/petani/0x063B8Bb28af8183803b09Dd28a2c04cb8183DaD7) (Demak, tercatat gagal panen).
-- **Agen AI** (`/agent`): identitas onchain, isi agent card, statistik, dan 10 putusan terakhir. Log kerjanya di [GitHub Actions](https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml).
+- **Agen AI** (`/agent`): identitas onchain, **reputasi di ERC-8004 ReputationRegistry** (persentase kesepakatan koperasi dengan putusan agen), isi agent card, statistik, dan 10 putusan terakhir. Log kerjanya di [GitHub Actions](https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml).
 - **Penolakan oleh agen** (proyek uji coba awal di Garut, tidak tampil di beranda): [foto jagung ditolak Gemini lalu diunggah ulang](https://bagipanen.vercel.app/campaign/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) dan [foto yang sama dipakai ulang → ditolak sebagai duplikat](https://bagipanen.vercel.app/campaign/0xB0C1d27dd190d3d95327676f689E06D18930cb75).
 
 Peran Petani, Koperasi, dan Admin terikat ke wallet demo kami. Alurnya ditunjukkan di video demo dan bisa dicoba penuh di [mode lokal](#menjalankan-di-lokal) tanpa akun apa pun.
@@ -84,9 +84,10 @@ flowchart LR
     HC --> RB["ReputationBook<br/>Rapor Petani & statistik agen"]
     HC --> RP["ReservePool<br/>dana cadangan 5%"]
     F --> ID["IdentityRegistry ERC-8004<br/>(resmi)"]
+    RR["ReputationRegistry ERC-8004<br/>(resmi)"]
   end
   IPFS[("IPFS (Pinata)<br/>foto bukti, metadata,<br/>JSON putusan")]
-  subgraph Agent["agent/ — Node.js"]
+  subgraph Agent["agent/ — Node.js (GitHub Actions)"]
     A["Loop agen: EXIF · duplikat ·<br/>cuaca · penilaian foto"]
   end
   UI -- baca/tulis kontrak (MetaMask) --> Chain
@@ -97,6 +98,7 @@ flowchart LR
   A -- Gemini --> V["Penilaian foto"]
   A -- JSON putusan --> IPFS
   A -- recordVerdict --> HC
+  UI -- "giveFeedback (koperasi menilai agen)" --> RR
 ```
 
 | Bagian | Teknologi |
@@ -164,6 +166,7 @@ Semua kontrak ada di [contracts/src/](contracts/src/).
 | ReputationBook | [`0xE10414172fB887d9789AA2b33B6D062cb5432B90`](https://testnet.bscscan.com/address/0xE10414172fB887d9789AA2b33B6D062cb5432B90#code) |
 | ReservePool | [`0x9e4C939F7DD58b13cBB1148bff4fC15433E0978b`](https://testnet.bscscan.com/address/0x9e4C939F7DD58b13cBB1148bff4fC15433E0978b#code) |
 | IdentityRegistry ERC-8004 (resmi, bukan milik BagiPanen) | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
+| ReputationRegistry ERC-8004 (resmi, bukan milik BagiPanen) | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://testnet.bscscan.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
 | Wallet agen AI (#2544) | [`0x0837FE45C0faf7a101C98d70D71476db81806022`](https://testnet.bscscan.com/address/0x0837FE45C0faf7a101C98d70D71476db81806022) |
 
 Proyek demo di testnet (dibuat dengan [`agent/scripts/seed-showcase.ts`](agent/scripts/seed-showcase.ts) lewat transaksi sungguhan; foto bukti dinilai agen AI, bukan diisi manual). Tiga proyek uji coba awal di Garut tidak tampil di beranda, tetapi tetap bisa dibuka lewat tautan.
@@ -310,4 +313,4 @@ docs/        PRD, keputusan teknis, hasil uji, riset ERC-8004, foto demo
 
 ## Di luar lingkup MVP
 
-Login sosial & gasless, BNB Greenfield, pasar sekunder token porsi, pembayaran x402, notifikasi WhatsApp/Telegram, mainnet, multisig admin, dan reputasi di Reputation Registry ERC-8004. Roadmap lengkapnya ada di [docs/PRD.md](docs/PRD.md).
+Login sosial & gasless, BNB Greenfield, pasar sekunder token porsi, pembayaran x402, notifikasi WhatsApp/Telegram, mainnet, multisig admin, penilaian agen oleh admin saat sengketa, dan Validation Registry ERC-8004. Roadmap lengkapnya ada di [docs/PRD.md](docs/PRD.md).

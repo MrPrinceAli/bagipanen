@@ -1,16 +1,20 @@
 "use client";
 
-import { Camera, ClipboardCheck, Clock, HandCoins, Receipt, ShieldCheck, Wallet } from "lucide-react";
+import { BadgeCheck, Camera, ClipboardCheck, Clock, HandCoins, Receipt, ShieldCheck, Wallet } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { isAddressEqual } from "viem";
+import { isAddressEqual, zeroHash } from "viem";
 import { useAccount } from "wagmi";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
+import { erc8004ReputationRegistryAbi } from "@/lib/abi/ERC8004ReputationRegistry";
 import { harvestCampaignAbi } from "@/lib/abi/HarvestCampaign";
 import { mockUSDTAbi } from "@/lib/abi/MockUSDT";
-import { addresses } from "@/lib/addresses";
+import { addresses, REPUTATION_REGISTRY } from "@/lib/addresses";
+import { targetChain } from "@/lib/config";
+import { decidedPairs, FEEDBACK_TAG, useGivenFeedback } from "@/lib/agentReputation";
 import { usePosition } from "@/lib/campaigns";
 import { formatPercent, formatRupiah, formatUsdt, parseUsdtInput, usdtToInput } from "@/lib/format";
-import { uploadFile } from "@/lib/ipfs";
+import { uploadFile, uploadJson } from "@/lib/ipfs";
+import { useAgentProfile } from "@/lib/registry";
 import type { Role } from "@/lib/role";
 import { useEffectiveNow } from "@/lib/time";
 import { useTx } from "@/lib/tx";
@@ -58,6 +62,8 @@ export function ActionPanels(props: PanelProps) {
     (current.status === MStatus.ProofSubmitted || current.status === MStatus.AIReviewed)
   )
     panels.push(<CooperativePanel key="coop" c={c} milestone={current} />);
+  if (isCoop && REPUTATION_REGISTRY && decidedPairs(c, milestones).length > 0)
+    panels.push(<AgentFeedbackPanel key="feedback" c={c} milestones={milestones} />);
 
   if (panels.length === 0) return null;
   return <div className="flex flex-col gap-4">{panels}</div>;
@@ -451,6 +457,100 @@ export function CooperativePanel({ c, milestone }: { c: CampaignSummary; milesto
       </div>
       <div className="mt-3">
         <TxStatus state={tx.state} successText="Keputusanmu sudah tercatat." />
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * Koperasi menilai agen AI di ERC-8004 ReputationRegistry resmi: setiap tahap yang sudah diputus
+ * keduanya → 100 (sepakat) atau 0 (tidak sepakat). Transaksi terpisah; tidak memengaruhi pencairan.
+ */
+function AgentFeedbackPanel({ c, milestones }: { c: CampaignSummary; milestones: readonly Milestone[] }) {
+  const { address } = useAccount();
+  const { data: agent } = useAgentProfile();
+  const { data: given } = useGivenFeedback(agent?.configured ? agent.agentId : undefined, address);
+  const tx = useTx();
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  if (!agent?.configured || !given || !address) return null;
+  const pending = decidedPairs(c, milestones).filter((p) => !given.has(p.key));
+  if (pending.length === 0) return null;
+
+  async function rate({ m, index, key }: (typeof pending)[number]) {
+    setError("");
+    setBusyKey(key);
+    try {
+      const agree = m.aiApproved === m.verifierApproved;
+      // Berkas feedback ERC-8004 (field wajib spesifikasi + konteks BagiPanen) di IPFS.
+      const doc = await uploadJson({
+        schema: "bagipanen.agent-feedback.v1",
+        agentRegistry: `eip155:${targetChain.id}:${agent!.identityRegistry}`,
+        agentId: Number(agent!.agentId),
+        clientAddress: `eip155:${targetChain.id}:${address}`,
+        createdAt: new Date().toISOString(),
+        value: agree ? 100 : 0,
+        valueDecimals: 0,
+        tag1: FEEDBACK_TAG,
+        tag2: key,
+        campaign: c.address,
+        milestoneIndex: index,
+        milestoneName: m.name,
+        attempt: m.attempts,
+        proofCID: m.proofCID,
+        aiApproved: m.aiApproved,
+        aiReasonCID: m.aiReasonCID,
+        verifierApproved: m.verifierApproved,
+      });
+      await tx.write({
+        address: REPUTATION_REGISTRY!,
+        abi: erc8004ReputationRegistryAbi,
+        functionName: "giveFeedback",
+        args: [agent!.agentId, agree ? 100n : 0n, 0, FEEDBACK_TAG, key, "", `ipfs://${doc.cid}`, zeroHash],
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Penilaian gagal disimpan. Coba lagi.");
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardTitle
+        icon={BadgeCheck}
+        description="Catat apakah kamu sepakat dengan putusan agen AI. Penilaian masuk ke registri reputasi ERC-8004 resmi dan bisa dibaca siapa saja. Tidak memengaruhi pencairan dana."
+      >
+        Nilai agen AI
+      </CardTitle>
+      <ul className="flex flex-col gap-2">
+        {pending.map((p) => {
+          const agree = p.m.aiApproved === p.m.verifierApproved;
+          return (
+            <li key={p.key} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-krem-50 p-3 ring-1 ring-krem-200">
+              <div className="text-sm">
+                <p className="font-semibold text-hutan-950">
+                  Tahap {p.m.name} <span className="font-normal text-stone-500">· percobaan {p.m.attempts}</span>
+                </p>
+                <p className="text-stone-600">
+                  Agen {p.m.aiApproved ? "menyetujui" : "menolak"}, kamu {p.m.verifierApproved ? "menyetujui" : "menolak"} →{" "}
+                  <span className={cn("font-semibold", agree ? "text-hutan-700" : "text-red-700")}>{agree ? "sepakat (100)" : "tidak sepakat (0)"}</span>
+                </p>
+              </div>
+              <Button size="sm" loading={busyKey === p.key} disabled={busyKey !== null} onClick={() => rate(p)}>
+                Catat penilaian
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+      {error && (
+        <Notice tone="error" className="mt-3">
+          {error}
+        </Notice>
+      )}
+      <div className="mt-3">
+        <TxStatus state={tx.state} successText="Penilaianmu tercatat di registri reputasi ERC-8004." />
       </div>
     </Card>
   );

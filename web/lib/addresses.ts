@@ -10,6 +10,8 @@ export type Deployment = {
   usdt: Address;
   identityRegistry: Address;
   identityIsMock: boolean;
+  /** ERC-8004 ReputationRegistry resmi (opsional; tidak ada di Anvil). */
+  reputationRegistry?: Address;
   factory: Address;
   campaignDeployer: Address;
   reputationBook: Address;
@@ -44,6 +46,15 @@ export const addresses = IS_LOCAL
       reservePool: asAddress(process.env.NEXT_PUBLIC_RESERVE_ADDRESS) ?? current?.reservePool,
       reputationBook: asAddress(process.env.NEXT_PUBLIC_REPUTATION_ADDRESS) ?? current?.reputationBook,
     };
+
+/**
+ * ERC-8004 ReputationRegistry untuk feedback koperasi → agen. Testnet: NEXT_PUBLIC_ERC8004_REPUTATION_REGISTRY,
+ * jika kosong dari deployments/bscTestnet.json. Tidak ada (mis. mode lokal) = fitur disembunyikan.
+ */
+export const REPUTATION_REGISTRY: Address | undefined = IS_LOCAL
+  ? undefined
+  : (asAddress(process.env.NEXT_PUBLIC_ERC8004_REPUTATION_REGISTRY) ??
+    (current?.reputationRegistry && !/^0x0{40}$/.test(current.reputationRegistry) ? current.reputationRegistry : undefined));
 
 /** Blok awal pencarian event (blok deploy factory). */
 export const START_BLOCK = BigInt(current?.startBlock ?? 0);

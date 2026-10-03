@@ -15,7 +15,8 @@ import {ICampaignFactory, IReputationBook, IReservePool} from "../src/interfaces
 ///   BSC testnet (97):    forge script script/Deploy.s.sol --rpc-url bscTestnet --broadcast
 /// Anvil memakai akun bawaan #0 sebagai admin dan selalu MockAgentIdentity.
 /// Testnet memakai DEPLOYER_PRIVATE_KEY dan ERC8004_IDENTITY_REGISTRY dari contracts/.env
-/// (kosong = deploy MockAgentIdentity sebagai fallback).
+/// (kosong = deploy MockAgentIdentity sebagai fallback). ERC8004_REPUTATION_REGISTRY (opsional)
+/// hanya dicatat untuk web & skrip — kontrak BagiPanen tidak memanggilnya.
 /// Hasil ditulis ke deployments/<anvil|bscTestnet>.json.
 contract Deploy is AnvilAccounts {
     struct Result {
@@ -24,6 +25,7 @@ contract Deploy is AnvilAccounts {
         address usdt;
         address identityRegistry;
         bool identityIsMock;
+        address reputationRegistry;
         address factory;
         address campaignDeployer;
         address reputationBook;
@@ -36,6 +38,10 @@ contract Deploy is AnvilAccounts {
         address registry = local ? address(0) : _envAddressOrZero("ERC8004_IDENTITY_REGISTRY");
         if (registry != address(0)) {
             require(registry.code.length > 0, "ERC8004_IDENTITY_REGISTRY bukan alamat kontrak");
+        }
+        r.reputationRegistry = local ? address(0) : _envAddressOrZero("ERC8004_REPUTATION_REGISTRY");
+        if (r.reputationRegistry != address(0)) {
+            require(r.reputationRegistry.code.length > 0, "ERC8004_REPUTATION_REGISTRY bukan alamat kontrak");
         }
 
         r.deployer = vm.addr(pk);
@@ -97,6 +103,7 @@ contract Deploy is AnvilAccounts {
         vm.serializeAddress(o, "usdt", r.usdt);
         vm.serializeAddress(o, "identityRegistry", r.identityRegistry);
         vm.serializeBool(o, "identityIsMock", r.identityIsMock);
+        vm.serializeAddress(o, "reputationRegistry", r.reputationRegistry);
         vm.serializeAddress(o, "factory", r.factory);
         vm.serializeAddress(o, "campaignDeployer", r.campaignDeployer);
         vm.serializeAddress(o, "reputationBook", r.reputationBook);

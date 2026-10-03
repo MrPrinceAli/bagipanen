@@ -12,6 +12,7 @@
     "register": "tsx scripts/register-agent.ts",
     "cek-foto": "tsx scripts/cek-foto.ts",
     "seed:showcase": "tsx scripts/seed-showcase.ts",
+    "feedback:backfill": "tsx scripts/feedback-backfill.ts",
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

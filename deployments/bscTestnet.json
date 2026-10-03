@@ -7,6 +7,7 @@
   "identityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
   "network": "bscTestnet",
   "reputationBook": "0xE10414172fB887d9789AA2b33B6D062cb5432B90",
+  "reputationRegistry": "0x8004B663056A597Dffe9eCcC1965A193B7388713",
   "reservePool": "0x9e4C939F7DD58b13cBB1148bff4fC15433E0978b",
   "startBlock": 134247179,
   "usdt": "0x09E5561C0d52eD66c8d65F2DA5c7EF4708555642"
