@@ -74,6 +74,31 @@ export function useRegistrations() {
   });
 }
 
+/** Direktori petani: pendaftaran (event factory) + statistik Rapor (ReputationBook) tiap petani. */
+export function useFarmerDirectory() {
+  const client = usePublicClient();
+  const { data: regs } = useRegistrations();
+  return useQuery({
+    queryKey: ["farmerDirectory", regs?.farmers.length, regs?.cooperatives.length],
+    enabled: Boolean(client && regs && CONTRACTS_READY),
+    refetchInterval: REFRESH_MS,
+    queryFn: async () => {
+      const { reputationBook } = requireAddresses();
+      const stats = await Promise.all(
+        regs!.farmers.map((f) =>
+          client!.readContract({ address: reputationBook, abi: reputationBookAbi, functionName: "getFarmerStats", args: [f.address] }),
+        ),
+      );
+      const farmers = regs!.farmers.map((f, i) => ({
+        ...f,
+        stats: stats[i],
+        cooperativeName: regs!.cooperatives.find((c) => f.cooperative && isAddressEqual(c.address, f.cooperative))?.name ?? "",
+      }));
+      return { farmers, cooperatives: regs!.cooperatives };
+    },
+  });
+}
+
 /** Data Rapor Petani: statistik ReputationBook + nama petani & koperasi. */
 export function useFarmerReport(farmer: Address | undefined) {
   const client = usePublicClient();
