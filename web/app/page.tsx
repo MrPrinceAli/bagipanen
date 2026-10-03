@@ -3,7 +3,6 @@
 import {
   ArrowDown,
   ArrowRight,
-  Award,
   BadgeCheck,
   Blocks,
   Bot,
@@ -44,12 +43,11 @@ import heroImage from "@/public/hero-lahan.jpg";
 /** Teknologi utama di hero; di mode lokal adapter AI & penyimpanan memakai mock. */
 const TECH_STACK = [
   { icon: Wheat, label: "Real World Asset" },
-  { icon: Blocks, label: IS_LOCAL ? "Anvil (lokal)" : "BSC Testnet" },
-  { icon: BadgeCheck, label: "Agen AI ERC-8004" },
-  { icon: Award, label: "Reputasi agen ERC-8004" },
+  { icon: Blocks, label: IS_LOCAL ? "Anvil (local)" : "BSC Testnet" },
+  { icon: BadgeCheck, label: "ERC-8004 Identity + Reputation" },
   { icon: ScanEye, label: IS_LOCAL ? "AI Vision (mock)" : "Gemini Vision" },
   { icon: CloudSun, label: "Open-Meteo" },
-  { icon: Boxes, label: IS_LOCAL ? "Penyimpanan lokal" : "IPFS · Pinata" },
+  { icon: Boxes, label: IS_LOCAL ? "Local storage" : "IPFS · Pinata" },
   { icon: Coins, label: "Stablecoin" },
 ];
 
