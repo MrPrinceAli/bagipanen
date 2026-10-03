@@ -5,6 +5,7 @@ import { CloudRain, ScanEye, Thermometer } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import heroImage from "@/public/hero-lahan.jpg";
+import { PoweredBy } from "./BrandLogos";
 import { Card, cn } from "./ui";
 
 /* ================================================================ Gemini Vision */
@@ -21,6 +22,7 @@ export function GeminiVisionCard() {
   ];
   return (
     <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
+      <PoweredBy items={[{ logo: "gemini", label: "Google Gemini" }]} />
       <div>
         <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Mata agen AI · Gemini Vision</p>
         <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Foto lahan dinilai, bukan sekadar diunggah</h2>
@@ -124,6 +126,7 @@ export function OpenMeteoCard() {
 
   return (
     <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
+      <PoweredBy items={[{ logo: "openmeteo", label: "Open-Meteo" }]} />
       <div>
         <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Cuaca sebagai saksi · Open-Meteo</p>
         <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Klaim gagal panen dicek dengan data</h2>

@@ -25,6 +25,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
+import { PoweredBy } from "@/components/BrandLogos";
 import { CardSlider } from "@/components/CardSlider";
 import { StepBadge, StepVisual } from "@/components/HowItWorksVisuals";
 import { GeminiVisionCard, OpenMeteoCard } from "@/components/TechCards";
@@ -298,6 +299,7 @@ export default function HomePage() {
         <Container className="grid gap-6 lg:grid-cols-2">
           <Reveal className="h-full">
             <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
+              <PoweredBy items={[{ badge: "ERC-8004", label: "Agen #2544" }, { logo: "bnb", label: "BNB Smart Chain" }]} />
               <div>
                 <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Dua kunci pencairan</p>
                 <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Uang baru keluar kalau dua pihak setuju</h2>
@@ -332,6 +334,7 @@ export default function HomePage() {
 
           <Reveal delay={120} className="h-full">
             <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
+              <PoweredBy items={[{ logo: "solidity" }, { logo: "openzeppelin", label: "OpenZeppelin v5" }, { logo: "bnb" }]} />
               <div>
                 <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Bagi hasil</p>
                 <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Modal kembali dulu, baru untung dibagi</h2>

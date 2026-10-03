@@ -72,45 +72,53 @@ export function PlantProgress({ value, className }: { value: number; className?:
 
 /* ------------------------------------------------------- Loader awal (layar penuh) */
 
+const INTRO_MS = 5000; // kunjungan pertama dalam satu sesi: animasi penuh
+const REPEAT_MS = 900; // muat ulang di sesi yang sama: singkat saja
+const MAX_MS = 10_000; // pengaman bila event load tidak kunjung datang
+
 /**
- * Layar pembuka saat web pertama dibuka: persentase mengikuti pemuatan sungguhan (naik pelan sampai
- * ~88%, lalu 100% saat font & semua sumber halaman selesai dimuat), tampil minimal ±0,9 detik,
- * lalu memudar. Tidak muncul lagi pada navigasi antarhalaman.
+ * Layar pembuka saat web dibuka: persentase naik mulus mengikuti waktu (5 detik pada kunjungan
+ * pertama dalam satu sesi browser, ±0,9 detik bila dimuat ulang), tetapi tertahan di 92% sampai
+ * font & semua sumber halaman benar-benar selesai dimuat. Tidak muncul pada navigasi antarhalaman.
  */
 export function InitialLoader() {
   const [value, setValue] = useState(0);
   const [phase, setPhase] = useState<"load" | "fade" | "gone">("load");
 
   useEffect(() => {
-    let v = 0;
-    let target = 88;
-    let raf = 0;
-    const started = performance.now();
-    const finish = () => {
-      const wait = Math.max(0, 900 - (performance.now() - started));
-      setTimeout(() => (target = 100), wait);
-    };
-    const ready = Promise.all([
+    let first = true;
+    try {
+      first = !sessionStorage.getItem("bp-intro");
+      sessionStorage.setItem("bp-intro", "1");
+    } catch {
+      // penyimpanan diblokir (mode privat) → tetap tampilkan animasi penuh
+    }
+    const minMs = first ? INTRO_MS : REPEAT_MS;
+    let loaded = false;
+    Promise.all([
       document.readyState === "complete" ? Promise.resolve() : new Promise((r) => window.addEventListener("load", r, { once: true })),
       document.fonts?.ready ?? Promise.resolve(),
-    ]);
-    ready.then(finish);
-    const cap = setTimeout(() => (target = 100), 7000);
+    ]).then(() => (loaded = true));
+
+    const started = performance.now();
+    let v = 0;
+    let raf = 0;
     const tick = () => {
-      v += (target - v) * (target === 100 ? 0.14 : 0.03);
-      const shown = target === 100 && v > 99.4 ? 100 : Math.floor(v);
+      const elapsed = performance.now() - started;
+      if (elapsed > MAX_MS) loaded = true;
+      const eased = 1 - Math.pow(1 - Math.min(1, elapsed / minMs), 2.2);
+      const target = Math.min(loaded ? 100 : 92, eased * 100);
+      v += (target - v) * 0.2;
+      const shown = target === 100 && v > 99.5 ? 100 : Math.floor(v);
       setValue((prev) => (prev === shown ? prev : shown));
       if (shown < 100) raf = requestAnimationFrame(tick);
       else {
-        setTimeout(() => setPhase("fade"), 350);
-        setTimeout(() => setPhase("gone"), 950);
+        setTimeout(() => setPhase("fade"), 400);
+        setTimeout(() => setPhase("gone"), 1000);
       }
     };
     raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(cap);
-    };
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   if (phase === "gone") return null;
