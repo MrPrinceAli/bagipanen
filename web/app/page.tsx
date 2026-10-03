@@ -3,6 +3,7 @@
 import {
   ArrowDown,
   ArrowRight,
+  Award,
   BadgeCheck,
   Blocks,
   Bot,
@@ -10,6 +11,7 @@ import {
   Camera,
   Check,
   Clock,
+  CloudSun,
   Coins,
   FileSignature,
   HandCoins,
@@ -44,7 +46,9 @@ const TECH_STACK = [
   { icon: Wheat, label: "Real World Asset" },
   { icon: Blocks, label: IS_LOCAL ? "Anvil (lokal)" : "BSC Testnet" },
   { icon: BadgeCheck, label: "Agen AI ERC-8004" },
+  { icon: Award, label: "Reputasi onchain" },
   { icon: ScanEye, label: IS_LOCAL ? "AI Vision (mock)" : "Gemini Vision" },
+  { icon: CloudSun, label: "Open-Meteo" },
   { icon: Boxes, label: IS_LOCAL ? "Penyimpanan lokal" : "IPFS · Pinata" },
   { icon: Coins, label: "Stablecoin" },
 ];
