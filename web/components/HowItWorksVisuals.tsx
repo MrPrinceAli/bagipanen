@@ -60,7 +60,7 @@ function FundingPanel({ on }: PanelProps) {
     { name: "Sari", amt: "200", hue: "from-sky-300 to-sky-600" },
   ];
   return (
-    <div data-on={onAttr(on)} className="how-panel how-neon relative h-full min-h-[27rem] overflow-hidden rounded-[1.75rem] p-6 text-white sm:p-8">
+    <div data-on={onAttr(on)} className="how-panel how-neon relative flex h-full min-h-[27rem] flex-col overflow-hidden rounded-[1.75rem] p-6 text-white sm:p-8">
       <p className="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] text-white/60 uppercase">
         <span className="relative flex size-2">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-300 opacity-70" />
@@ -68,10 +68,10 @@ function FundingPanel({ on }: PanelProps) {
         </span>
         Pool pendanaan · live onchain
       </p>
-      <div className="mt-6 grid items-center gap-6 sm:grid-cols-[auto_1fr]">
+      <div className="my-auto grid items-center gap-7 py-6 sm:grid-cols-[auto_1fr]">
         <div className="relative mx-auto">
-          <div className="how-ring grid size-44 place-items-center rounded-full">
-            <div className="grid size-[9.4rem] place-items-center rounded-full bg-[#04110b] text-center shadow-[inset_0_0_30px_rgb(237_197_106/0.15)]">
+          <div className="how-ring grid size-48 place-items-center rounded-full">
+            <div className="grid size-[10.4rem] place-items-center rounded-full bg-[#04110b] text-center shadow-[inset_0_0_30px_rgb(237_197_106/0.15)]">
               <div>
                 <p className="font-display text-4xl font-semibold tracking-tight">1.000</p>
                 <p className="font-mono text-[10px] tracking-widest text-white/50 uppercase">USDT terkumpul</p>
@@ -80,9 +80,9 @@ function FundingPanel({ on }: PanelProps) {
             </div>
           </div>
           {[
-            { t: "+500 BPS", cls: "-top-2 -left-6", d: "0s" },
-            { t: "+300 BPS", cls: "top-10 -right-10", d: "0.8s" },
-            { t: "+200 BPS", cls: "-bottom-1 -left-3", d: "1.6s" },
+            { t: "+500 BPS", cls: "-top-3 left-0", d: "0s" },
+            { t: "+300 BPS", cls: "top-[45%] -left-10", d: "0.8s" },
+            { t: "+200 BPS", cls: "-bottom-3 left-6", d: "1.6s" },
           ].map((k) => (
             <span
               key={k.t}
@@ -107,7 +107,7 @@ function FundingPanel({ on }: PanelProps) {
           ))}
         </ul>
       </div>
-      <p className="mt-6 font-mono text-[11px] text-white/45">1 USDT = 1 token porsi (BPS) · tidak bisa dipindahtangankan</p>
+      <p className="font-mono text-[11px] text-white/45">1 USDT = 1 token porsi (BPS) · tidak bisa dipindahtangankan</p>
     </div>
   );
 }
@@ -176,7 +176,7 @@ function SplitPanel({ on }: PanelProps) {
     { label: "Dana cadangan", value: "32,5", cls: "bg-[#c0392b] text-white", tilt: "-1.5deg", d: "0.8s" },
   ];
   return (
-    <div data-on={onAttr(on)} className="how-panel how-brutal relative h-full min-h-[27rem] rounded-[1.25rem] p-6 text-hutan-950 sm:p-7">
+    <div data-on={onAttr(on)} className="how-panel how-brutal relative flex h-full min-h-[27rem] flex-col rounded-[1.25rem] p-6 text-hutan-950 sm:p-7">
       <div className="flex items-start justify-between gap-3">
         <p className="font-display text-3xl leading-none font-black tracking-tight uppercase">
           Bagi
@@ -187,28 +187,28 @@ function SplitPanel({ on }: PanelProps) {
           Otomatis!
         </span>
       </div>
-      <div className="mt-5 grid items-center gap-6 sm:grid-cols-[auto_1fr]">
+      <div className="my-auto grid items-center gap-7 py-6 sm:grid-cols-[auto_1fr]">
         <div
-          className="how-donut relative mx-auto size-40 rounded-full border-[3px] border-hutan-950 shadow-[6px_6px_0_#0b1d15]"
+          className="how-donut relative mx-auto size-44 sm:size-48 rounded-full border-[3px] border-hutan-950 shadow-[6px_6px_0_#0b1d15]"
           style={{ background: "conic-gradient(#1b4130 0 60.6%, #3d855d 0 76.4%, #e6b043 0 98.1%, #c0392b 0)" }}
         >
           <div className="absolute inset-[24%] grid place-items-center rounded-full border-[3px] border-hutan-950 bg-[#fdf9ee] text-center">
             <div>
-              <p className="font-display text-xl leading-none font-black">1.650</p>
+              <p className="font-display text-2xl leading-none font-black">1.650</p>
               <p className="font-mono text-[9px] font-bold tracking-widest uppercase">USDT</p>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {tiles.map((t) => (
-            <div key={t.label} className={cn("how-tile rounded-lg p-2.5", t.cls)} style={{ "--tilt": t.tilt, animationDelay: t.d } as CSSProperties}>
+            <div key={t.label} className={cn("how-tile rounded-lg p-3", t.cls)} style={{ "--tilt": t.tilt, animationDelay: t.d } as CSSProperties}>
               <p className="font-mono text-[9px] font-black tracking-wider uppercase opacity-80">{t.label}</p>
-              <p className="font-display text-2xl leading-tight font-black">{t.value}</p>
+              <p className="font-display text-[1.7rem] leading-tight font-black">{t.value}</p>
             </div>
           ))}
         </div>
       </div>
-      <p className="mt-6 font-mono text-[11px] font-bold">Modal kembali dulu → untung: 55% petani · 40% investor · 5% cadangan</p>
+      <p className="font-mono text-[11px] font-bold">Modal kembali dulu → untung: 55% petani · 40% investor · 5% cadangan</p>
     </div>
   );
 }
