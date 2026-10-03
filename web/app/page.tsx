@@ -387,19 +387,28 @@ export default function HomePage() {
 
 /* ================================================================ Kenapa */
 
-/** Kalimat masalah → solusi yang menyala kata demi kata mengikuti gulir. `*kata*` = sorotan emas. */
-const STATEMENT =
-  "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* Semua risikonya ditanggung petani sendirian. BagiPanen menggantinya dengan modal yang transparan: dikunci di kontrak, cair per tahap, *risikonya ditanggung bersama investor,* dan *untungnya dibagi adil.*";
+/**
+ * Paragraf masalah lalu paragraf solusi, menyala kata demi kata mengikuti gulir (berlanjut dari
+ * paragraf pertama ke kedua). `*kata*` = sorotan emas.
+ */
+const STATEMENT = [
+  "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* Semua risikonya ditanggung petani sendirian.",
+  "BagiPanen menggantinya dengan modal yang transparan: dikunci di kontrak, cair per tahap, *risikonya ditanggung bersama investor,* dan *untungnya dibagi adil.*",
+];
 
-const STATEMENT_WORDS = (() => {
-  let accent = false;
-  return STATEMENT.split(" ").map((raw) => {
-    if (raw.startsWith("*")) accent = true;
-    const word = { text: raw.replaceAll("*", ""), accent };
-    if (/\*[.,]?$/.test(raw)) accent = false;
-    return word;
+const STATEMENT_PARAGRAPHS = (() => {
+  let index = 0;
+  return STATEMENT.map((paragraph) => {
+    let accent = false;
+    return paragraph.split(" ").map((raw) => {
+      if (raw.startsWith("*")) accent = true;
+      const word = { text: raw.replaceAll("*", ""), accent, index: index++ };
+      if (/\*[.,]?$/.test(raw)) accent = false;
+      return word;
+    });
   });
 })();
+const STATEMENT_WORD_COUNT = STATEMENT_PARAGRAPHS.flat().length;
 
 const FACTS = [
   { value: "55%", label: "untung untuk petani" },
@@ -410,7 +419,7 @@ const FACTS = [
 function ProblemStatement() {
   const reduced = useReducedMotion();
   const [ref, progress] = useScrollProgress<HTMLElement>();
-  const n = STATEMENT_WORDS.length;
+  const n = STATEMENT_WORD_COUNT;
   const lit = reduced ? n : Math.round(Math.min(1, Math.max(0, (progress - 0.06) / 0.72)) * n);
   const factsShown = reduced || progress > 0.8;
 
@@ -420,19 +429,27 @@ function ProblemStatement() {
         <div className="pola-bedengan absolute inset-0" aria-hidden />
         <Container className="relative">
           <p className="mb-4 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase sm:mb-6">Kenapa BagiPanen</p>
-          <p className="max-w-4xl font-display text-[1.45rem] leading-[1.28] font-semibold tracking-tight min-[400px]:text-[1.7rem] min-[400px]:leading-[1.3] sm:text-4xl sm:leading-[1.25] lg:text-[2.75rem]">
-            {STATEMENT_WORDS.map((w, i) => (
-              <span
-                key={i}
-                className={cn(
-                  "transition-colors duration-300",
-                  i < lit ? (w.accent ? "text-emas-300 italic" : "text-white") : w.accent ? "text-white/15 italic" : "text-white/15",
-                )}
-              >
-                {w.text}{" "}
-              </span>
-            ))}
-          </p>
+          {STATEMENT_PARAGRAPHS.map((words, p) => (
+            <p
+              key={p}
+              className={cn(
+                "max-w-4xl font-display text-[1.45rem] leading-[1.28] font-semibold tracking-tight min-[400px]:text-[1.7rem] min-[400px]:leading-[1.3] sm:text-4xl sm:leading-[1.25] lg:text-[2.75rem]",
+                p > 0 && "mt-4 sm:mt-6",
+              )}
+            >
+              {words.map((w) => (
+                <span
+                  key={w.index}
+                  className={cn(
+                    "transition-colors duration-300",
+                    w.index < lit ? (w.accent ? "text-emas-300 italic" : "text-white") : w.accent ? "text-white/15 italic" : "text-white/15",
+                  )}
+                >
+                  {w.text}{" "}
+                </span>
+              ))}
+            </p>
+          ))}
           <dl
             className={cn(
               "mt-6 grid max-w-3xl grid-cols-3 gap-3 transition duration-700 sm:mt-10 sm:gap-6",
