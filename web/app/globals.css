@@ -376,9 +376,22 @@ body {
   line-height: 0.8;
 }
 
+/* Garis pemindai di kartu Gemini Vision */
+.scan-line {
+  top: -3rem;
+  background: linear-gradient(180deg, transparent, rgb(237 197 106 / 0.35) 70%, rgb(237 197 106 / 0.9) 96%, transparent);
+  animation: scan 2.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@keyframes scan {
+  to {
+    top: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
-  .scroll-cue {
+  .scroll-cue,
+  .scan-line {
     animation: none;
   }
   .reveal,

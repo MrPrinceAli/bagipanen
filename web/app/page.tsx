@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
 import { CardSlider } from "@/components/CardSlider";
 import { StepBadge, StepVisual } from "@/components/HowItWorksVisuals";
+import { GeminiVisionCard, OpenMeteoCard } from "@/components/TechCards";
 import { StatusBadge } from "@/components/common";
 import { Reveal, useReducedMotion, useScrollProgress } from "@/components/scroll";
 import { ButtonLink, Card, Container, cn, EmptyState, Notice, ProgressBar, SectionTitle, Skeleton, Stat } from "@/components/ui";
@@ -356,6 +357,12 @@ export default function HomePage() {
                 ))}
               </dl>
             </Card>
+          </Reveal>
+          <Reveal className="h-full">
+            <GeminiVisionCard />
+          </Reveal>
+          <Reveal delay={120} className="h-full">
+            <OpenMeteoCard />
           </Reveal>
         </Container>
       </section>
