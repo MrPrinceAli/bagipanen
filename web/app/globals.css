@@ -109,6 +109,10 @@ body {
       animation-timeline: scroll(root);
       animation-range: 0 100vh;
     }
+  }
+  /* Isi hero memudar hanya di layar lebar, tempat seluruh hero muat satu layar. Di HP hero lebih
+     tinggi dari layar, sehingga kartu proyek di bawahnya akan pudar sebelum sempat terlihat. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
     .hero-exit {
       animation: hero-exit linear both;
       animation-timeline: scroll(root);
