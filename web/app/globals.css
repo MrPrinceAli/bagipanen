@@ -148,15 +148,213 @@ body {
   animation: scroll-cue 1.8s ease-in-out infinite;
 }
 
+/* ---------- Cara kerja: empat panel dengan gaya berbeda ----------
+   Animasi berjalan saat panel aktif ([data-on], visual menempel di desktop) atau saat muncul
+   di layar ([data-shown] dari Reveal, visual sebaris di HP). */
+@property --ring {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+/* 1 · Formulir kertas */
+.how-paper {
+  background-color: #f6efe0;
+  background-image:
+    linear-gradient(90deg, transparent 46px, rgb(192 57 43 / 0.35) 46px 48px, transparent 48px),
+    repeating-linear-gradient(0deg, transparent 0 29px, rgb(141 90 28 / 0.14) 29px 30px),
+    radial-gradient(120% 80% at 100% 0%, rgb(255 255 255 / 0.6), transparent 60%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 30px 60px -30px rgb(60 40 10 / 0.55),
+    0 10px 20px -12px rgb(60 40 10 / 0.35);
+}
+.how-clip {
+  width: 22px;
+  height: 64px;
+  border: 3px solid #9aa3a8;
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 4px transparent;
+}
+.how-clip::after {
+  content: "";
+  position: absolute;
+  inset: 8px 3px 14px;
+  border: 3px solid #9aa3a8;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+.how-stamp {
+  opacity: 0;
+  transform: scale(2.4) rotate(-32deg);
+  mask-image: repeating-radial-gradient(circle at 30% 40%, #000 0 2px, rgb(0 0 0 / 0.72) 2px 3px);
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-stamp {
+  animation: how-stamp 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) 0.45s forwards;
+}
+@keyframes how-stamp {
+  60% {
+    opacity: 0.95;
+    transform: scale(0.9) rotate(-10deg);
+  }
+  to {
+    opacity: 0.88;
+    transform: scale(1) rotate(-12deg);
+  }
+}
+
+/* 2 · Neon fintech */
+.how-neon {
+  background-color: #04110b;
+  background-image:
+    radial-gradient(60% 50% at 80% 0%, rgb(230 176 67 / 0.22), transparent 70%),
+    radial-gradient(50% 60% at 0% 100%, rgb(61 133 93 / 0.35), transparent 70%),
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    26px 26px,
+    26px 26px;
+  box-shadow:
+    0 0 0 1px rgb(237 197 106 / 0.25),
+    0 0 40px -8px rgb(237 197 106 / 0.35),
+    0 30px 60px -30px rgb(0 0 0 / 0.8);
+}
+.how-ring {
+  background: conic-gradient(from -90deg, #edc56a, #8fc2a3 var(--ring), rgb(255 255 255 / 0.07) 0);
+  transition: --ring 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s;
+  filter: drop-shadow(0 0 18px rgb(237 197 106 / 0.45));
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-ring {
+  --ring: 100%;
+}
+.how-token {
+  opacity: 0;
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-token {
+  animation: how-token 2.6s ease-in-out infinite;
+}
+@keyframes how-token {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.8);
+  }
+  25%,
+  60% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px) scale(0.9);
+  }
+}
+
+/* 3 · Tanah & tunas */
+.how-soil {
+  background:
+    radial-gradient(circle at 20% 82%, rgb(0 0 0 / 0.18) 0 1.5px, transparent 2px) 0 0 / 18px 14px,
+    radial-gradient(circle at 70% 90%, rgb(255 255 255 / 0.12) 0 1px, transparent 1.5px) 0 0 / 22px 16px,
+    linear-gradient(180deg, #dff0e6 0%, #f4f9f5 52%, #9a6a3a 52.5%, #7a5230 60%, #5c3b20 80%, #462c18 100%);
+  box-shadow: 0 30px 60px -30px rgb(40 25 10 / 0.6);
+}
+.how-stem {
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.3, 0.6, 0.2, 1) 0.2s;
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-stem {
+  stroke-dashoffset: 0;
+}
+.how-leaf {
+  transform: scale(0);
+  transform-box: fill-box;
+  transition: transform 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-leaf {
+  transform: scale(1);
+}
+.how-row {
+  opacity: 0;
+  transform: translateX(16px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-row {
+  opacity: 1;
+  transform: none;
+}
+
+/* 4 · Neo-brutalist */
+.how-brutal {
+  background:
+    radial-gradient(circle, rgb(11 29 21 / 0.18) 1.2px, transparent 1.6px) 0 0 / 16px 16px,
+    #f4dca0;
+  border: 3px solid #0b1d15;
+  box-shadow: 10px 10px 0 #0b1d15;
+}
+.how-tile {
+  border: 3px solid #0b1d15;
+  box-shadow: 5px 5px 0 #0b1d15;
+  opacity: 0;
+  transform: translateY(-26px) rotate(var(--tilt, 0deg));
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-tile {
+  animation: how-drop 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
+}
+@keyframes how-drop {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+}
+.how-donut {
+  opacity: 0;
+  transform: rotate(-140deg) scale(0.55);
+}
+:is(.how-panel[data-on], [data-shown] .how-panel) .how-donut {
+  animation: how-spin 1s cubic-bezier(0.3, 1.3, 0.5, 1) 0.1s forwards;
+}
+@keyframes how-spin {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .scroll-cue {
     animation: none;
   }
   .reveal,
-  .grow-x {
+  .grow-x,
+  .how-stamp,
+  .how-token,
+  .how-leaf,
+  .how-row,
+  .how-tile,
+  .how-donut {
     opacity: 1;
     transform: none;
+    transition: none;
+    animation: none !important;
+  }
+  .how-stamp {
+    opacity: 0.88;
+    transform: rotate(-12deg);
+  }
+  .how-token {
+    opacity: 0;
+  }
+  .how-ring {
+    --ring: 100%;
+    transition: none;
+  }
+  .how-stem {
+    stroke-dashoffset: 0;
     transition: none;
   }
 }

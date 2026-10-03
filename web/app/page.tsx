@@ -7,33 +7,28 @@ import {
   Blocks,
   Bot,
   Boxes,
-  Camera,
-  Check,
   ChevronLeft,
   ChevronRight,
-  Clock,
   CloudSun,
   Coins,
-  FileSignature,
   HandCoins,
   Landmark,
   MapPin,
-  PieChart,
   Scale,
   ScanEye,
   ShieldCheck,
   Sprout,
   Users,
   Wheat,
-  type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
+import { StepBadge, StepVisual } from "@/components/HowItWorksVisuals";
 import { StatusBadge } from "@/components/common";
 import { Reveal, useActiveIndex, useReducedMotion, useScrollProgress } from "@/components/scroll";
-import { ButtonLink, Card, Container, cn, EmptyState, IconBubble, Notice, ProgressBar, SectionTitle, Skeleton, Stat } from "@/components/ui";
+import { ButtonLink, Card, Container, cn, EmptyState, Notice, ProgressBar, SectionTitle, Skeleton, Stat } from "@/components/ui";
 import { useCampaignList, useIpfsJson, useReserveBalance } from "@/lib/campaigns";
 import { HIDDEN_FROM_HOME, IS_LOCAL } from "@/lib/config";
 import { formatPercent, formatRupiah, formatUsdt, projectedInvestorReturn } from "@/lib/format";
@@ -473,24 +468,20 @@ function ProblemStatement() {
 
 /* ============================================================ Cara kerja */
 
-const STEPS: { icon: LucideIcon; title: string; body: string }[] = [
+const STEPS: { title: string; body: string }[] = [
   {
-    icon: FileSignature,
     title: "Petani mengajukan",
     body: "Petani anggota koperasi menulis kebutuhan modal, rencana biaya, dan perkiraan panennya. Admin memeriksa dulu sebelum pendanaan dibuka.",
   },
   {
-    icon: HandCoins,
     title: "Kamu ikut mendanai",
     body: "Danai berapa pun yang kamu mau. Setiap 1 USDT jadi 1 token porsi yang mencatat bagianmu dan tidak bisa dipindahtangankan.",
   },
   {
-    icon: Camera,
     title: "Dana cair per tahap",
     body: "Tanam, tumbuh, pra-panen. Tiap tahap baru cair setelah foto lahan terbaru lolos pengecekan agen AI dan koperasi.",
   },
   {
-    icon: PieChart,
     title: "Panen dibagi otomatis",
     body: "Hasil penjualan disetor ke kontrak. Modal investor kembali dulu, sisanya dibagi ke petani, investor, dan dana cadangan.",
   },
@@ -547,16 +538,12 @@ function HowItWorks() {
             {STEPS.map((s, i) => (
               <li key={s.title} ref={register(i)} className="lg:flex lg:min-h-[72svh] lg:items-center lg:last:min-h-[56svh]">
                 <Reveal className="w-full">
-                  <div className="mb-5 lg:hidden">
-                    <StepVisual index={i} active />
+                  <div className="mb-6 lg:hidden">
+                    {/* Di HP animasi panel dipicu saat muncul di layar (data-shown dari Reveal). */}
+                    <StepVisual index={i} active={false} />
                   </div>
                   <div className={cn("transition-opacity duration-500", i === active ? "lg:opacity-100" : "lg:opacity-30")}>
-                    <div className="flex items-center gap-3">
-                      <IconBubble icon={s.icon} />
-                      <span className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">
-                        Langkah {i + 1} dari {STEPS.length}
-                      </span>
-                    </div>
+                    <StepBadge index={i} />
                     <h3 className="mt-4 font-display text-2xl font-semibold text-balance text-hutan-950 sm:text-3xl">{s.title}</h3>
                     <p className="mt-3 max-w-md leading-relaxed text-pretty text-stone-600">{s.body}</p>
                   </div>
@@ -567,136 +554,6 @@ function HowItWorks() {
         </div>
       </Container>
     </section>
-  );
-}
-
-/** Ilustrasi mini tiap langkah (angka contoh PRD). */
-function StepVisual({ index, active }: { index: number; active: boolean }) {
-  const shell = "h-full rounded-[2rem] border border-krem-200 bg-krem-50 p-5 shadow-lift sm:p-7";
-  if (index === 0)
-    return (
-      <div className={shell}>
-        <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Pengajuan proyek tanam</p>
-        <p className="mt-2 font-display text-xl font-semibold text-hutan-950">Modal tanam cabai merah</p>
-        <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-          {[
-            ["Komoditas", "Cabai merah"],
-            ["Luas lahan", "0,5 ha"],
-            ["Kebutuhan modal", "1.000 USDT"],
-            ["Perkiraan panen", "1.650 USDT"],
-          ].map(([k, v]) => (
-            <div key={k} className="rounded-2xl border border-krem-200 bg-white p-3">
-              <dt className="text-xs text-stone-500">{k}</dt>
-              <dd className="mt-0.5 font-semibold text-hutan-950">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-emas-100 px-3 py-1.5 text-xs font-semibold text-emas-800">
-          <Clock className="size-3.5" aria-hidden /> Menunggu review admin
-        </p>
-      </div>
-    );
-  if (index === 1)
-    return (
-      <div className={shell}>
-        <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Pendanaan</p>
-        <div className="mt-3 flex items-baseline justify-between">
-          <p className="font-display text-3xl font-semibold text-hutan-950">1.000 USDT</p>
-          <p className="text-sm font-semibold text-hutan-600">100%</p>
-        </div>
-        <div className="mt-3 h-3 overflow-hidden rounded-full bg-krem-200">
-          <div
-            className="h-full rounded-full bg-linear-to-r from-hutan-600 to-emas-400 transition-[width] delay-200 duration-[1400ms] ease-out"
-            style={{ width: active ? "100%" : "0%" }}
-          />
-        </div>
-        <ul className="mt-5 flex flex-col gap-2 text-sm">
-          {[
-            ["Rina", "500"],
-            ["Budi", "300"],
-            ["Sari", "200"],
-          ].map(([name, amt]) => (
-            <li key={name} className="flex items-center justify-between rounded-2xl border border-krem-200 bg-white px-4 py-2.5">
-              <span className="flex items-center gap-2.5 font-semibold text-hutan-950">
-                <span className="grid size-7 place-items-center rounded-full bg-hutan-100 text-xs text-hutan-700">{name[0]}</span>
-                {name}
-              </span>
-              <span className="text-stone-600">
-                {amt} USDT → <span className="font-semibold text-hutan-700">{amt} BPS</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  if (index === 2)
-    return (
-      <div className={shell}>
-        <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Pencairan bertahap</p>
-        <ul className="mt-4 flex flex-col gap-3">
-          {[
-            { name: "Tanam", pct: "40%", done: true },
-            { name: "Tumbuh", pct: "35%", done: true },
-            { name: "Pra-panen", pct: "25%", done: false },
-          ].map((m, i) => (
-            <li
-              key={m.name}
-              className="rounded-2xl border border-krem-200 bg-white p-4 transition duration-500"
-              style={{ transitionDelay: active ? `${i * 150}ms` : "0ms", opacity: active ? 1 : 0.4 }}
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-hutan-950">
-                  {m.name} <span className="font-normal text-stone-500">· {m.pct}</span>
-                </p>
-                <span className={cn("text-xs font-semibold", m.done ? "text-hutan-600" : "text-emas-700")}>
-                  {m.done ? "Dana cair" : "Menunggu koperasi"}
-                </span>
-              </div>
-              <div className="mt-2.5 flex gap-2 text-xs">
-                <KeyChip icon={Bot} label="Agen AI" ok />
-                <KeyChip icon={Users} label="Koperasi" ok={m.done} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  return (
-    <div className={shell}>
-      <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Bagi hasil otomatis</p>
-      <p className="mt-2 font-display text-3xl font-semibold text-hutan-950">1.650 USDT</p>
-      <p className="text-sm text-stone-500">hasil penjualan panen disetor ke kontrak</p>
-      <div data-shown={active ? "" : undefined} className="mt-5">
-        <SplitBar />
-      </div>
-      <ul className="mt-5 grid grid-cols-2 gap-2 text-sm">
-        {[
-          ["Modal investor", "1.000"],
-          ["Untung investor", "260"],
-          ["Untung petani", "357,5"],
-          ["Dana cadangan", "32,5"],
-        ].map(([k, v]) => (
-          <li key={k} className="rounded-2xl border border-krem-200 bg-white px-3 py-2">
-            <p className="text-xs text-stone-500">{k}</p>
-            <p className="font-semibold text-hutan-950">{v} USDT</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function KeyChip({ icon: Icon, label, ok }: { icon: LucideIcon; label: string; ok: boolean }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium",
-        ok ? "bg-hutan-50 text-hutan-700" : "bg-krem-100 text-stone-500",
-      )}
-    >
-      <Icon className="size-3.5" aria-hidden /> {label}
-      {ok ? <Check className="size-3.5" aria-hidden /> : <Clock className="size-3.5" aria-hidden />}
-    </span>
   );
 }
 
