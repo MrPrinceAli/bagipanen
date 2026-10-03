@@ -98,9 +98,9 @@ export default function HomePage() {
                 </span>
                 {IS_LOCAL ? "Mode demo lokal" : "Sudah berjalan di BNB Smart Chain Testnet"}
               </span>
-              <h1 className="mt-6 font-display text-[2.15rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 font-display text-[2.15rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl xl:text-[3.4rem]">
                 Tanpa ijon, tanpa tengkulak.{" "}
-                <span className="bg-linear-to-r from-emas-200 via-emas-300 to-emas-500 bg-clip-text text-transparent italic">
+                <span className="box-decoration-clone bg-linear-to-r from-emas-200 via-emas-300 to-emas-500 bg-clip-text pe-[0.12em] text-transparent italic">
                   Hasil panen dibagi smart contract.
                 </span>
               </h1>
