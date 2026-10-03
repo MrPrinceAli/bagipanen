@@ -9,6 +9,8 @@ import {
   Boxes,
   Camera,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   CloudSun,
   Coins,
@@ -27,7 +29,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
 import { StatusBadge } from "@/components/common";
 import { Reveal, useActiveIndex, useReducedMotion, useScrollProgress } from "@/components/scroll";
@@ -766,19 +768,45 @@ function AgentSection() {
 /* ======================================================= Kartu unggulan */
 
 const SLIDE_MS = 3000;
+const SWIPE_PX = 60;
 
-/** Slide otomatis kartu proyek di hero; berhenti saat disorot/difokus atau bila reduced motion. */
+/**
+ * Posisi kartu di tumpukan menurut jaraknya dari kartu depan (r): 0 = depan (ikut jari saat digeser),
+ * 1–2 = mengintip di belakang, n−1 = baru terlempar ke kiri, sisanya tersembunyi di belakang.
+ */
+function deckSlot(r: number, n: number, dragX: number) {
+  if (r === 0) return { transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`, opacity: 1, z: 30, dim: 0 };
+  if (r === 1) return { transform: "translate(7%, 4%) scale(0.92) rotate(3deg)", opacity: 1, z: 20, dim: 0.35 };
+  if (r === 2) return { transform: "translate(13%, 8%) scale(0.84) rotate(6deg)", opacity: 1, z: 10, dim: 0.55 };
+  if (r === n - 1) return { transform: "translate(-118%, 2%) rotate(-12deg)", opacity: 0, z: 40, dim: 0 };
+  return { transform: "translate(17%, 11%) scale(0.78) rotate(8deg)", opacity: 0, z: 0, dim: 0.6 };
+}
+
+/**
+ * Tumpukan kartu proyek di hero: satu kartu di depan, dua mengintip di belakang. Geser ke kiri
+ * (mouse/jari) → kartu depan terlempar dan kartu berikutnya maju; geser ke kanan → kartu sebelumnya
+ * kembali. Otomatis tiap 3 detik, berhenti saat disorot/disentuh atau bila reduced motion.
+ */
 function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
   const reduced = useReducedMotion();
+  const n = items.length;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const current = index % items.length;
+  const [drag, setDrag] = useState<{ x0: number; dx: number } | null>(null);
+  const moved = useRef(false);
+  const current = ((index % n) + n) % n;
 
   useEffect(() => {
-    if (reduced || paused || items.length < 2) return;
-    const t = setTimeout(() => setIndex((i) => (i + 1) % items.length), SLIDE_MS);
+    if (reduced || paused || drag || n < 2) return;
+    const t = setTimeout(() => setIndex((i) => i + 1), SLIDE_MS);
     return () => clearTimeout(t);
-  }, [index, reduced, paused, items.length]);
+  }, [index, reduced, paused, drag, n]);
+
+  const release = () => {
+    if (drag && drag.dx <= -SWIPE_PX) setIndex((i) => i + 1);
+    else if (drag && drag.dx >= SWIPE_PX) setIndex((i) => i - 1);
+    setDrag(null);
+  };
 
   return (
     <div
@@ -790,60 +818,105 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      {/* Lintasan geser: kartu lama keluar ke kiri bersamaan kartu baru masuk, tanpa jeda kosong.
-          Padding + margin negatif agar bayangan kartu tidak terpotong; jarak antar-kartu > padding. */}
-      <div className="-m-4 overflow-hidden p-4">
-        <div
-          className="flex items-stretch gap-8 transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.2,1)] motion-reduce:transition-none"
-          style={{ transform: `translateX(calc(${-current} * (100% + 2rem)))` }}
-        >
-          {items.map((c, i) => (
+      <div
+        className="mr-[12%] mb-12 grid cursor-grab touch-pan-y select-none active:cursor-grabbing"
+        onDragStart={(e) => e.preventDefault()}
+        onPointerDown={(e) => {
+          if (n < 2) return;
+          moved.current = false;
+          setDrag({ x0: e.clientX, dx: 0 });
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          if (!drag) return;
+          const dx = e.clientX - drag.x0;
+          if (Math.abs(dx) > 6) moved.current = true;
+          setDrag({ ...drag, dx });
+        }}
+        onPointerUp={release}
+        onPointerCancel={() => setDrag(null)}
+        onClickCapture={(e) => {
+          // Seret bukan klik: jangan buka halaman proyek setelah kartu digeser.
+          if (moved.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {items.map((c, i) => {
+          const r = (i - current + n) % n;
+          const slot = deckSlot(r, n, r === 0 && drag ? drag.dx : 0);
+          return (
             <div
               key={c.address}
               aria-roledescription="slide"
-              aria-label={`${i + 1} dari ${items.length}`}
-              aria-hidden={i !== current}
-              inert={i !== current}
-              className="w-full shrink-0"
+              aria-label={`${i + 1} dari ${n}`}
+              aria-hidden={r !== 0}
+              inert={r !== 0}
+              className="relative [grid-area:1/1] origin-bottom-left"
+              style={{
+                transform: slot.transform,
+                opacity: slot.opacity,
+                zIndex: slot.z,
+                transition: (r === 0 && drag) || reduced ? "none" : "transform 650ms cubic-bezier(0.2,0.7,0.2,1), opacity 500ms ease",
+              }}
             >
               <FeaturedCampaign c={c} />
-            </div>
-          ))}
-        </div>
-      </div>
-      {items.length > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          {items.map((c, i) => (
-            <button
-              key={c.address}
-              type="button"
-              onClick={() => setIndex(i)}
-              aria-label={`Tampilkan proyek ${i + 1}`}
-              aria-current={i === current}
-              className="grid h-6 place-items-center px-0.5"
-            >
-              <span
-                className={cn(
-                  "block h-1.5 rounded-full transition-all duration-500",
-                  i === current ? "w-8 bg-emas-300" : "w-3 bg-white/30 hover:bg-white/50",
-                )}
+              <div
+                className="pointer-events-none absolute inset-0 rounded-[2rem] bg-hutan-950 transition-opacity duration-500"
+                style={{ opacity: slot.dim }}
+                aria-hidden
               />
-            </button>
-          ))}
+            </div>
+          );
+        })}
+      </div>
+      {n > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIndex((i) => i - 1)}
+            aria-label="Proyek sebelumnya"
+            className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </button>
+          <div className="flex items-center gap-1.5">
+            {items.map((c, i) => (
+              <button
+                key={c.address}
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`Tampilkan proyek ${i + 1}`}
+                aria-current={i === current}
+                className="grid h-6 place-items-center px-0.5"
+              >
+                <span className={cn("block h-1.5 rounded-full transition-all duration-500", i === current ? "w-7 bg-emas-300" : "w-2.5 bg-white/30 hover:bg-white/50")} />
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIndex((i) => i + 1)}
+            aria-label="Proyek berikutnya"
+            className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-/** Kartu proyek unggulan di hero (gaya kaca). */
+/** Kartu proyek unggulan di hero (latar padat agar kartu di belakangnya tidak tembus pandang). */
 function FeaturedCampaign({ c }: { c: CampaignSummary }) {
   const { data: meta } = useIpfsJson<CampaignMetadata>(c.metadataCID);
   const pct = fundedPercent(c);
   return (
     <Link
       href={`/campaign/${c.address}`}
-      className="group block h-full overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.07] p-3 shadow-lift backdrop-blur-xl transition hover:bg-white/10"
+      className="group block h-full overflow-hidden rounded-[2rem] border border-white/15 bg-hutan-900 p-3 shadow-lift transition hover:bg-hutan-800"
     >
       <div className="relative h-56 overflow-hidden rounded-3xl sm:h-64">
         <CampaignCover cid={meta?.coverImageCID} commodity={c.commodity} className="transition duration-700 group-hover:scale-105" />
