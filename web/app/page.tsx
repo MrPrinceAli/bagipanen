@@ -25,6 +25,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CampaignCard, CampaignCover, fundedPercent } from "@/components/CampaignCard";
+import { CardSlider } from "@/components/CardSlider";
 import { StepBadge, StepVisual } from "@/components/HowItWorksVisuals";
 import { StatusBadge } from "@/components/common";
 import { Reveal, useReducedMotion, useScrollProgress } from "@/components/scroll";
@@ -258,13 +259,21 @@ export default function HomePage() {
               )}
             </EmptyState>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <CardSlider
+              key={filter}
+              label="Daftar proyek tanam"
+              footer={
+                <Link href="/proyek" className="inline-flex items-center gap-1 text-sm font-semibold text-hutan-700 hover:text-hutan-900">
+                  Lihat semua di peta <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              }
+            >
               {shown.map((c, i) => (
-                <Reveal key={`${filter}-${c.address}`} delay={(i % 3) * 90} className="h-full">
+                <Reveal key={c.address} delay={(i % 3) * 90} className="h-full">
                   <CampaignCard c={c} />
                 </Reveal>
               ))}
-            </div>
+            </CardSlider>
           )}
 
           {drafts.length > 0 && (role === "admin" || role === "petani") && (
