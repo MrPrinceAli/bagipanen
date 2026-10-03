@@ -46,7 +46,7 @@ const TECH_STACK = [
   { icon: Wheat, label: "Real World Asset" },
   { icon: Blocks, label: IS_LOCAL ? "Anvil (lokal)" : "BSC Testnet" },
   { icon: BadgeCheck, label: "Agen AI ERC-8004" },
-  { icon: Award, label: "Reputasi onchain" },
+  { icon: Award, label: "Reputasi agen ERC-8004" },
   { icon: ScanEye, label: IS_LOCAL ? "AI Vision (mock)" : "Gemini Vision" },
   { icon: CloudSun, label: "Open-Meteo" },
   { icon: Boxes, label: IS_LOCAL ? "Penyimpanan lokal" : "IPFS · Pinata" },
