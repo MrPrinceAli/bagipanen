@@ -776,10 +776,10 @@ const SWIPE_PX = 60;
  */
 function deckSlot(r: number, n: number, dragX: number) {
   if (r === 0) return { transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`, opacity: 1, z: 30, dim: 0 };
-  if (r === 1) return { transform: "translate(7%, 4%) scale(0.92) rotate(3deg)", opacity: 1, z: 20, dim: 0.35 };
-  if (r === 2) return { transform: "translate(13%, 8%) scale(0.84) rotate(6deg)", opacity: 1, z: 10, dim: 0.55 };
+  if (r === 1) return { transform: "translate(7%, 0) scale(0.94) rotate(2.5deg)", opacity: 1, z: 20, dim: 0.35 };
+  if (r === 2) return { transform: "translate(13%, 0) scale(0.88) rotate(5deg)", opacity: 1, z: 10, dim: 0.55 };
   if (r === n - 1) return { transform: "translate(-118%, 2%) rotate(-12deg)", opacity: 0, z: 40, dim: 0 };
-  return { transform: "translate(17%, 11%) scale(0.78) rotate(8deg)", opacity: 0, z: 0, dim: 0.6 };
+  return { transform: "translate(16%, 0) scale(0.84) rotate(6deg)", opacity: 0, z: 0, dim: 0.6 };
 }
 
 /**
@@ -819,7 +819,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
       onBlur={() => setPaused(false)}
     >
       <div
-        className="mr-[12%] mb-12 grid cursor-grab touch-pan-y select-none active:cursor-grabbing"
+        className="mr-[12%] mb-8 grid cursor-grab touch-pan-y select-none active:cursor-grabbing"
         onDragStart={(e) => e.preventDefault()}
         onPointerDown={(e) => {
           if (n < 2) return;
@@ -853,7 +853,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
               aria-label={`${i + 1} dari ${n}`}
               aria-hidden={r !== 0}
               inert={r !== 0}
-              className="relative [grid-area:1/1] origin-bottom-left"
+              className="relative [grid-area:1/1]"
               style={{
                 transform: slot.transform,
                 opacity: slot.opacity,
@@ -872,7 +872,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
         })}
       </div>
       {n > 1 && (
-        <div className="flex items-center justify-center gap-3">
+        <div className="relative z-40 flex items-center justify-center gap-3">
           <button
             type="button"
             onClick={() => setIndex((i) => i - 1)}
