@@ -8,7 +8,8 @@ import { Badge, Card, CardTitle, cn, EmptyState, Loading, Notice, PageBody, Page
 import { formatDateTime, formatPercent, shortAddress } from "@/lib/format";
 import { REPUTATION_REGISTRY } from "@/lib/addresses";
 import { useAgentReputation } from "@/lib/agentReputation";
-import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts, useRegistrations } from "@/lib/registry";
+import { useCampaignList } from "@/lib/campaigns";
+import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts } from "@/lib/registry";
 
 const METHOD_LABEL: Record<string, string> = {
   "vision-llm": "Penilaian foto dengan AI",
@@ -229,10 +230,13 @@ export default function AgentPage() {
   );
 }
 
-/** Reputasi agen di ERC-8004 ReputationRegistry resmi, hanya dari koperasi terdaftar (klien tepercaya). */
+/**
+ * Reputasi agen di ERC-8004 ReputationRegistry resmi, hanya dari klien tepercaya: koperasi pendamping
+ * setiap proyek resmi (dibaca langsung dari kontrak proyek, bukan dari riwayat event).
+ */
 function Erc8004Reputation({ agentId }: { agentId: bigint }) {
-  const { data: regs } = useRegistrations();
-  const coops = regs?.cooperatives.map((c) => c.address);
+  const { data: campaigns } = useCampaignList();
+  const coops = campaigns ? [...new Map(campaigns.map((c) => [c.cooperative.toLowerCase(), c.cooperative])).values()] : undefined;
   const { data: rep, isLoading } = useAgentReputation(agentId, coops);
   return (
     <Card className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -244,7 +248,7 @@ function Erc8004Reputation({ agentId }: { agentId: bigint }) {
           Reputasi di ERC-8004
         </CardTitle>
         <p className="text-xs text-stone-500">
-          Registri <AddressLink address={REPUTATION_REGISTRY!} /> · hanya menghitung penilaian dari {coops?.length ?? "…"} koperasi terdaftar.
+          Registri <AddressLink address={REPUTATION_REGISTRY!} /> · hanya menghitung penilaian dari {coops?.length ?? "…"} koperasi pendamping proyek.
         </p>
       </div>
       <div className="shrink-0 rounded-3xl bg-hutan-50 px-6 py-4 text-center ring-1 ring-hutan-100">
