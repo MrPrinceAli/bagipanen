@@ -110,7 +110,7 @@ export default function HomePage() {
         <div className="glow-hutan absolute inset-0 -z-10" aria-hidden />
 
         <Container className="hero-exit flex flex-1 items-center py-12 sm:py-16">
-          <div className="grid w-full items-center gap-12 lg:grid-cols-[1.25fr_1fr]">
+          <div className="grid w-full items-center gap-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
             <div className="animate-fade-up">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
                 <span className="relative flex size-2">
@@ -156,7 +156,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="animate-fade-up [animation-delay:150ms]">
+            <div className="min-w-0 animate-fade-up [animation-delay:150ms]">
               {featured.length > 0 ? <FeaturedCarousel items={featured.slice(0, 6)} /> : <Skeleton className="h-96 bg-white/10" />}
             </div>
           </div>
