@@ -389,7 +389,7 @@ export default function HomePage() {
 
 /** Kalimat masalah → solusi yang menyala kata demi kata mengikuti gulir. `*kata*` = sorotan emas. */
 const STATEMENT =
-  "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* BagiPanen menggantinya dengan modal yang terbuka: dikunci di kontrak, cair per tahap, dan *untungnya dibagi adil.*";
+  "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* BagiPanen menggantinya dengan modal yang transparan: dikunci di kontrak, cair per tahap, dan *untungnya dibagi adil.*";
 
 const STATEMENT_WORDS = (() => {
   let accent = false;
