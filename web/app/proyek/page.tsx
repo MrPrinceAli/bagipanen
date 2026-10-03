@@ -6,7 +6,7 @@ import { type ReactNode, useState } from "react";
 import { CampaignCard } from "@/components/CampaignCard";
 import { statusLabel } from "@/components/common";
 import { Reveal } from "@/components/scroll";
-import { Card, cn, EmptyState, Notice, PageBody, PageHero, Skeleton } from "@/components/ui";
+import { cn, EmptyState, Notice, PageBody, PageHero, Skeleton } from "@/components/ui";
 import { useCampaignList, useIpfsJson } from "@/lib/campaigns";
 import { HIDDEN_FROM_HOME } from "@/lib/config";
 import { INDONESIA_PATH, MAP_HEIGHT, MAP_WIDTH, NEIGHBORS_PATH, projectToMap } from "@/lib/indonesiaMap";
@@ -136,7 +136,7 @@ export default function ProjectsPage() {
         description="Setiap titik adalah satu musim tanam satu petani. Arahkan kursor ke titik untuk melihat proyeknya, atau klik untuk membuka detailnya."
       />
       <PageBody>
-        <Card className="overflow-hidden bg-hutan-950 p-0 sm:p-0">
+        <div className="overflow-hidden rounded-3xl bg-hutan-950 shadow-lift">
           <div className="glow-hutan p-3 sm:p-6">
             {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-white/10" /> : <ProjectMap items={visible} highlight={matches} />}
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-2 text-xs text-white/70">
@@ -153,7 +153,7 @@ export default function ProjectsPage() {
               <span className="ml-auto text-white/45">{provinces.length} provinsi · {visible.length} proyek</span>
             </div>
           </div>
-        </Card>
+        </div>
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
