@@ -26,6 +26,9 @@ const all = deployments as unknown as { anvil: Deployment | null; bscTestnet: De
 export const localDeployment = all.anvil;
 const current = IS_LOCAL ? all.anvil : all.bscTestnet;
 
+/** Deployment jaringan aktif (alamat lengkap untuk halaman transparansi). */
+export const currentDeployment = current;
+
 const asAddress = (v: string | undefined): Address | undefined =>
   v && /^0x[0-9a-fA-F]{40}$/.test(v) ? (v as Address) : undefined;
 

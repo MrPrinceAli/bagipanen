@@ -44,6 +44,10 @@ export const HIDDEN_FROM_HOME: ReadonlySet<string> = new Set(
       ].map((a) => a.toLowerCase()),
 );
 
+/** Repo kode sumber & log agen AI di GitHub Actions (agen berjalan di cloud, lihat README). */
+export const REPO_URL = "https://github.com/MrPrinceAli/bagipanen";
+export const AGENT_WORKFLOW_URL = `${REPO_URL}/actions/workflows/agent.yml`;
+
 /** Kurs tetap untuk perkiraan rupiah (PRD: Rp16.000 per USDT). */
 export const IDR_PER_USDT = Number(process.env.NEXT_PUBLIC_IDR_PER_USDT) || 16_000;
 

@@ -1,11 +1,10 @@
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { explorerAddressUrl, IS_LOCAL } from "@/lib/config";
+import { explorerAddressUrl, IS_LOCAL, REPO_URL } from "@/lib/config";
 import { addresses } from "@/lib/addresses";
 import { Logo } from "./Header";
 import { Container } from "./ui";
 
-const REPO_URL = "https://github.com/MrPrinceAli/bagipanen";
 
 export function Footer() {
   const factoryUrl = addresses.factory ? explorerAddressUrl(addresses.factory) : null;
