@@ -98,10 +98,10 @@ export default function HomePage() {
                 </span>
                 {IS_LOCAL ? "Mode demo lokal" : "Sudah berjalan di BNB Smart Chain Testnet"}
               </span>
-              <h1 className="mt-6 font-display text-[2.6rem] leading-[1.02] font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+              <h1 className="mt-6 font-display text-[2.15rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
                 Tanpa ijon, tanpa tengkulak.{" "}
                 <span className="bg-linear-to-r from-emas-200 via-emas-300 to-emas-500 bg-clip-text text-transparent italic">
-                  Hasil panen dibagi lewat smart contract.
+                  Hasil panen dibagi smart contract.
                 </span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-pretty text-white/75">
