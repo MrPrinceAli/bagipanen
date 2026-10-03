@@ -25,3 +25,24 @@ Foto hero di beranda (`web/public/hero-lahan.jpg`) adalah potongan landscape dar
   - pada skenario penuh di BSC testnet: `tumbuh.jpg` **disetujui** (fase Tumbuh, yakin 0,90). `pra-panen.jpg` **disetujui** (fase Pra-panen, yakin 0,90), tetapi Gemini menilai kondisinya "buruk" dan memberi catatan: daun keriting, polybag di pekarangan. Sesuai aturan PRD, kondisi tanaman tidak ikut menentukan putusan, tetapi catatannya tampil untuk koperasi. Jika ingin tampilan demo yang lebih meyakinkan, ganti dengan foto cabai berbuah merah di lahan terbuka;
   - foto yang sama diunggah ke kampanye lain → **ditolak sebagai duplikat** (hash SHA-256 sama).
 - **Koordinat lahan.** Foto tidak punya GPS. Tombol "Isi contoh data demo" di halaman Ajukan sudah mengisi koordinat Cikajang (-7,356436, 107,80699; sumber: [Wikipedia](https://id.wikipedia.org/wiki/Cikajang,_Garut)).
+
+## Foto enam proyek contoh (`showcase/`)
+
+Dipakai oleh `agent/scripts/seed-showcase.ts` untuk enam proyek contoh di BSC testnet (Nganjuk, Karo, Kulon Progo, Lombok Tengah, Sidrap, Tanah Laut). Semuanya dari Wikimedia Commons, diperkecil menjadi lebar 1.280 px oleh Wikimedia (tanpa perubahan lain). Sebelum dikirim ke kontrak, setiap foto bukti diuji dulu ke Gemini dengan `npm run cek-foto` agar kesempatan unggah tidak terbuang. Contohnya, foto jagung bertunas bunga ditolak untuk tahap Tumbuh karena fasenya sudah pra-panen, lalu diganti. Nama petani & koperasi fiktif; koordinat lahan adalah perkiraan pusat kecamatan.
+
+| File | Dipakai untuk | Judul asli | Pembuat | Lisensi |
+| --- | --- | --- | --- | --- |
+| `nganjuk-sampul.jpg` | Sampul bawang merah, Nganjuk | [Pertanian Bawang Merah (Red Onion Field).jpg](https://commons.wikimedia.org/wiki/File:Pertanian_Bawang_Merah_(Red_Onion_Field).jpg) | Nizambagusp | CC BY-SA 4.0 |
+| `karo-sampul.jpg` | Sampul kentang, Karo | [Potato Field.jpg](https://commons.wikimedia.org/wiki/File:Potato_Field.jpg) | Dzikra Imron | CC BY-SA 4.0 |
+| `kulonprogo-sampul.jpg` | Sampul cabai rawit, Kulon Progo | [Chilli plantation bali.jpg](https://commons.wikimedia.org/wiki/File:Chilli_plantation_bali.jpg) | Okkisafire | CC BY-SA 4.0 |
+| `lombok-sampul.jpg` | Sampul padi, Lombok Tengah | [Rice field in Lombok.jpg](https://commons.wikimedia.org/wiki/File:Rice_field_in_Lombok.jpg) | Lasthib | CC0 |
+| `lombok-tanam.jpg` | Bukti Tanam, Lombok Tengah | [Tandur (tanam mundur).jpg](https://commons.wikimedia.org/wiki/File:Tandur_(tanam_mundur).jpg) | Galeri ega | CC BY-SA 4.0 |
+| `sidrap-sampul.jpg` | Sampul padi, Sidrap | [Membajak Sawah Menggunakan Tenaga Sapi.jpg](https://commons.wikimedia.org/wiki/File:Membajak_Sawah_Menggunakan_Tenaga_Sapi.jpg) | Anis Mujahid Akbar | CC BY-SA 4.0 |
+| `sidrap-tanam.jpg` | Bukti Tanam, Sidrap | [Sawah hijau.jpg](https://commons.wikimedia.org/wiki/File:Sawah_hijau.jpg) | Mochammad Taufik | CC BY-SA 4.0 |
+| `sidrap-tumbuh.jpg` | Bukti Tumbuh, Sidrap | [Padi.jpg](https://commons.wikimedia.org/wiki/File:Padi.jpg) | Helito | CC BY-SA 4.0 |
+| `sidrap-pra-panen.jpg` | Bukti Pra-panen, Sidrap | [Ripening rice plants in paddy field, Indonesia.jpg](https://commons.wikimedia.org/wiki/File:Ripening_rice_plants_in_paddy_field,_Indonesia.jpg) | Undeka 11 | CC BY-SA 4.0 |
+| `tanahlaut-sampul.jpg` | Sampul jagung, Tanah Laut | [Ladang Jagung Di Bontotiro.jpg](https://commons.wikimedia.org/wiki/File:Ladang_Jagung_Di_Bontotiro.jpg) | Kurniawan Maulana | CC BY-SA 4.0 |
+| `tanahlaut-tanam.jpg` | Bukti Tanam, Tanah Laut | [Corn shoots - Mısır filizleri 01.jpg](https://commons.wikimedia.org/wiki/File:Corn_shoots_-_M%C4%B1s%C4%B1r_filizleri_01.jpg) | Zeynel Cebeci | CC BY-SA 4.0 |
+| `tanahlaut-tumbuh.jpg` | Bukti Tumbuh, Tanah Laut | [A maize and cassava farm.jpg](https://commons.wikimedia.org/wiki/File:A_maize_and_cassava_farm.jpg) | Phina001 | CC BY-SA 4.0 |
+| `tanahlaut-pra-panen.jpg` | Bukti Pra-panen, Tanah Laut | [Jagung Yang Sudah Siap Di Panen.jpg](https://commons.wikimedia.org/wiki/File:Jagung_Yang_Sudah_Siap_Di_Panen.jpg) | SATELITBM | CC BY-SA 4.0 |
+| `sidrap-nota.jpg`, `tanahlaut-nota.jpg` | Nota setor hasil panen | Dibuat untuk proyek ini, bertanda "CONTOH · DATA DEMO" (nama & angka fiktif) | Tim BagiPanen | — |
