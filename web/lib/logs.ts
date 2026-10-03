@@ -1,7 +1,12 @@
 "use client";
 
-import { IS_LOCAL } from "./config";
+import { createPublicClient, http } from "viem";
+import { BSC_TESTNET_LOGS_RPC, IS_LOCAL, testnetChain } from "./config";
 import { START_BLOCK } from "./addresses";
+
+/** Klien khusus log (testnet, bila NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC diisi); undefined = pakai klien utama. */
+export const logsClient =
+  !IS_LOCAL && BSC_TESTNET_LOGS_RPC ? createPublicClient({ chain: testnetChain, transport: http(BSC_TESTNET_LOGS_RPC) }) : undefined;
 
 /**
  * Rentang blok per panggilan eth_getLogs. RPC publik resmi BNB menolak getLogs; RPC publik

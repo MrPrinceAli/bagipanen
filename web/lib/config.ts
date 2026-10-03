@@ -20,6 +20,13 @@ export const testnetChain = defineChain({
   rpcUrls: { default: { http: [BSC_TESTNET_RPC] } },
 });
 
+/**
+ * RPC khusus pembacaan log (eth_getLogs) di testnet. RPC publik biasa (mis. publicnode) hanya
+ * menyimpan log beberapa hari terakhir, sehingga riwayat lama (pendaftaran, putusan) hilang.
+ * Kosong = pakai RPC utama.
+ */
+export const BSC_TESTNET_LOGS_RPC = process.env.NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC || undefined;
+
 /** Chain tujuan sesuai mode. */
 export const targetChain = IS_LOCAL ? localChain : testnetChain;
 

@@ -256,7 +256,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 ### Deploy ke Vercel
 
 - Root directory: `web/` (framework Next.js terdeteksi otomatis).
-- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_IDR_PER_USDT=16000`.
+- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC=https://rpc.sentio.xyz/bsc-testnet` (publicnode hanya menyimpan log beberapa hari terakhir; tanpa ini riwayat lama seperti pendaftaran koperasi tidak terbaca), `NEXT_PUBLIC_IDR_PER_USDT=16000`.
 - Alamat kontrak tidak perlu diisi, karena sudah ada di `web/lib/deployments.ts` hasil `npm run sync`. Variabel `NEXT_PUBLIC_*_ADDRESS` hanya untuk menimpa alamat itu.
 - Agen AI tidak di-deploy ke Vercel (fungsi Vercel hanya hidup saat ada permintaan). Agen berjalan di GitHub Actions, lihat bagian berikut.
 

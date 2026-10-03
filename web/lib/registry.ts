@@ -10,7 +10,7 @@ import { reputationBookAbi } from "./abi/ReputationBook";
 import { CONTRACTS_READY, requireAddresses } from "./addresses";
 import { IS_LOCAL, REFRESH_MS } from "./config";
 import { fetchIpfsJson, ipfsUrl } from "./ipfs";
-import { getLogsIncremental } from "./logs";
+import { getLogsIncremental, logsClient } from "./logs";
 import type { CampaignSummary, Milestone } from "./types";
 import { deployments } from "./deployments";
 
@@ -52,7 +52,7 @@ export function useRegistrations() {
       const latest = await client!.getBlockNumber();
       // Cache yang sama dengan riwayat transaksi kampanye (semua event factory)
       const logs = await getLogsIncremental(`factory:${factory}`, latest, (fromBlock, toBlock) =>
-        client!.getContractEvents({ address: factory, abi: campaignFactoryAbi, fromBlock, toBlock }),
+        (logsClient ?? client!).getContractEvents({ address: factory, abi: campaignFactoryAbi, fromBlock, toBlock }),
       );
       const cooperatives: Registration[] = [];
       const farmers: Registration[] = [];
@@ -203,7 +203,7 @@ export function useRecentVerdicts(limit = 10) {
       if (campaignList.length === 0) return [];
       const latest = await client!.getBlockNumber();
       const logs = await getLogsIncremental(`verdicts:${campaignList.length}`, latest, (fromBlock, toBlock) =>
-        client!.getLogs({ address: [...campaignList], event: verdictEvent, fromBlock, toBlock }),
+        (logsClient ?? client!).getLogs({ address: [...campaignList], event: verdictEvent, fromBlock, toBlock }),
       );
       const recent = logs
         .sort((a, b) => (a.blockNumber === b.blockNumber ? b.logIndex - a.logIndex : Number(b.blockNumber - a.blockNumber)))

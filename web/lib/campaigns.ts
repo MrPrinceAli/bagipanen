@@ -10,7 +10,7 @@ import { reservePoolAbi } from "./abi/ReservePool";
 import { CONTRACTS_READY, requireAddresses } from "./addresses";
 import { REFRESH_MS } from "./config";
 import { fetchIpfsJson } from "./ipfs";
-import { getLogsIncremental } from "./logs";
+import { getLogsIncremental, logsClient } from "./logs";
 import type { CampaignSummary } from "./types";
 
 /** Semua kampanye + ringkasannya (terbaru di atas). */
@@ -154,10 +154,10 @@ export function useCampaignActivity(campaign: Address | undefined) {
       const latest = await client!.getBlockNumber();
       const [campaignLogs, factoryLogs] = await Promise.all([
         getLogsIncremental(`campaign:${c}`, latest, (fromBlock, toBlock) =>
-          client!.getContractEvents({ address: c, abi: harvestCampaignAbi, fromBlock, toBlock }),
+          (logsClient ?? client!).getContractEvents({ address: c, abi: harvestCampaignAbi, fromBlock, toBlock }),
         ),
         getLogsIncremental(`factory:${factory}`, latest, (fromBlock, toBlock) =>
-          client!.getContractEvents({ address: factory, abi: campaignFactoryAbi, fromBlock, toBlock }),
+          (logsClient ?? client!).getContractEvents({ address: factory, abi: campaignFactoryAbi, fromBlock, toBlock }),
         ),
       ]);
       const relevantFactory = factoryLogs.filter((log) => {
