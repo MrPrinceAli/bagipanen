@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { type PointerEvent, useState } from "react";
+import { type PointerEvent, useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogos";
 import { VerdictSummary } from "@/components/campaign/Timeline";
 import { AddressLink, IpfsImage, TxLink } from "@/components/common";
@@ -138,6 +138,92 @@ function IdentityCard({ agentId, wallet, registry, card, mock }: { agentId: bigi
             <BrandLogo name="bnb" className="size-5" />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ Terminal */
+
+type Line = { tag: string; text: string; tone?: "ok" | "bad" | "dim" | "gold" };
+
+/** Log kerja agen untuk satu putusan, disusun dari dokumen putusan sungguhan di IPFS. */
+function buildLog(v: VerdictEntry, d: VerdictDocument | undefined): Line[] {
+  const vis = d?.vision;
+  const exif = d?.exif;
+  const w = d?.weather;
+  const num = (x: number | undefined) => (x === undefined ? "?" : x.toLocaleString("id-ID", { maximumFractionDigits: 1 }));
+  return [
+    { tag: "$", text: `agen --periksa ${shortAddress(v.campaign)} --tahap ${v.milestoneName.toLowerCase()}`, tone: "gold" },
+    { tag: "BUKTI", text: `${v.commodity} · tahap ${v.milestoneName} (percobaan ${d?.attempt ?? 1})` },
+    { tag: "FOTO", text: d ? `ipfs://${d.proofCID.slice(0, 18)}… diunduh, sha256 dihitung` : "mengunduh foto dari IPFS…" },
+    { tag: "DUPLIKAT", text: d?.duplicate ? "foto pernah dipakai!" : "aman, foto belum pernah dipakai", tone: d?.duplicate ? "bad" : "ok" },
+    {
+      tag: "EXIF",
+      text: exif?.status === "ok" ? `GPS ${num(exif.distanceKm ?? undefined)} km dari lahan, tanggal cocok` : exif?.status === "mismatch" ? "GPS/tanggal tidak cocok" : "tidak ada GPS & tanggal (dicatat, tidak ditolak)",
+      tone: exif?.status === "mismatch" ? "bad" : "dim",
+    },
+    { tag: "CUACA", text: w ? `14 hari: hujan ${num(w.precip14dMm)} mm, maks ${num(w.maxDailyPrecipMm)} mm/hari${w.extreme ? " · EKSTREM" : ""}` : "membaca Open-Meteo…" },
+    {
+      tag: "AI",
+      text: vis
+        ? `${d?.agent?.model ?? "gemini"} → ${vis.detected_commodity ?? "?"}, fase ${vis.detected_stage ?? "?"}, kondisi ${vis.plant_condition ?? "?"}, yakin ${vis.confidence?.toFixed(2) ?? "?"}`
+        : "meminta Gemini Vision…",
+    },
+    { tag: "PUTUSAN", text: `${v.approved ? "DISETUJUI" : "DITOLAK"} → tx ${shortAddress(v.txHash)}`, tone: v.approved ? "ok" : "bad" },
+  ];
+}
+
+const TAG_W = "w-[5.5rem] sm:w-24";
+
+/** Jendela terminal yang mengetik ulang log putusan terbaru agen, lalu mengulang. */
+function AgentTerminal({ verdict }: { verdict: VerdictEntry | undefined }) {
+  const { data: doc } = useIpfsJson<VerdictDocument>(verdict?.reasonCID);
+  const lines = verdict ? buildLog(verdict, doc) : [];
+  const [shown, setShown] = useState(0);
+  const ready = Boolean(verdict && doc);
+
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => setShown((n) => (n >= lines.length + 6 ? 0 : n + 1)), shown === 0 ? 600 : 520);
+    return () => clearTimeout(t);
+  }, [ready, shown, lines.length]);
+
+  const tone = (l: Line) =>
+    l.tone === "ok" ? "text-hutan-300" : l.tone === "bad" ? "text-red-400" : l.tone === "gold" ? "text-emas-300" : l.tone === "dim" ? "text-hutan-100/45" : "text-hutan-100/85";
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-hutan-400/20 bg-[#050d09]/90 shadow-[0_0_60px_-15px_rgb(61_133_93/0.45)] backdrop-blur">
+      <div className="flex items-center gap-2 border-b border-hutan-400/15 bg-black/40 px-4 py-2.5">
+        <span className="size-3 rounded-full bg-[#ff5f57]" aria-hidden />
+        <span className="size-3 rounded-full bg-[#febc2e]" aria-hidden />
+        <span className="size-3 rounded-full bg-[#28c840]" aria-hidden />
+        <span className="ml-3 truncate font-mono text-xs text-hutan-100/50">agen@github-actions: ~/bagipanen/agent — putusan terbaru</span>
+      </div>
+      <div className="min-h-[19rem] p-4 font-mono text-[12px] leading-relaxed sm:p-5 sm:text-[13px]" aria-live="off">
+        {!ready ? (
+          <p className="text-hutan-100/50">
+            menghubungkan ke chain…<span className="caret ml-1 inline-block h-[1em] w-[0.5ch] translate-y-[0.15em] bg-hutan-300" aria-hidden />
+          </p>
+        ) : (
+          <>
+            {lines.slice(0, shown).map((l, i) => (
+              <div key={i} className="flex gap-3">
+                <span className={cn("shrink-0", TAG_W, l.tag === "$" ? "text-emas-300" : "text-hutan-400")}>{l.tag === "$" ? "$" : `[${l.tag}]`}</span>
+                <span className={cn("min-w-0 break-words", tone(l))}>{l.text}</span>
+              </div>
+            ))}
+            {shown <= lines.length && <span className="caret mt-1 inline-block h-[1em] w-[0.6ch] bg-hutan-300" aria-hidden />}
+            {shown > lines.length && (
+              <p className="mt-3 text-hutan-100/40">
+                {"// putaran selesai · "}
+                <Link href={`/campaign/${verdict!.campaign}`} className="text-emas-300 underline-offset-2 hover:underline">
+                  buka proyeknya
+                </Link>
+              </p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -266,59 +352,75 @@ export default function AgentPage() {
 
   return (
     <>
-      {/* ---------------------------------------------------------------- Hero */}
-      <section className="glow-hutan relative overflow-hidden bg-hutan-950 text-white">
-        <div className="pola-bedengan absolute inset-0" aria-hidden />
-        <Container className="relative grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          <div className="animate-fade-up">
-            <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Agen AI verifikator</p>
-            <h1 className="mt-3 font-display text-4xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl xl:text-6xl">
-              Mata digital yang memeriksa <span className="text-emas-300 italic">setiap foto lahan</span>
+      {/* -------------------------------------------------- Hero: konsol agen */}
+      <section className="relative overflow-hidden bg-[#030806] text-[#cfe7d8]">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(143_194_163/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(143_194_163/0.06)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,#000_40%,transparent_80%)]"
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full bg-hutan-500/15 blur-3xl" aria-hidden />
+        <div className="crt-scan pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+
+        {/* Status bar HUD */}
+        <div className="relative border-b border-hutan-400/15 bg-black/30 font-mono text-[11px] tracking-wider text-hutan-300/80 uppercase">
+          <Container className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
+            <span className="inline-flex items-center gap-2 text-hutan-200">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-300 opacity-70" />
+                <span className="relative inline-flex size-2 rounded-full bg-hutan-300" />
+              </span>
+              Sistem aktif
+            </span>
+            <span>agen #{agent.agentId.toString()}</span>
+            <span>bsc-testnet · chain 97</span>
+            <span className="hidden sm:inline">dompet {shortAddress(agent.agentWallet)}</span>
+            {run && (
+              <span className="sm:ml-auto">
+                putaran terakhir: {run.status !== "completed" ? "berjalan…" : `${timeAgo(run.updated_at)} · ${run.conclusion === "success" ? "ok" : run.conclusion}`}
+              </span>
+            )}
+          </Container>
+        </div>
+
+        <Container className="relative py-12 sm:py-16">
+          <div className="max-w-3xl">
+            <p className="font-mono text-sm text-hutan-400">
+              <span className="text-emas-300">agent://</span>bagipanen/{agent.agentId.toString()}
+            </p>
+            <h1 className="crt-glow mt-3 font-mono text-3xl leading-tight font-bold tracking-tight text-[#e6f4ea] sm:text-5xl">
+              &gt; verifikator_lapangan<span className="caret ml-1 inline-block h-[0.9em] w-[0.5ch] translate-y-[0.1em] bg-emas-300" aria-hidden />
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-white/70">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-pretty text-hutan-100/70">
               {card?.description ??
                 "Agen ini memeriksa setiap foto bukti dari lahan sebelum dana tahap boleh cair. Identitasnya tercatat di blockchain, dan semua putusannya bisa dibaca siapa saja."}
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {[
-                { icon: Fingerprint, text: "Identity Registry ERC-8004" },
-                { icon: ShieldCheck, text: "Reputation Registry ERC-8004" },
-                { icon: null, text: "Berjalan di cloud (GitHub Actions)" },
-              ].map(({ icon: Icon, text }) => (
-                <span key={text} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/85 backdrop-blur">
-                  {Icon ? <Icon className="size-4 text-emas-300" aria-hidden /> : <BrandLogo name="github" className="text-emas-300" />} {text}
-                </span>
-              ))}
-            </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <a
-                href={AGENT_WORKFLOW_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-emas-400 px-5 py-2.5 text-sm font-semibold text-hutan-950 transition hover:bg-emas-300"
-              >
-                <BrandLogo name="github" /> Log kerja agen
-              </a>
-              {registryUrl && (
+          </div>
+
+          <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <AgentTerminal verdict={verdicts?.[0]} />
+            <div className="flex flex-col gap-5">
+              <IdentityCard agentId={agent.agentId} wallet={agent.agentWallet} registry={agent.identityRegistry} card={card} mock={mock} />
+              <div className="grid grid-cols-2 gap-2 font-mono text-xs">
                 <a
-                  href={registryUrl}
+                  href={AGENT_WORKFLOW_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-hutan-400/30 bg-hutan-400/10 px-3 py-2.5 text-hutan-100 transition hover:bg-hutan-400/20"
                 >
-                  Registri di BscScan <ExternalLink className="size-4" aria-hidden />
+                  <BrandLogo name="github" /> log kerja
                 </a>
-              )}
+                {registryUrl && (
+                  <a
+                    href={registryUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emas-300/30 bg-emas-300/10 px-3 py-2.5 text-emas-100 transition hover:bg-emas-300/20"
+                  >
+                    registri ERC-8004 <ExternalLink className="size-3.5" aria-hidden />
+                  </a>
+                )}
+              </div>
             </div>
-            {run && (
-              <p className="mt-5 inline-flex items-center gap-2 text-sm text-white/60">
-                <span className={cn("size-2 rounded-full", run.conclusion === "success" ? "bg-hutan-300" : run.status !== "completed" ? "animate-pulse bg-emas-300" : "bg-red-400")} aria-hidden />
-                Putaran terakhir di cloud: {run.status !== "completed" ? "sedang berjalan" : `${timeAgo(run.updated_at)} · ${run.conclusion === "success" ? "berhasil" : run.conclusion}`}
-              </p>
-            )}
-          </div>
-          <div className="animate-fade-up [animation-delay:150ms]">
-            <IdentityCard agentId={agent.agentId} wallet={agent.agentWallet} registry={agent.identityRegistry} card={card} mock={mock} />
           </div>
         </Container>
       </section>

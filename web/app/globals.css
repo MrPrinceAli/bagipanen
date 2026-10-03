@@ -469,6 +469,24 @@ body {
   }
 }
 
+/* Konsol agen: garis scan CRT & kursor berkedip */
+.crt-scan {
+  background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
+}
+.crt-glow {
+  text-shadow:
+    0 0 12px rgb(143 194 163 / 0.45),
+    0 0 2px rgb(143 194 163 / 0.6);
+}
+.caret {
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .scroll-cue,
@@ -478,7 +496,8 @@ body {
   .holo-sheen,
   .radar-sweep,
   .pipe-flow,
-  .pipe-flow-y {
+  .pipe-flow-y,
+  .caret {
     animation: none;
   }
   .reveal,
