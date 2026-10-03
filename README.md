@@ -239,7 +239,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
    npm run seed:testnet     # opsional: tBNB & mUSDT ke akun demo, daftarkan koperasi & petani
    ```
 2. **Daftarkan agen.** Isi `agent/.env`, lalu jalankan `cd agent && npm run register`. Perintah ini mendaftar di registri ERC-8004 dan mengunggah agent card ke Pinata. Setelah itu admin memanggil `setAgent` di halaman `/admin` (bagian *Konfigurasi agen AI*) dengan parameter yang dicetak.
-3. **Jalankan agen:** `npm run dev:agent`. Agen harus menyala supaya bukti baru diputus.
+3. **Jalankan agen:** di cloud lewat GitHub Actions (lihat [Agen di cloud](#agen-di-cloud-github-actions)), atau di laptop dengan `npm run dev:agent` untuk respons paling cepat. Jangan jalankan keduanya bersamaan.
 4. **Web:** isi `web/.env.local` (`NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT`, `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC`), lalu `npm run dev:web` atau deploy ke Vercel.
 
 ### Deploy ke Vercel
@@ -247,13 +247,22 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 - Root directory: `web/` (framework Next.js terdeteksi otomatis).
 - Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_IDR_PER_USDT=16000`.
 - Alamat kontrak tidak perlu diisi, karena sudah ada di `web/lib/deployments.ts` hasil `npm run sync`. Variabel `NEXT_PUBLIC_*_ADDRESS` hanya untuk menimpa alamat itu.
-- Agen AI tidak di-deploy ke Vercel. Agen adalah proses yang berjalan terus, jadi jalankan di laptop atau server kecil.
+- Agen AI tidak di-deploy ke Vercel (fungsi Vercel hanya hidup saat ada permintaan). Agen berjalan di GitHub Actions, lihat bagian berikut.
+
+### Agen di cloud (GitHub Actions)
+
+[`.github/workflows/agent.yml`](.github/workflows/agent.yml) membangunkan agen setiap ±5 menit untuk **satu putaran** (`npm start -- --once`): membaca bukti baru di chain, menilainya, mencatat putusan, lalu berhenti. Gratis untuk repo publik dan tidak bergantung pada laptop siapa pun.
+
+- **State antar-run** (blok terakhir, sidik jari foto, antrean ulang) disimpan dengan cache Actions. Kalau cache kosong, agen memulihkan sidik jari foto lama langsung dari chain + IPFS tanpa memanggil Gemini, jadi deteksi foto daur ulang tetap jalan.
+- **Secrets** (Settings → Secrets and variables → Actions): `AGENT_PRIVATE_KEY`, `GEMINI_API_KEY`, `PINATA_JWT`, `IPFS_GATEWAY`, `BSC_TESTNET_RPC`. Model bisa diatur lewat *variables* `GEMINI_MODEL` dan `GEMINI_FALLBACK_MODELS`.
+- Log Actions bersifat publik, jadi agen hanya mencetak host RPC, bukan URL lengkapnya. Nilai secrets juga otomatis disensor GitHub.
+- Bisa dipicu manual dari tab **Actions → Agen AI verifikator → Run workflow**.
 
 ## Test
 
 ```bash
 npm run test:contracts   # 90 test Foundry, cakupan 100% baris/cabang/fungsi, termasuk fuzz pembulatan
-npm run test:agent       # 46 unit test agen (aturan putusan, EXIF, MockVision, model cadangan Gemini, cuaca, duplikat, antrean)
+npm run test:agent       # 47 unit test agen (aturan putusan, EXIF, MockVision, model cadangan Gemini, cuaca, duplikat, antrean)
 (cd web && npm run lint && npm run build)
 ```
 
@@ -273,7 +282,7 @@ Hasil uji acceptance per butir PRD, di lokal dan BSC testnet, ada di [docs/accep
 
 ## Catatan jujur
 
-- **Agen AI berjalan di laptop tim**, bukan di Vercel. Jika agen sedang mati, bukti baru menunggu di status "Bukti dikirim" dan diputus begitu agen menyala lagi. Koperasi tetap bisa memutuskan lebih dulu.
+- **Agen AI berjalan di GitHub Actions setiap ±5 menit**, bukan terus-menerus. Jadwal GitHub kadang terlambat beberapa menit, jadi putusan bisa datang 5–15 menit setelah foto dikirim; selama itu bukti berstatus "Bukti dikirim" dan koperasi tetap bisa memutuskan lebih dulu. Untuk demo langsung, agen yang sama bisa dijalankan di laptop (`npm run dev:agent`) dengan jeda ±10 detik.
 - **Latensi putusan di testnet ±30–50 detik** (target PRD ≤ 30 detik tercapai di mode lokal). Penyebab utamanya Gemini paket gratis: model utama sering sibuk (503) atau kuota hariannya habis (429), sehingga agen pindah ke model cadangan. Rinciannya ada di [docs/acceptance.md](docs/acceptance.md#bsc-testnet-gelombang-8).
 - **Foto demo diambil dari Wikimedia Commons** (berlisensi CC, sumbernya dicatat). Foto ini bukan foto lapangan asli dan tidak punya EXIF. Agen mencatat "EXIF tidak ada" tanpa menolak, sesuai aturan PRD. Data EXIF tidak pernah dipalsukan.
 - **mUSDT adalah token demo** yang bisa di-mint siapa saja (maks 10.000 per panggilan). Admin memakai satu wallet (multisig ada di roadmap).

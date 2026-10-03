@@ -1,0 +1,61 @@
+# Agen AI verifikator di cloud: GitHub membangunkan agen setiap ~5 menit untuk satu putaran
+# (baca bukti baru di BSC testnet → nilai → catat putusan onchain), jadi tidak bergantung laptop.
+# State agen (blok terakhir, sidik jari foto, antrean ulang) disimpan antar-run dengan cache Actions.
+# Rahasia diisi di Settings → Secrets and variables → Actions (lihat README, bagian Agen di cloud).
+name: Agen AI verifikator
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: agen-verifikator
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  agen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: agent
+    env:
+      APP_MODE: testnet
+      AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PINATA_JWT: ${{ secrets.PINATA_JWT }}
+      IPFS_GATEWAY: ${{ secrets.IPFS_GATEWAY }}
+      BSC_TESTNET_RPC: ${{ secrets.BSC_TESTNET_RPC }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+      GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS || 'gemini-3.6-flash,gemini-3.7-flash,gemini-3.5-flash' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: agent/package-lock.json
+
+      - run: npm ci
+
+      - name: Pulihkan state agen
+        uses: actions/cache/restore@v4
+        with:
+          path: agent/data
+          key: agent-data-${{ github.run_id }}
+          restore-keys: agent-data-
+
+      - name: Satu putaran agen
+        run: npm start -- --once
+
+      - name: Simpan state agen
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: agent/data
+          key: agent-data-${{ github.run_id }}-${{ github.run_attempt }}

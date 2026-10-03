@@ -1,11 +1,15 @@
 import { createStorage, createVision } from "./adapters.js";
-import { genesisHash, getProofLogs, type ProofLog, publicClient, readAgentConfig } from "./chain.js";
+import { genesisHash, getProofLogs, type ProofLog, publicClient, readAgentConfig, readCampaign } from "./chain.js";
 import { config } from "./config.js";
+import { sha256Hex } from "./ipfs.js";
 import { fmt, log } from "./log.js";
-import { processProof } from "./pipeline.js";
+import { pendingReason, processProof } from "./pipeline.js";
 import { AgentState, DeferredProofs, type DeferredItem, SeenHashes } from "./state.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** `--once`: satu putaran lalu keluar (untuk penjadwal seperti GitHub Actions); tanpa itu, polling terus. */
+const ONCE = process.argv.includes("--once");
 
 const storage = createStorage();
 const vision = createVision();
@@ -87,6 +91,22 @@ async function processWithRetry(p: ProofLog) {
   }
 }
 
+/**
+ * Mulai dari nol (mis. runner GitHub Actions tanpa cache): bukti lama yang sudah diputus tidak
+ * dinilai ulang, tetapi sidik jari fotonya dipulihkan dari IPFS agar deteksi foto daur ulang tetap
+ * mengenali foto yang pernah dipakai. Tanpa panggilan Gemini maupun transaksi.
+ */
+async function rememberIfDecided(p: ProofLog): Promise<boolean> {
+  if (pendingReason(await readCampaign(p.campaign), p) === null) return false;
+  try {
+    const photo = await storage.getFile(p.cid);
+    seen.add(sha256Hex(photo.bytes), { campaign: p.campaign, milestoneIndex: p.index, attempt: p.attempt });
+  } catch (e) {
+    log("LEWATI", `sidik jari foto lama ${p.cid.slice(0, 12)}… tidak bisa dipulihkan (${message(e)})`);
+  }
+  return true;
+}
+
 let warnedNotRegistered = false;
 
 async function tick(chainId: number) {
@@ -101,6 +121,7 @@ async function tick(chainId: number) {
     state.reset(id, config.startBlock);
     seen.clear();
     deferred.clear();
+    coldStart = true;
   }
 
   const agent = await readAgentConfig();
@@ -124,19 +145,34 @@ async function tick(chainId: number) {
   const logs = (await getProofLogs(from, latest)).sort((a, b) =>
     a.blockNumber === b.blockNumber ? a.logIndex - b.logIndex : Number(a.blockNumber - b.blockNumber),
   );
-  for (const p of logs) await processWithRetry(p);
+  if (coldStart) log("AGEN", `memulihkan sidik jari foto dari ${logs.length} bukti di chain…`);
+  for (const p of logs) {
+    if (coldStart && (await rememberIfDecided(p))) continue;
+    await processWithRetry(p);
+  }
+  coldStart = false;
   state.setLastBlock(latest);
 }
+
+let coldStart = false;
 
 async function main() {
   const chainId = await publicClient.getChainId();
   const agent = await readAgentConfig();
   log("AGEN", fmt.bold("BagiPanen Verifier Agent"));
-  log("AGEN", `mode ${config.mode} · chain ${chainId} · RPC ${config.rpcUrl}`);
+  // Hanya host RPC: URL lengkap bisa berisi API key, dan log GitHub Actions bersifat publik.
+  log("AGEN", `mode ${config.mode} · chain ${chainId} · RPC ${new URL(config.rpcUrl).host}`);
   log("AGEN", `wallet ${config.account.address} · agen #${agent.configured ? agent.agentId : "–"} · registri ${agent.identityRegistry}`);
   log("AGEN", `factory ${config.factory} · penyimpanan ${storage.name} · penilai foto ${vision.model}`);
-  log("AGEN", `polling setiap ${config.pollMs / 1000} detik… (Ctrl+C untuk berhenti)`);
   if (deferred.size) log("AGEN", `${deferred.size} bukti tertunda akan dicoba ulang`);
+
+  if (ONCE) {
+    await tick(chainId);
+    log("AGEN", "satu putaran selesai.");
+    return;
+  }
+
+  log("AGEN", `polling setiap ${config.pollMs / 1000} detik… (Ctrl+C untuk berhenti)`);
 
   for (;;) {
     try {

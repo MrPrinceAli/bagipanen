@@ -87,7 +87,8 @@ export const config = {
   vision: IS_LOCAL ? ("mock" as const) : ("gemini" as const),
   localIpfsDir: path.resolve(AGENT_ROOT, env("LOCAL_IPFS_DIR") ?? "../web/.local-ipfs"),
   ipfsGateway: env("IPFS_GATEWAY"),
-  dataDir: path.join(AGENT_ROOT, "data"),
+  /** Folder state agen (blok terakhir, sidik jari foto, antrean ulang). Bisa diganti untuk uji/CI. */
+  dataDir: path.resolve(AGENT_ROOT, env("AGENT_DATA_DIR") ?? "data"),
   pollMs: Number(env("POLL_INTERVAL_MS") ?? 10_000),
   retryAttempts: 3,
   retryDelayMs: Number(env("RETRY_DELAY_MS") ?? 15_000),
