@@ -419,8 +419,8 @@ function ProblemStatement() {
       <div className="sticky top-28 flex h-[calc(100svh-7rem)] items-center overflow-hidden lg:top-16 lg:h-[calc(100svh-4rem)]">
         <div className="pola-bedengan absolute inset-0" aria-hidden />
         <Container className="relative">
-          <p className="mb-6 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Kenapa BagiPanen</p>
-          <p className="max-w-4xl font-display text-[1.7rem] leading-[1.3] font-semibold tracking-tight sm:text-4xl sm:leading-[1.25] lg:text-[2.75rem]">
+          <p className="mb-4 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase sm:mb-6">Kenapa BagiPanen</p>
+          <p className="max-w-4xl font-display text-[1.45rem] leading-[1.28] font-semibold tracking-tight min-[400px]:text-[1.7rem] min-[400px]:leading-[1.3] sm:text-4xl sm:leading-[1.25] lg:text-[2.75rem]">
             {STATEMENT_WORDS.map((w, i) => (
               <span
                 key={i}
@@ -435,7 +435,7 @@ function ProblemStatement() {
           </p>
           <dl
             className={cn(
-              "mt-10 grid max-w-3xl grid-cols-3 gap-3 transition duration-700 sm:gap-6",
+              "mt-6 grid max-w-3xl grid-cols-3 gap-3 transition duration-700 sm:mt-10 sm:gap-6",
               factsShown ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
             )}
           >
