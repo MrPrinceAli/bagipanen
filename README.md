@@ -177,7 +177,7 @@ Proyek demo di testnet (dibuat dengan [`agent/scripts/seed-showcase.ts`](agent/s
 | --- | --- | --- | --- |
 | [`0xd880…01EC`](https://testnet.bscscan.com/address/0xd880139c524932250a89F37b05E5f1607fd901EC) | Bawang merah · Rejoso, Nganjuk, Jawa Timur | Cari dana (sampai 17 Nov 2026) | 60% terkumpul, terbuka untuk dicoba juri |
 | [`0x6E55…cB8B`](https://testnet.bscscan.com/address/0x6E55404560B82Eec9548AE645382AB93280fcB8B) | Kentang · Berastagi, Karo, Sumatera Utara | Cari dana (sampai 17 Nov 2026) | 25% terkumpul, terbuka untuk dicoba juri |
-| [`0x442e…1BDC`](https://testnet.bscscan.com/address/0x442ea9D7ffbDf16FE0f2bd1f62F25555C43D1BDC) | Cabai rawit · Galur, Kulon Progo, DIY | Berjalan | Didanai penuh, menunggu bukti Tanam |
+| [`0x442e…1BDC`](https://testnet.bscscan.com/address/0x442ea9D7ffbDf16FE0f2bd1f62F25555C43D1BDC) | Cabai rawit · Galur, Kulon Progo, DIY | Berjalan | Bukti Tanam disetujui agen ±43 detik setelah dikirim (dipicu `/api/agent-wake`), menunggu konfirmasi koperasi |
 | [`0x04Be…97CD`](https://testnet.bscscan.com/address/0x04Be743A5271De7132859bEAd9fCf2a0F58597CD) | Padi · Praya, Lombok Tengah, NTB | Berjalan | Tahap Tanam cair (disetujui Gemini + koperasi) |
 | [`0xd2cF…2219`](https://testnet.bscscan.com/address/0xd2cF6F942c33be09CEd219AC8413653935A52219) | Padi · Watang Pulu, Sidrap, Sulawesi Selatan | Selesai | 3 tahap cair → setor panen 1.560 → klaim 612/367,2/244,8 |
 | [`0xE9F6…722E`](https://testnet.bscscan.com/address/0xE9F65054880f9b63c06736030c99f8D2FdE1722E) | Jagung · Pelaihari, Tanah Laut, Kalimantan Selatan | Selesai | 3 tahap cair → setor panen 1.700, siap diklaim |
