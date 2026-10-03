@@ -270,6 +270,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 - **Secrets** (Settings → Secrets and variables → Actions): `AGENT_PRIVATE_KEY`, `GEMINI_API_KEY`, `PINATA_JWT`, `IPFS_GATEWAY`, `BSC_TESTNET_RPC`. Model bisa diatur lewat *variables* `GEMINI_MODEL` dan `GEMINI_FALLBACK_MODELS`.
 - Log Actions bersifat publik, jadi agen hanya mencetak host RPC, bukan URL lengkapnya. Nilai secrets juga otomatis disensor GitHub.
 - Bisa dipicu manual dari tab **Actions → Agen AI verifikator → Run workflow**.
+- **Langsung saat foto dikirim (opsional):** isi `GITHUB_DISPATCH_TOKEN` di environment variable Vercel (fine-grained token, repo ini saja, izin *Actions: Read and write*). Setelah petani mengirim foto, web memanggil `/api/agent-wake`, yang memicu workflow hanya jika kontrak resmi itu benar-benar punya bukti yang menunggu putusan dan agen belum berjalan. Putusan jadi keluar ±1–3 menit, bukan 5–15 menit.
 
 ## Test
 

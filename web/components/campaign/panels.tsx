@@ -283,7 +283,13 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
       const { cid } = await uploadFile(file);
       setUploading(false);
       const ok = await tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "submitProof", args: [cid] });
-      if (ok) setFile(null);
+      if (ok) {
+        setFile(null);
+        // Panggil agen AI di cloud sekarang juga (tanpa menunggu jadwal); gagal pun tidak masalah.
+        fetch("/api/agent-wake", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ campaign: c.address }) }).catch(
+          () => {},
+        );
+      }
     } catch (e) {
       setUploading(false);
       setError(e instanceof Error ? e.message : "Fotonya gagal diunggah. Coba lagi.");
@@ -312,7 +318,7 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
         <Button size="lg" disabled={!file} loading={uploading || tx.busy} onClick={submit}>
           {uploading ? "Mengunggah foto…" : "Kirim bukti"}
         </Button>
-        <TxStatus state={tx.state} successText="Bukti terkirim. Agen AI sedang memeriksanya." />
+        <TxStatus state={tx.state} successText="Bukti terkirim. Agen AI akan memeriksanya dalam beberapa menit." />
       </div>
     </Card>
   );
