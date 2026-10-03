@@ -4,18 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { CloudRain, ScanEye, Thermometer } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import heroImage from "@/public/hero-lahan.jpg";
+import proofImage from "@/public/demo/sidrap-pra-panen.jpg";
 import { PoweredBy } from "./BrandLogos";
 import { Card, cn } from "./ui";
 
 /* ================================================================ Gemini Vision */
 
-/** Cara agen menilai foto: Gemini sebagai "mata", aturan BagiPanen yang memutuskan (agent/src/verdict.ts). */
+/**
+ * Cara agen menilai foto: Gemini sebagai "mata", aturan BagiPanen yang memutuskan (agent/src/verdict.ts).
+ * Contohnya putusan sungguhan: bukti Pra-panen proyek padi Sidrap di BSC testnet (3 Okt 2026).
+ */
 export function GeminiVisionCard() {
   const json: [string, string, string][] = [
     ["foto_lahan", "true", "text-sky-300"],
     ["komoditas", '"Padi"', "text-emas-200"],
-    ["fase", '"Tanam"', "text-emas-200"],
+    ["fase", '"Pra-panen"', "text-emas-200"],
     ["kondisi", '"baik"', "text-emas-200"],
     ["yakin", "0.95", "text-sky-300"],
     ["catatan", "[]", "text-white/60"],
@@ -33,7 +36,13 @@ export function GeminiVisionCard() {
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_1.1fr]">
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-hutan-900">
-          <Image src={heroImage} alt="" sizes="(min-width: 640px) 240px, 100vw" placeholder="blur" className="h-full w-full object-cover opacity-90" />
+          <Image
+            src={proofImage}
+            alt="Foto bukti tahap Pra-panen: tanaman padi yang mulai menguning"
+            sizes="(min-width: 640px) 240px, 100vw"
+            placeholder="blur"
+            className="h-full w-full object-cover opacity-90"
+          />
           {/* Bingkai bidik & garis pemindai */}
           {["top-3 left-3 border-t-2 border-l-2", "top-3 right-3 border-t-2 border-r-2", "bottom-3 left-3 border-b-2 border-l-2", "right-3 bottom-3 border-r-2 border-b-2"].map(
             (c) => (
@@ -57,6 +66,9 @@ export function GeminiVisionCard() {
           <span className="mt-2 block font-semibold text-hutan-300">→ DISETUJUI</span>
         </pre>
       </div>
+      <p className="-mt-3 text-xs text-stone-400">
+        Putusan sungguhan: bukti tahap Pra-panen proyek padi Sidrap di BSC testnet. Foto: Undeka 11, Wikimedia Commons, CC BY-SA 4.0.
+      </p>
       <div className="mt-auto flex flex-wrap items-center gap-1.5 text-xs">
         <ScanEye className="size-4 text-hutan-500" aria-hidden />
         {["gemini-3.8-flash", "3.6-flash", "3.7-flash", "3.5-flash"].map((m, i) => (
