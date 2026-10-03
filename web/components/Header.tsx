@@ -43,25 +43,34 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function Header() {
-  const { role, address } = useRole();
+  const { role } = useRole();
   const pathname = usePathname();
-  const nav = [
-    { href: "/", label: "Beranda", show: true },
-    { href: "/create", label: "Ajukan proyek tanam", short: "Ajukan", show: role === "petani" },
-    { href: "/dashboard", label: "Dashboard", show: role === "petani" || role === "investor" },
-    { href: `/petani/${address}`, label: "Rapor saya", show: role === "petani" && Boolean(address) },
-    { href: "/koperasi", label: "Koperasi", show: role === "koperasi" },
-    { href: "/admin", label: "Admin", show: role === "admin" },
-    { href: "/agent", label: "Agen AI", show: true },
-  ].filter((n) => n.show);
+  // Menu publik untuk semua orang + satu pintu ke ruang kerja sesuai peran dompet.
+  const roleHome =
+    role === "petani" || role === "investor"
+      ? { href: "/dashboard", label: "Dashboard" }
+      : role === "koperasi"
+        ? { href: "/koperasi", label: "Koperasi" }
+        : role === "admin"
+          ? { href: "/admin", label: "Admin" }
+          : null;
+  const nav: { href: string; label: string; short?: string }[] = [
+    { href: "/", label: "Beranda" },
+    { href: "/petani", label: "Petani" },
+    { href: "/transparansi", label: "Transparansi" },
+    { href: "/agent", label: "Agen AI" },
+    { href: "/faq", label: "FAQ" },
+    ...(roleHome ? [roleHome] : []),
+  ];
 
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
   const link = (n: (typeof nav)[number], compact = false) => (
     <Link
       key={n.href}
       href={n.href}
       className={cn(
         "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition",
-        pathname === n.href ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/8 hover:text-white",
+        isActive(n.href) ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/8 hover:text-white",
       )}
     >
       {compact && n.short ? n.short : n.label}
@@ -72,20 +81,20 @@ export function Header() {
     <header className="sticky top-0 z-30 border-b border-white/10 bg-hutan-950/90 text-white backdrop-blur-xl">
       <Container className="flex h-16 items-center gap-3">
         <Logo />
-        <nav className="ml-4 hidden items-center gap-1 lg:flex">{nav.map((n) => link(n))}</nav>
+        <nav className="ml-4 hidden items-center gap-0.5 xl:flex">{nav.map((n) => link(n))}</nav>
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden sm:block">
             <FaucetButton />
           </div>
           {role && role !== "tamu" && (
-            <span className="hidden rounded-full bg-emas-400/15 px-3 py-1 text-xs font-semibold text-emas-200 ring-1 ring-emas-300/30 md:inline">
+            <span className="hidden rounded-full bg-emas-400/15 px-3 py-1 text-xs font-semibold text-emas-200 ring-1 ring-emas-300/30 md:inline xl:hidden 2xl:inline">
               {ROLE_LABEL[role]}
             </span>
           )}
           <WalletButton />
         </div>
       </Container>
-      <div className="border-t border-white/5 lg:hidden">
+      <div className="border-t border-white/5 xl:hidden">
         <Container className="flex items-center gap-2 py-2">
           <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto">{nav.map((n) => link(n, true))}</nav>
           <div className="sm:hidden">
@@ -108,7 +117,7 @@ function FaucetButton({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2">
       {!compact && balance !== undefined && (
-        <span className="hidden text-xs text-white/60 xl:inline">Saldo {formatUsdt(balance)} mUSDT</span>
+        <span className="hidden text-xs text-white/60 2xl:inline">Saldo {formatUsdt(balance)} mUSDT</span>
       )}
       <Button
         size="sm"

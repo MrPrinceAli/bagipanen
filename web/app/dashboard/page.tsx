@@ -80,9 +80,14 @@ function FarmerDashboard({ address }: { address: `0x${string}` }) {
         eyebrow="Proyek tanam saya"
         description="Pantau tahap pencairan dan langkah berikutnya di sini."
         action={
-          <ButtonLink href="/create" variant="primary">
-            <Plus className="size-4" aria-hidden /> Ajukan proyek tanam
-          </ButtonLink>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href={`/petani/${address}`} variant="secondary">
+              Rapor saya
+            </ButtonLink>
+            <ButtonLink href="/create" variant="primary">
+              <Plus className="size-4" aria-hidden /> Ajukan proyek tanam
+            </ButtonLink>
+          </div>
         }
       >
         Lahan yang sedang kamu kelola
