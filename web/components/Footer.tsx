@@ -24,8 +24,23 @@ export function Footer() {
           <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Jelajahi</p>
           <ul className="flex flex-col gap-2 text-sm">
             <li>
-              <Link href="/#proyek" className="hover:text-white">
-                Proyek tanam
+              <Link href="/proyek" className="hover:text-white">
+                Proyek tanam & peta
+              </Link>
+            </li>
+            <li>
+              <Link href="/petani" className="hover:text-white">
+                Petani & Rapor
+              </Link>
+            </li>
+            <li>
+              <Link href="/transparansi" className="hover:text-white">
+                Transparansi dana
+              </Link>
+            </li>
+            <li>
+              <Link href="/faq" className="hover:text-white">
+                Tanya jawab
               </Link>
             </li>
             <li>

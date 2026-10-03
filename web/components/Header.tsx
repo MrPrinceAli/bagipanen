@@ -56,6 +56,7 @@ export function Header() {
           : null;
   const nav: { href: string; label: string; short?: string }[] = [
     { href: "/", label: "Beranda" },
+    { href: "/proyek", label: "Proyek" },
     { href: "/petani", label: "Petani" },
     { href: "/transparansi", label: "Transparansi" },
     { href: "/agent", label: "Agen AI" },
