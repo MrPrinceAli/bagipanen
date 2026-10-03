@@ -44,6 +44,11 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/coba" className="hover:text-white">
+                Coba demo
+              </Link>
+            </li>
+            <li>
               <Link href="/#cara-kerja" className="hover:text-white">
                 Cara kerja
               </Link>
