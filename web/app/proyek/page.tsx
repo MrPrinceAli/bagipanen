@@ -234,7 +234,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
           value === "all" ? "bg-white text-stone-600 ring-krem-200 hover:bg-krem-50" : "bg-hutan-50 text-hutan-900 ring-hutan-300",
         )}
       >
-        <option value="all">{label}: semua</option>
+        <option value="all">{label}</option>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -276,13 +276,16 @@ export default function ProjectsPage() {
           <div className="p-2 sm:p-4">
             {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-white/10" /> : <ProjectMap items={visible} highlight={matches} />}
           </div>
-          <div className="pointer-events-none absolute top-3 left-3 rounded-2xl bg-hutan-950/60 px-3 py-2 text-white ring-1 ring-white/10 backdrop-blur sm:top-5 sm:left-5">
+          <div className="pointer-events-none absolute top-5 left-5 hidden rounded-2xl bg-hutan-950/60 px-3 py-2 text-white ring-1 ring-white/10 backdrop-blur sm:block">
             <p className="font-display text-lg leading-none font-semibold sm:text-2xl">
               {visible.length} <span className="text-sm font-normal text-white/60">proyek</span>
             </p>
             <p className="mt-0.5 text-[11px] text-white/55">{provinces.length} provinsi · BSC Testnet</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/10 bg-hutan-950/40 px-4 py-3 text-xs text-white/75 sm:absolute sm:bottom-5 sm:left-5 sm:rounded-2xl sm:border-t-0 sm:ring-1 sm:ring-white/10 sm:backdrop-blur">
+            <span className="w-full font-semibold text-white sm:hidden">
+              {visible.length} proyek · {provinces.length} provinsi
+            </span>
             {[
               ["#edc56a", "Cari dana"],
               ["#5fa27b", "Berjalan"],
@@ -301,7 +304,7 @@ export default function ProjectsPage() {
 
         {/* Bar filter */}
         <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 shadow-soft ring-1 ring-krem-200 lg:flex-row lg:items-center">
-          <div className="flex gap-1 overflow-x-auto rounded-xl bg-krem-100 p-1" role="tablist" aria-label="Status proyek">
+          <div className="grid grid-cols-4 gap-1 rounded-xl bg-krem-100 p-1 lg:flex" role="tablist" aria-label="Status proyek">
             {STATUS_FILTERS.map((f) => {
               const n = f.key === "all" ? visible.length : visible.filter((c) => statusKey(c) === f.key).length;
               return (
@@ -312,11 +315,11 @@ export default function ProjectsPage() {
                   aria-selected={status === f.key}
                   onClick={() => setStatus(f.key)}
                   className={cn(
-                    "flex-1 rounded-lg px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition lg:flex-none",
+                    "rounded-lg px-1.5 py-1.5 text-xs font-medium whitespace-nowrap transition sm:px-3.5 sm:text-sm",
                     status === f.key ? "bg-hutan-900 text-white shadow-soft" : "text-stone-600 hover:bg-white/70",
                   )}
                 >
-                  {f.label} <span className={cn("ml-0.5 text-xs", status === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
+                  {f.label} <span className={cn("ml-0.5 hidden text-xs sm:inline", status === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
                 </button>
               );
             })}
