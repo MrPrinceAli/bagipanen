@@ -5,19 +5,20 @@
 BagiPanen adalah platform pendanaan modal tanam untuk petani Indonesia di BNB Chain. Investor mendanai satu musim tanam dengan stablecoin. Dana cair bertahap setelah bukti lapangan diverifikasi **agen AI dan koperasi**, lalu hasil panen dibagi otomatis oleh smart contract.
 
 > Indonesia Web3 Hackathon 2026 — track Finance & Commerce (RWA + stablecoin), AI Agents, dan Consumer Apps.
-> **Status: berjalan di BSC testnet** — 5 kontrak terverifikasi di BscScan, agen AI terdaftar di registri ERC-8004 resmi (agen #2544), skenario penuh sudah diuji dari pengajuan sampai semua investor klaim.
+> **Status: berjalan di BSC testnet** — 5 kontrak terverifikasi di BscScan, agen AI terdaftar di registri ERC-8004 resmi (agen #2544) dan **berjalan otomatis di cloud** (GitHub Actions), 8 proyek contoh di 8 daerah mencakup semua status termasuk gagal pendanaan dan gagal panen.
 
 | | |
 | --- | --- |
 | 🌐 **Demo web** | **[bagipanen.vercel.app](https://bagipanen.vercel.app)** (BSC testnet) |
 | 🤖 **Agen AI** | [#2544 di IdentityRegistry ERC-8004](https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) · halaman `/agent` di demo |
 | 📜 **Kontrak** | [CampaignFactory di BscScan](https://testnet.bscscan.com/address/0xDaAAb760e8ba84dFBB209a1ec944875d71584809#code) · [daftar lengkap](#alamat-kontrak) |
+| ⚙️ **Agen di cloud** | [GitHub Actions · Agen AI verifikator](https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml) (tiap ±5 menit, log publik) |
 | ✅ **Hasil uji** | [docs/acceptance.md](docs/acceptance.md) (lokal & BSC testnet) |
 
 <details>
 <summary><b>English summary</b></summary>
 
-BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season of a smallholder farmer with a stablecoin (MockUSDT on testnet). The money sits in a per-campaign escrow contract and is released in three tranches (planting 40%, growing 35%, pre-harvest 25%) only when **both** an AI agent and the farmer's cooperative approve a field photo. The AI agent has an on-chain identity in the official **ERC-8004 Identity Registry** (agent #2544) and a public verdict record. It checks EXIF GPS/date, duplicate photos, 14-day weather (Open-Meteo), and asks **Gemini** to assess the photo. Each verdict is stored as JSON on IPFS (Pinata). After harvest, the contract repays investors' principal first, then splits profit 55% farmer / 40% investors / 5% reserve pool. Every season builds an on-chain **farmer report card** that can serve as an alternative credit history. The UI is in Indonesian. It is live on BSC testnet with all contracts verified, and the full scenario has been tested end to end.
+BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season of a smallholder farmer with a stablecoin (MockUSDT on testnet). The money sits in a per-campaign escrow contract and is released in three tranches (planting 40%, growing 35%, pre-harvest 25%) only when **both** an AI agent and the farmer's cooperative approve a field photo. The AI agent has an on-chain identity in the official **ERC-8004 Identity Registry** (agent #2544) and a public verdict record. It checks EXIF GPS/date, duplicate photos, 14-day weather (Open-Meteo), and asks **Gemini** to assess the photo. Each verdict is stored as JSON on IPFS (Pinata). After harvest, the contract repays investors' principal first, then splits profit 55% farmer / 40% investors / 5% reserve pool. Every season builds an on-chain **farmer report card** that can serve as an alternative credit history. The UI is in Indonesian. It is live on BSC testnet with all contracts verified; the AI agent runs autonomously in the cloud (GitHub Actions, every ~5 minutes), and eight demo projects across Indonesia cover every state, including failed funding (100% refund) and crop failure (reserve-pool compensation).
 </details>
 
 ## Coba sekarang (untuk juri)
@@ -27,17 +28,16 @@ Yang dibutuhkan: MetaMask dan sedikit tBNB untuk gas. **Tidak ada uang sungguhan
 1. Buka **[bagipanen.vercel.app](https://bagipanen.vercel.app)**, klik **Hubungkan dompet**, lalu pilih MetaMask. Kalau diminta pindah jaringan, setujui pindah ke **BSC Testnet** (chain 97). Di HP, buka tautannya dari browser di dalam aplikasi MetaMask.
 2. Ambil tBNB gratis dari [faucet QuickNode](https://faucet.quicknode.com/binance-smart-chain/bnb-testnet) atau [faucet BNB Chain](https://www.bnbchain.org/en/testnet-faucet). Faucet BNB Chain mensyaratkan saldo BNB mainnet. 0,005 tBNB sudah cukup untuk puluhan transaksi.
 3. Klik **Minta mUSDT** di header untuk mendapat 1.000 mUSDT.
-4. Buka proyek **"Modal tanam cabai merah musim kemarau 2027"** (pendanaan terbuka sampai 15 Oktober 2026). Danai lewat dua langkah, *Izinkan mUSDT → Danai*. Token porsi (BPS) langsung muncul di dashboard.
+4. Pilih proyek berstatus **Cari dana** di beranda, misalnya **"Bawang merah musim kemarau di Rejoso, Nganjuk"** atau **"Kentang dataran tinggi di Berastagi, Karo"** (keduanya terbuka sampai 17 November 2026). Danai lewat dua langkah, *Izinkan mUSDT → Danai*. Token porsi (BPS) langsung muncul di dashboard.
 
 Yang bisa dilihat tanpa wallet:
 
-- **Proyek yang sudah selesai** — "Modal tanam cabai merah musim hujan 2026":
-  - timeline milestone dengan foto bukti;
-  - putusan Gemini (termasuk foto jagung yang **ditolak**);
-  - nota panen, bagi hasil, dan riwayat transaksi lengkap dengan tautan BscScan.
-- **Rapor Petani:** klik nama petani "Pak Darto".
-- **Agen AI** (`/agent`): identitas onchain, isi agent card, statistik, dan 10 putusan terakhir.
-- **Proyek kedua** "Perluasan lahan cabai merah 0,3 ha": foto bukti yang sama diunggah ulang, lalu **ditolak sebagai duplikat**.
+- **Proyek selesai** — [Padi Sidrap](https://bagipanen.vercel.app/campaign/0xd2cF6F942c33be09CEd219AC8413653935A52219) dan [Jagung Tanah Laut](https://bagipanen.vercel.app/campaign/0xE9F65054880f9b63c06736030c99f8D2FdE1722E): timeline tiga tahap dengan foto bukti dan alasan putusan Gemini, nota panen, bagi hasil, klaim investor, serta riwayat transaksi dengan tautan BscScan.
+- **Gagal panen** — [Padi Demak](https://bagipanen.vercel.app/campaign/0x0f31dCAFb0770788a05CA2820D3Fe07B2690Eb47): tahap Tanam cair, lalu admin menandai gagal panen. Sisa dana 540 mUSDT + kompensasi dana cadangan 30 mUSDT dibagi ke investor sesuai porsi.
+- **Gagal pendanaan** — [Kentang Dieng](https://bagipanen.vercel.app/campaign/0x2e67FB4A9349a73F5a82bcb5751ddf370f5891F9): target tidak tercapai sampai tenggat, investor refund 100%.
+- **Rapor Petani:** klik nama petani di halaman proyek, misalnya [Pak Andi Baso](https://bagipanen.vercel.app/petani/0x7aE6ae33d47b40b9d7afd5DC23c98af3b40DcB73) (Sidrap) atau [Pak Kasmuri](https://bagipanen.vercel.app/petani/0x063B8Bb28af8183803b09Dd28a2c04cb8183DaD7) (Demak, tercatat gagal panen).
+- **Agen AI** (`/agent`): identitas onchain, isi agent card, statistik, dan 10 putusan terakhir. Log kerjanya di [GitHub Actions](https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml).
+- **Penolakan oleh agen** (proyek uji coba awal di Garut, tidak tampil di beranda): [foto jagung ditolak Gemini lalu diunggah ulang](https://bagipanen.vercel.app/campaign/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) dan [foto yang sama dipakai ulang → ditolak sebagai duplikat](https://bagipanen.vercel.app/campaign/0xB0C1d27dd190d3d95327676f689E06D18930cb75).
 
 Peran Petani, Koperasi, dan Admin terikat ke wallet demo kami. Alurnya ditunjukkan di video demo dan bisa dicoba penuh di [mode lokal](#menjalankan-di-lokal) tanpa akun apa pun.
 
@@ -166,13 +166,21 @@ Semua kontrak ada di [contracts/src/](contracts/src/).
 | IdentityRegistry ERC-8004 (resmi, bukan milik BagiPanen) | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | Wallet agen AI (#2544) | [`0x0837FE45C0faf7a101C98d70D71476db81806022`](https://testnet.bscscan.com/address/0x0837FE45C0faf7a101C98d70D71476db81806022) |
 
-Proyek demo di testnet:
+Proyek demo di testnet (dibuat dengan [`agent/scripts/seed-showcase.ts`](agent/scripts/seed-showcase.ts) lewat transaksi sungguhan; foto bukti dinilai agen AI, bukan diisi manual). Tiga proyek uji coba awal di Garut tidak tampil di beranda, tetapi tetap bisa dibuka lewat tautan.
 
-| Proyek | Status | Isi |
-| --- | --- | --- |
-| [`0xa13f…58bE`](https://testnet.bscscan.com/address/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) | Panen (selesai) | Skenario penuh: foto jagung ditolak Gemini → unggah ulang → 3 milestone cair → setor panen 1.650 → klaim 630/378/252 |
-| [`0xB0C1…cb75`](https://testnet.bscscan.com/address/0xB0C1d27dd190d3d95327676f689E06D18930cb75) | Berjalan | Foto bukti yang sama dipakai ulang → ditolak sebagai duplikat |
-| [`0xff66…74b9`](https://testnet.bscscan.com/address/0xff66E4Ce4f4cD4e98619dE0524390c3581Eb74b9) | Pendanaan (sampai 15 Okt 2026) | Terbuka untuk dicoba juri |
+| Proyek | Komoditas · lokasi | Status | Isi |
+| --- | --- | --- | --- |
+| [`0xd880…01EC`](https://testnet.bscscan.com/address/0xd880139c524932250a89F37b05E5f1607fd901EC) | Bawang merah · Rejoso, Nganjuk, Jawa Timur | Cari dana (sampai 17 Nov 2026) | 60% terkumpul, terbuka untuk dicoba juri |
+| [`0x6E55…cB8B`](https://testnet.bscscan.com/address/0x6E55404560B82Eec9548AE645382AB93280fcB8B) | Kentang · Berastagi, Karo, Sumatera Utara | Cari dana (sampai 17 Nov 2026) | 25% terkumpul, terbuka untuk dicoba juri |
+| [`0x442e…1BDC`](https://testnet.bscscan.com/address/0x442ea9D7ffbDf16FE0f2bd1f62F25555C43D1BDC) | Cabai rawit · Galur, Kulon Progo, DIY | Berjalan | Didanai penuh, menunggu bukti Tanam |
+| [`0x04Be…97CD`](https://testnet.bscscan.com/address/0x04Be743A5271De7132859bEAd9fCf2a0F58597CD) | Padi · Praya, Lombok Tengah, NTB | Berjalan | Tahap Tanam cair (disetujui Gemini + koperasi) |
+| [`0xd2cF…2219`](https://testnet.bscscan.com/address/0xd2cF6F942c33be09CEd219AC8413653935A52219) | Padi · Watang Pulu, Sidrap, Sulawesi Selatan | Selesai | 3 tahap cair → setor panen 1.560 → klaim 612/367,2/244,8 |
+| [`0xE9F6…722E`](https://testnet.bscscan.com/address/0xE9F65054880f9b63c06736030c99f8D2FdE1722E) | Jagung · Pelaihari, Tanah Laut, Kalimantan Selatan | Selesai | 3 tahap cair → setor panen 1.700, siap diklaim |
+| [`0x0f31…Eb47`](https://testnet.bscscan.com/address/0x0f31dCAFb0770788a05CA2820D3Fe07B2690Eb47) | Padi · Karanganyar, Demak, Jawa Tengah | Gagal panen | Tanam cair → gagal panen → sisa 540 + kompensasi cadangan 30 → klaim |
+| [`0x2e67…91F9`](https://testnet.bscscan.com/address/0x2e67FB4A9349a73F5a82bcb5751ddf370f5891F9) | Kentang · Kejajar, Wonosobo, Jawa Tengah | Gagal pendanaan | 25% terkumpul saat tenggat → refund 100% |
+| [`0xa13f…58bE`](https://testnet.bscscan.com/address/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) | Cabai merah · Cikajang, Garut (uji coba awal) | Selesai | Foto jagung ditolak Gemini → unggah ulang → 3 tahap cair → klaim 630/378/252 |
+| [`0xB0C1…cb75`](https://testnet.bscscan.com/address/0xB0C1d27dd190d3d95327676f689E06D18930cb75) | Cabai merah · Garut (uji coba awal) | Berjalan | Foto bukti yang sama dipakai ulang → ditolak sebagai duplikat |
+| [`0xff66…74b9`](https://testnet.bscscan.com/address/0xff66E4Ce4f4cD4e98619dE0524390c3581Eb74b9) | Cabai merah · Garut (uji coba awal) | Cari dana (sampai 15 Okt 2026) | — |
 
 **Anvil (lokal, chain 31337)** — alamatnya selalu sama setiap `npm run dev:chain`, karena deploy dari akun bawaan Anvil pada nonce yang sama: factory `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`, mUSDT `0x5FbDB2315678afecb367f032d93F642f64180aa3`, MockAgentIdentity `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`. Daftar lengkapnya ada di [deployments/anvil.json](deployments/anvil.json).
 

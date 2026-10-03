@@ -448,9 +448,10 @@ async function milestone(p: Project, addr: Address, i: number, farmer: HDAccount
     await send(farmer, { address: addr, abi: harvestCampaignAbi, functionName: "submitProof", args: [cid] }, `kirim bukti ${m.name}`);
   }
   log(`  … menunggu putusan agen AI untuk ${m.name}`);
-  const deadline = Date.now() + 15 * 60_000;
+  // Agen di GitHub Actions jalan tiap ±5 menit dan jadwalnya bisa telat → beri waktu longgar.
+  const deadline = Date.now() + 30 * 60_000;
   while (!m.aiDecided) {
-    if (Date.now() > deadline) throw new Error(`Agen belum memutus bukti ${m.name} ${p.key} setelah 15 menit. Pastikan agen berjalan.`);
+    if (Date.now() > deadline) throw new Error(`Agen belum memutus bukti ${m.name} ${p.key} setelah 30 menit. Pastikan agen berjalan.`);
     await sleep(10_000);
     m = (await readCampaign(addr)).milestones[i];
   }
