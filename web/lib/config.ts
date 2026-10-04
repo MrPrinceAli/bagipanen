@@ -31,7 +31,8 @@ export const BSC_TESTNET_LOGS_RPC = process.env.NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC
 export const targetChain = IS_LOCAL ? localChain : testnetChain;
 
 /**
- * Proyek uji coba awal di BSC testnet (Garut, gelombang 8) yang tidak ditampilkan di beranda.
+ * Proyek uji coba awal di BSC testnet (Garut, gelombang 8) dan proyek demo juri yang tidak ditampilkan
+ * di beranda & daftar proyek.
  * Datanya tetap onchain dan halamannya masih bisa dibuka lewat tautan langsung (mis. demo foto duplikat).
  */
 export const HIDDEN_FROM_HOME: ReadonlySet<string> = new Set(
@@ -41,6 +42,8 @@ export const HIDDEN_FROM_HOME: ReadonlySet<string> = new Set(
         "0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE",
         "0xB0C1d27dd190d3d95327676f689E06D18930cb75",
         "0xff66E4Ce4f4cD4e98619dE0524390c3581Eb74b9",
+        // Proyek demo juri (dipakai lewat akun demo di /masuk), bukan etalase
+        "0x875Af5435E084F906E1f05b9b8f27Ca2C032FAEe",
       ].map((a) => a.toLowerCase()),
 );
 
