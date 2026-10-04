@@ -2,6 +2,7 @@
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ChevronDown, Lock, Wallet } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Address } from "viem";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
@@ -61,13 +62,16 @@ export function WalletButton() {
   if (IS_LOCAL) return <AccountPicker dark />;
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+      {({ account, chain, openAccountModal, openChainModal, mounted }) => {
         if (!mounted) return <div className="h-9 w-36" aria-hidden />;
         if (!account || !chain)
           return (
-            <Button size="sm" variant="gold" onClick={openConnectModal}>
-              <Wallet className="size-4" aria-hidden /> Hubungkan dompet
-            </Button>
+            <Link
+              href="/masuk"
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-emas-400 px-4 text-sm font-semibold text-hutan-950 shadow-soft transition hover:bg-emas-300"
+            >
+              <Wallet className="size-4" aria-hidden /> Masuk
+            </Link>
           );
         if (chain.unsupported)
           return (
