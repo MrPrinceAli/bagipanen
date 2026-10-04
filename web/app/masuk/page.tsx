@@ -246,7 +246,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 -z-10 bg-linear-to-t from-hutan-950/80 via-transparent to-hutan-950/40" aria-hidden />
       <div className="glow-hutan absolute inset-0 -z-10" aria-hidden />
 
-      <Container className="grid items-center gap-10 py-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-16">
+      <Container className="grid items-center gap-10 py-6 sm:py-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-16">
         {/* Tagline (desktop) */}
         <div className="hidden lg:block">
           <div className="flex items-center gap-3">
@@ -274,7 +274,7 @@ export default function LoginPage() {
         </div>
 
         {/* Kartu masuk melayang di atas sawah */}
-        <div className="relative w-full rounded-[1.75rem] bg-white/95 p-4 text-stone-800 shadow-[0_40px_90px_-30px_rgb(0_0_0/0.7)] ring-1 ring-white/40 backdrop-blur-xl sm:p-7">
+        <div className="relative w-full rounded-[1.75rem] bg-white/95 p-4 text-stone-800 shadow-[0_40px_90px_-30px_rgb(0_0_0/0.7)] ring-1 ring-white/40 backdrop-blur-xl sm:p-6">
           <Suspense fallback={null}>
             <LoginCard />
           </Suspense>
