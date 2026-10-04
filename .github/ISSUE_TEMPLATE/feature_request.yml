@@ -1,0 +1,15 @@
+name: ✨ Usulan fitur
+description: Ide untuk BagiPanen
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: masalah
+    attributes:
+      label: Masalah
+      description: Siapa yang terbantu (petani, investor, koperasi) dan masalah apa yang diselesaikan?
+    validations:
+      required: true
+  - type: textarea
+    id: solusi
+    attributes:
+      label: Usulan solusi

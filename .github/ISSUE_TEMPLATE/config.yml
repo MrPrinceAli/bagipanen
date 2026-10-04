@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Celah keamanan
+    url: https://github.com/MrPrinceAli/bagipanen/security/advisories/new
+    about: Laporkan secara privat.
+  - name: 🌾 Demo langsung
+    url: https://bagipanen.vercel.app/coba
+    about: Panduan interaktif untuk juri.
