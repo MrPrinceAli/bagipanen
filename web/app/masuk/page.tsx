@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { LogoMark } from "@/components/Header";
-import { cn } from "@/components/ui";
+import { Container } from "@/components/ui";
 import { AccountPicker, useJudgeLogin } from "@/components/wallet";
 import { JUDGE_ACCOUNTS, JUDGE_PROJECT } from "@/lib/demoJudge";
 import { IS_LOCAL } from "@/lib/config";
@@ -239,49 +239,47 @@ function LoginCard() {
 
 export default function LoginPage() {
   return (
-    <div className="relative min-h-[calc(100svh-7rem)] bg-krem-50 lg:grid lg:h-[calc(100svh-4rem)] lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-      {/* Panel visual */}
-      <aside className="relative hidden overflow-hidden bg-hutan-950 text-white lg:block">
-        <Image src={heroImage} alt="" fill sizes="50vw" placeholder="blur" className="object-cover opacity-40" />
-        <div className="absolute inset-0 bg-linear-to-t from-hutan-950 via-hutan-950/60 to-hutan-950/30" aria-hidden />
-        <div className="glow-hutan absolute inset-0" aria-hidden />
-        <div className="relative flex h-full flex-col justify-between p-8 xl:p-12">
+    <div className="relative isolate flex min-h-[calc(100svh-7rem)] items-center overflow-hidden bg-hutan-950 text-white lg:min-h-[calc(100svh-4rem)]">
+      {/* Latar sawah penuh satu layar */}
+      <Image src={heroImage} alt="" fill priority sizes="100vw" placeholder="blur" className="-z-20 object-cover" />
+      <div className="absolute inset-0 -z-10 bg-linear-to-r from-hutan-950/95 via-hutan-950/70 to-hutan-950/30" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-linear-to-t from-hutan-950/80 via-transparent to-hutan-950/40" aria-hidden />
+      <div className="glow-hutan absolute inset-0 -z-10" aria-hidden />
+
+      <Container className="grid items-center gap-10 py-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-16">
+        {/* Tagline (desktop) */}
+        <div className="hidden lg:block">
           <div className="flex items-center gap-3">
             <LogoMark className="size-11" />
             <span className="font-display text-2xl font-semibold">BagiPanen</span>
           </div>
-          <div>
-            <p className="max-w-md font-display text-3xl leading-tight font-semibold text-balance xl:text-4xl">
-              Satu dompet, <span className="text-emas-300 italic">semua peran</span> dikenali kontrak.
-            </p>
-            <ul className="mt-6 flex flex-col gap-2.5 text-sm text-white/80">
-              {[
-                "Tanpa email & kata sandi, tanpa server yang menyimpan data akunmu",
-                "Dana tetap di kontrak, bukan di dompet BagiPanen",
-                "Peran petani, koperasi, admin, dan investor dibaca langsung dari BNB Chain",
-              ].map((t) => (
-                <li key={t} className="flex gap-3">
-                  <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emas-400 text-hutan-950">
-                    <Check className="size-3.5" aria-hidden />
-                  </span>
-                  <span className="text-pretty">{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-xs text-white/45">{IS_LOCAL ? "Mode lokal · chain Anvil" : "BNB Smart Chain Testnet · token demo, bukan uang sungguhan"}</p>
+          <p className="mt-10 max-w-lg font-display text-4xl leading-tight font-semibold text-balance xl:text-5xl">
+            Satu dompet, <span className="text-emas-300 italic">semua peran</span> dikenali kontrak.
+          </p>
+          <ul className="mt-7 flex flex-col gap-3 text-white/80">
+            {[
+              "Tanpa email & kata sandi, tanpa server yang menyimpan data akunmu",
+              "Dana tetap di kontrak, bukan di dompet BagiPanen",
+              "Peran petani, koperasi, admin, dan investor dibaca langsung dari BNB Chain",
+            ].map((t) => (
+              <li key={t} className="flex gap-3">
+                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emas-400 text-hutan-950">
+                  <Check className="size-3.5" aria-hidden />
+                </span>
+                <span className="text-pretty">{t}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-10 text-xs text-white/45">{IS_LOCAL ? "Mode lokal · chain Anvil" : "BNB Smart Chain Testnet · token demo, bukan uang sungguhan"}</p>
         </div>
-      </aside>
 
-      {/* Kartu masuk */}
-      <main className="relative flex items-center justify-center px-3 py-3 sm:px-8 sm:py-6 lg:overflow-y-auto">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(19_46_34/0.07)_1px,transparent_1.4px)] bg-[size:22px_22px] lg:hidden" aria-hidden />
-        <div className={cn("relative w-full max-w-md rounded-[1.75rem] bg-white p-4 shadow-lift ring-1 ring-krem-200 sm:p-7")}>
+        {/* Kartu masuk melayang di atas sawah */}
+        <div className="relative w-full rounded-[1.75rem] bg-white/95 p-4 text-stone-800 shadow-[0_40px_90px_-30px_rgb(0_0_0/0.7)] ring-1 ring-white/40 backdrop-blur-xl sm:p-7">
           <Suspense fallback={null}>
             <LoginCard />
           </Suspense>
         </div>
-      </main>
+      </Container>
     </div>
   );
 }
