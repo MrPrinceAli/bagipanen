@@ -1,6 +1,51 @@
-# BagiPanen
+<div align="center">
 
-**Modal tanam yang adil untuk petani, transparan untuk investor, diverifikasi AI, tercatat onchain.**
+<a href="https://bagipanen.vercel.app"><img src="docs/assets/banner.svg" alt="BagiPanen — Tanpa ijon, tanpa tengkulak. Hasil panen dibagi smart contract." width="100%"></a>
+
+<h3>Modal tanam yang adil untuk petani, transparan untuk investor, diverifikasi AI, tercatat onchain.</h3>
+
+<p>
+<a href="https://bagipanen.vercel.app"><img src="https://img.shields.io/badge/demo-live-e6b043?style=for-the-badge&logo=vercel&logoColor=0b1d15" alt="Demo live"></a>
+<a href="https://bagipanen.vercel.app/coba"><img src="https://img.shields.io/badge/coba%20sebagai-juri-3d855d?style=for-the-badge" alt="Panduan juri"></a>
+<a href="https://testnet.bscscan.com/address/0xDaAAb760e8ba84dFBB209a1ec944875d71584809#code"><img src="https://img.shields.io/badge/BNB%20Smart%20Chain-Testnet-F0B90B?style=for-the-badge&logo=binance&logoColor=white" alt="BNB Smart Chain Testnet"></a>
+<a href="https://testnet.bscscan.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e"><img src="https://img.shields.io/badge/ERC--8004-agen%20%232544-0b1d15?style=for-the-badge" alt="ERC-8004 agent #2544"></a>
+</p>
+
+<p>
+<a href="https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml"><img src="https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml/badge.svg" alt="Agen AI verifikator"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2c6a48" alt="MIT License"></a>
+<img src="https://img.shields.io/badge/kontrak-5%20terverifikasi%20BscScan-2c6a48" alt="5 kontrak terverifikasi">
+<img src="https://img.shields.io/badge/Foundry-90%20test%20·%20100%25%20coverage-2c6a48" alt="90 Foundry tests, 100% coverage">
+<img src="https://img.shields.io/badge/agen-47%20unit%20test-2c6a48" alt="47 agent tests">
+<a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-e6b043" alt="PRs welcome"></a>
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white" alt="Solidity">
+<img src="https://img.shields.io/badge/OpenZeppelin-v5-4E5EE4?logo=openzeppelin&logoColor=white" alt="OpenZeppelin">
+<img src="https://img.shields.io/badge/Foundry-forge-1B1B1B" alt="Foundry">
+<img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" alt="Next.js 16">
+<img src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" alt="React 19">
+<img src="https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind v4">
+<img src="https://img.shields.io/badge/wagmi%20·%20viem-v2-1C1C1C" alt="wagmi viem">
+<img src="https://img.shields.io/badge/Gemini-Vision-8E75B2?logo=googlegemini&logoColor=white" alt="Gemini">
+<img src="https://img.shields.io/badge/IPFS-Pinata-65C2CB?logo=ipfs&logoColor=white" alt="IPFS Pinata">
+<img src="https://img.shields.io/badge/RWA-stablecoin-e6b043" alt="RWA stablecoin">
+</p>
+
+<b><a href="https://bagipanen.vercel.app">Demo</a></b> ·
+<a href="#-coba-sekarang-untuk-juri">Coba sekarang</a> ·
+<a href="#-masalah--solusi">Masalah &amp; solusi</a> ·
+<a href="#%EF%B8%8F-arsitektur">Arsitektur</a> ·
+<a href="#-agen-ai-verifikator">Agen AI</a> ·
+<a href="#alamat-kontrak">Kontrak</a> ·
+<a href="#-menjalankan-di-lokal">Jalankan lokal</a>
+
+<sub>🌾 Indonesia Web3 Hackathon 2026 · BNB Chain · Finance &amp; Commerce (RWA + stablecoin) · AI Agents · Consumer Apps</sub>
+
+</div>
+
+---
 
 BagiPanen adalah platform pendanaan modal tanam untuk petani Indonesia di BNB Chain. Investor mendanai satu musim tanam dengan stablecoin. Dana cair bertahap setelah bukti lapangan diverifikasi **agen AI dan koperasi**, lalu hasil panen dibagi otomatis oleh smart contract.
 
@@ -21,7 +66,23 @@ BagiPanen adalah platform pendanaan modal tanam untuk petani Indonesia di BNB Ch
 BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season of a smallholder farmer with a stablecoin (MockUSDT on testnet). The money sits in a per-campaign escrow contract and is released in three tranches (planting 40%, growing 35%, pre-harvest 25%) only when **both** an AI agent and the farmer's cooperative approve a field photo. The AI agent has an on-chain identity in the official **ERC-8004 Identity Registry** (agent #2544), and cooperatives rate each of its verdicts in the official **ERC-8004 Reputation Registry**. It checks EXIF GPS/date, duplicate photos, 14-day weather (Open-Meteo), and asks **Gemini** to assess the photo. Each verdict is stored as JSON on IPFS (Pinata). After harvest, the contract repays investors' principal first, then splits profit 55% farmer / 40% investors / 5% reserve pool. Every season builds an on-chain **farmer report card** that can serve as an alternative credit history. The UI is in Indonesian. It is live on BSC testnet with all contracts verified; the AI agent runs autonomously in the cloud (GitHub Actions, every ~5 minutes), and eight demo projects across Indonesia cover every state, including failed funding (100% refund) and crop failure (reserve-pool compensation).
 </details>
 
-## Coba sekarang (untuk juri)
+## 📸 Tampilan
+
+<table>
+<tr>
+<td colspan="2"><img src="docs/assets/home.png" alt="Beranda BagiPanen"></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/assets/campaign.png" alt="Halaman proyek"><br><sub><b>Halaman proyek</b>: escrow, tahap cair, bagi hasil</sub></td>
+<td width="50%"><img src="docs/assets/agent.png" alt="Agen AI"><br><sub><b>Agen AI #2544</b>: identitas ERC-8004 + putusan publik</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/assets/rapor.png" alt="Rapor Petani"><br><sub><b>Rapor Petani</b>: riwayat kredit alternatif onchain</sub></td>
+<td width="50%" align="center"><img src="docs/assets/mobile.png" alt="Tampilan mobile" width="230"><br><sub>Mobile-first</sub></td>
+</tr>
+</table>
+
+## 🚀 Coba sekarang (untuk juri)
 
 Yang dibutuhkan: MetaMask dan sedikit tBNB untuk gas. **Tidak ada uang sungguhan:** semua berjalan di BSC testnet dengan stablecoin demo (mUSDT).
 
@@ -43,9 +104,9 @@ Yang bisa dilihat tanpa wallet:
 - **Agen AI** (`/agent`): identitas onchain, **reputasi di ERC-8004 ReputationRegistry** (persentase kesepakatan koperasi dengan putusan agen), isi agent card, statistik, dan 10 putusan terakhir. Log kerjanya di [GitHub Actions](https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml).
 - **Penolakan oleh agen** (proyek uji coba awal di Garut, tidak tampil di beranda): [foto jagung ditolak Gemini lalu diunggah ulang](https://bagipanen.vercel.app/campaign/0xa13f0bB50045F5e8cA1054b9AeF070CD9D9c58bE) dan [foto yang sama dipakai ulang → ditolak sebagai duplikat](https://bagipanen.vercel.app/campaign/0xB0C1d27dd190d3d95327676f689E06D18930cb75).
 
-Peran Petani, Koperasi, dan Admin terikat ke wallet demo kami. Alurnya ditunjukkan di video demo dan bisa dicoba penuh di [mode lokal](#menjalankan-di-lokal) tanpa akun apa pun.
+Peran Petani, Koperasi, dan Admin terikat ke wallet demo kami. Alurnya ditunjukkan di video demo dan bisa dicoba penuh di [mode lokal](#-menjalankan-di-lokal) tanpa akun apa pun.
 
-## Masalah & solusi
+## 🌾 Masalah & solusi
 
 Petani kecil sulit mendapat kredit bank karena tidak punya riwayat kredit, sehingga modal tanam datang dari tengkulak lewat sistem *ijon*: panen dibeli murah sebelum waktunya.
 
@@ -70,7 +131,7 @@ Contoh dari data demo — modal 1.000 USDT, hasil penjualan 1.650 USDT. Angka in
 | Dana cadangan (5%) | 32,5 |
 | Pool investor (modal + 40%) | 1.260 → Rina 630, Budi 378, Sari 252 (**imbal hasil 26%**) |
 
-## Arsitektur
+## 🏗️ Arsitektur
 
 Tidak ada server aplikasi maupun database:
 - smart contract menyimpan data dan dana;
@@ -112,7 +173,7 @@ flowchart LR
 | Agen | Node.js 20, TypeScript, viem, exifr, `@google/genai` (Gemini), Open-Meteo |
 | Penyimpanan | IPFS via Pinata (testnet) / folder lokal (mode lokal) |
 
-## Agen AI verifikator
+## 🤖 Agen AI verifikator
 
 Agen memantau event `ProofSubmitted` dari semua proyek (polling 10 detik) dan menilai setiap bukti dalam 7 langkah:
 
@@ -144,7 +205,7 @@ Alasannya tampil dalam bahasa Indonesia di timeline proyek, antrean koperasi, da
 - Bukti yang gagal diproses dicoba ulang 3×, lalu masuk antrean tertunda dengan jeda bertahap.
 - Agen idempoten: aman di-restart, dan bukti yang sudah diputus tidak dinilai dua kali.
 
-## Smart contract
+## 📜 Smart contract
 
 Semua kontrak ada di [contracts/src/](contracts/src/).
 
@@ -191,7 +252,7 @@ Proyek demo di testnet (dibuat dengan [`agent/scripts/seed-showcase.ts`](agent/s
 
 **Anvil (lokal, chain 31337)** — alamatnya selalu sama setiap `npm run dev:chain`, karena deploy dari akun bawaan Anvil pada nonce yang sama: factory `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`, mUSDT `0x5FbDB2315678afecb367f032d93F642f64180aa3`, MockAgentIdentity `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`. Daftar lengkapnya ada di [deployments/anvil.json](deployments/anvil.json).
 
-## Menjalankan di lokal
+## 💻 Menjalankan di lokal
 
 Mode lokal tidak butuh akun, API key, maupun MetaMask. Chain, penyimpanan file, dan penilai foto semuanya berjalan di laptop.
 
@@ -231,7 +292,7 @@ Foto contoh berlisensi bebas ada di [docs/demo-photos/](docs/demo-photos/), bese
 
 Menjalankan ulang `npm run dev:chain` memulai chain dari nol, dan agen mendeteksinya otomatis.
 
-## Menjalankan di BSC testnet
+## ⛓️ Menjalankan di BSC testnet
 
 Kode yang sama berjalan di BSC testnet cukup dengan mengganti `.env`. Adapter yang dipakai otomatis beralih:
 
@@ -274,7 +335,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 - Bisa dipicu manual dari tab **Actions → Agen AI verifikator → Run workflow**.
 - **Langsung saat foto dikirim (opsional):** isi `GITHUB_DISPATCH_TOKEN` di environment variable Vercel (fine-grained token, repo ini saja, izin *Actions: Read and write*). Setelah petani mengirim foto, web memanggil `/api/agent-wake`, yang memicu workflow hanya jika kontrak resmi itu benar-benar punya bukti yang menunggu putusan dan agen belum berjalan. Putusan jadi keluar ±1–3 menit, bukan 5–15 menit.
 
-## Test
+## 🧪 Test
 
 ```bash
 npm run test:contracts   # 90 test Foundry, cakupan 100% baris/cabang/fungsi, termasuk fuzz pembulatan
@@ -296,7 +357,7 @@ Test Foundry mencakup semua skenario wajib PRD:
 
 Hasil uji acceptance per butir PRD, di lokal dan BSC testnet, ada di [docs/acceptance.md](docs/acceptance.md).
 
-## Catatan jujur
+## 📝 Catatan jujur
 
 - **Agen AI berjalan di GitHub Actions setiap ±5 menit**, bukan terus-menerus. Jadwal GitHub kadang terlambat beberapa menit, jadi putusan bisa datang 5–15 menit setelah foto dikirim; selama itu bukti berstatus "Bukti dikirim" dan koperasi tetap bisa memutuskan lebih dulu. Untuk demo langsung, agen yang sama bisa dijalankan di laptop (`npm run dev:agent`) dengan jeda ±10 detik.
 - **Latensi putusan di testnet ±30–50 detik** (target PRD ≤ 30 detik tercapai di mode lokal). Penyebab utamanya Gemini paket gratis: model utama sering sibuk (503) atau kuota hariannya habis (429), sehingga agen pindah ke model cadangan. Rinciannya ada di [docs/acceptance.md](docs/acceptance.md#bsc-testnet-gelombang-8).
@@ -305,7 +366,7 @@ Hasil uji acceptance per butir PRD, di lokal dan BSC testnet, ada di [docs/accep
 - Unggah foto di versi Vercel dibatasi ±4,5 MB oleh platform. Batas aplikasi 5 MB berlaku di mode lokal.
 - Semua keputusan teknis dan alasannya dicatat di [docs/decisions.md](docs/decisions.md).
 
-## Struktur repo
+## 🗂️ Struktur repo
 
 ```text
 contracts/   Foundry: src/ (kontrak), test/, script/ (Deploy, Seed, SeedTestnet)
@@ -316,6 +377,15 @@ scripts/     dev-chain.mjs (satu perintah chain lokal), sync.mjs (salin ABI & al
 docs/        PRD, keputusan teknis, hasil uji, riset ERC-8004, foto demo
 ```
 
-## Di luar lingkup MVP
+## 🔭 Di luar lingkup MVP
 
 Login sosial & gasless, BNB Greenfield, pasar sekunder token porsi, pembayaran x402, notifikasi WhatsApp/Telegram, mainnet, multisig admin, penilaian agen oleh admin saat sengketa, dan Validation Registry ERC-8004. Roadmap lengkapnya ada di [docs/PRD.md](docs/PRD.md).
+
+## 🤝 Kontribusi & lisensi
+
+Kontribusi terbuka, lihat [CONTRIBUTING.md](CONTRIBUTING.md). Laporan keamanan lewat [SECURITY.md](SECURITY.md).
+Foto demo berasal dari Wikimedia Commons; sumber dan lisensinya tercatat di [docs/demo-photos/SUMBER.md](docs/demo-photos/SUMBER.md).
+
+Kode dirilis di bawah lisensi [MIT](LICENSE) © 2026 MrPrinceAli dan kontributor BagiPanen.
+
+<div align="center"><sub>Dibuat dengan 💛 untuk petani Indonesia · <a href="https://bagipanen.vercel.app">bagipanen.vercel.app</a></sub></div>

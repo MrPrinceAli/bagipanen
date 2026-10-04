@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "Monorepo BagiPanen: contracts/ (Foundry), web/ (Next.js), agent/ (Node.js).",
+  "license": "MIT",
+  "homepage": "https://bagipanen.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrPrinceAli/bagipanen.git"
+  },
   "scripts": {
     "dev:chain": "node scripts/dev-chain.mjs",
     "dev:web": "cd web && npm run dev",

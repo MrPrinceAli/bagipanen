@@ -1,0 +1,26 @@
+name: 🐞 Laporan bug
+description: Ada yang tidak berjalan sesuai harapan
+labels: ["bug"]
+body:
+  - type: textarea
+    id: apa
+    attributes:
+      label: Apa yang terjadi?
+      description: Langkah yang dilakukan, hasil yang diharapkan, dan hasil yang terjadi.
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Halaman / alamat proyek
+      placeholder: https://bagipanen.vercel.app/campaign/0x…
+  - type: dropdown
+    id: area
+    attributes:
+      label: Bagian
+      options: [Web, Smart contract, Agen AI, Mode lokal, Lainnya]
+  - type: dropdown
+    id: peran
+    attributes:
+      label: Peran
+      options: [Investor, Petani, Koperasi, Admin, Pengunjung]
