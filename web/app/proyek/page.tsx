@@ -284,10 +284,9 @@ export default function ProjectsPage() {
           <div className="p-2 sm:p-4">
             {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-[#e6d3a6]" /> : <ProjectMap items={visible} highlight={matches} />}
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#5c3d16]/25 bg-[#f6ecd4] px-4 py-3 font-display text-xs text-[#5c3d16] italic sm:absolute sm:bottom-9 sm:left-9 sm:rounded-xl sm:border sm:border-[#5c3d16]/40 sm:bg-[#f6ecd4]/90">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#5c3d16]/25 bg-[#f6ecd4] px-4 py-3 font-display text-xs text-[#5c3d16] italic sm:absolute sm:bottom-9 sm:left-9 sm:flex-col sm:items-start sm:gap-y-1 sm:rounded-xl sm:border sm:border-[#5c3d16]/40 sm:bg-[#f6ecd4]/90">
             <span className="w-full font-semibold not-italic">
               {visible.length} proyek · {provinces.length} provinsi
-              <span className="hidden font-normal italic opacity-70 sm:inline"> · BSC Testnet</span>
             </span>
             {[
               ["#edc56a", "Cari dana"],
