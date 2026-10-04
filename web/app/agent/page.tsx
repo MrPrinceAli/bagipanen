@@ -145,7 +145,7 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
         </p>
         {verdict && <span className="text-xs text-stone-500">{formatDateTime(verdict.timestamp)}</span>}
       </div>
-      <div className="grid gap-0 sm:grid-cols-[11rem_1fr]">
+      <div className="grid gap-0 sm:grid-cols-[15rem_1fr] lg:grid-cols-[19rem_1fr]">
         <div className="relative h-40 bg-hutan-100 sm:h-auto">
           {doc?.proofCID ? (
             <IpfsImage cid={doc.proofCID} alt={verdict ? `Foto bukti ${verdict.commodity} tahap ${verdict.milestoneName}` : "Foto bukti"} className="absolute inset-0 h-full rounded-none" link={false} />
@@ -162,7 +162,7 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
             </span>
           )}
         </div>
-        <ol className="relative flex flex-col gap-3 p-5">
+        <ol className="relative grid gap-3 p-5 sm:p-6 lg:grid-cols-2 lg:gap-x-6 lg:gap-y-4">
           {(doc ? steps : Array.from({ length: 5 }, () => null)).map((st, i) => {
             const on = i < done;
             return (
@@ -179,7 +179,7 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
           })}
           <li
             className={cn(
-              "mt-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition duration-500",
+              "mt-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition duration-500 lg:col-span-2",
               done >= total ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
               verdict?.approved ? "bg-hutan-900 text-white" : "bg-red-600 text-white",
             )}
@@ -329,8 +329,8 @@ export default function AgentPage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(19_46_34/0.09)_1px,transparent_1.4px)] bg-[size:22px_22px]" aria-hidden />
         <div className="pointer-events-none absolute -top-32 -left-24 size-[28rem] rounded-full bg-hutan-200/50 blur-3xl" aria-hidden />
         <div className="pointer-events-none absolute -right-20 -bottom-40 size-[30rem] rounded-full bg-emas-200/60 blur-3xl" aria-hidden />
-        <Container className="relative grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-          <div className="animate-fade-up">
+        <Container className="relative flex flex-col items-center gap-12 py-14 text-center sm:py-20">
+          <div className="flex animate-fade-up flex-col items-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-hutan-800 shadow-soft ring-1 ring-hutan-200">
               <span className="relative flex size-2">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-400 opacity-70" />
@@ -343,15 +343,15 @@ export default function AgentPage() {
                 </span>
               )}
             </span>
-            <h1 className="mt-5 text-4xl leading-[1.08] font-extrabold tracking-tight text-balance text-hutan-950 sm:text-5xl xl:text-[3.5rem]">
+            <h1 className="mt-5 max-w-4xl text-4xl leading-[1.05] font-extrabold tracking-tight text-balance text-hutan-950 sm:text-6xl xl:text-7xl">
               Agen AI yang memeriksa{" "}
               <span className="bg-linear-to-r from-hutan-600 via-hutan-500 to-emas-500 bg-clip-text text-transparent">setiap foto lahan</span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-stone-600">
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-balance text-stone-600">
               {card?.description ??
                 "Agen ini memeriksa setiap foto bukti dari lahan sebelum dana tahap boleh cair. Identitasnya tercatat di blockchain, dan semua putusannya bisa dibaca siapa saja."}
             </p>
-            <dl className="mt-6 flex flex-wrap gap-2 text-sm">
+            <dl className="mt-6 flex flex-wrap justify-center gap-2 text-sm">
               {[
                 { k: "Agen", v: `#${agent.agentId.toString()}` },
                 { k: "Dompet", v: shortAddress(agent.agentWallet) },
@@ -363,7 +363,7 @@ export default function AgentPage() {
                 </div>
               ))}
             </dl>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
               <a
                 href={AGENT_WORKFLOW_URL}
                 target="_blank"
@@ -384,7 +384,7 @@ export default function AgentPage() {
               )}
             </div>
           </div>
-          <div className="animate-fade-up [animation-delay:150ms]">
+          <div className="w-full max-w-4xl animate-fade-up text-left [animation-delay:150ms]">
             <ActivityFeed verdict={verdicts?.[0]} />
           </div>
         </Container>
