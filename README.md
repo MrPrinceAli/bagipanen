@@ -26,6 +26,8 @@ BagiPanen is a crop-funding dApp on BNB Chain. Investors fund one growing season
 Yang dibutuhkan: MetaMask dan sedikit tBNB untuk gas. **Tidak ada uang sungguhan:** semua berjalan di BSC testnet dengan stablecoin demo (mUSDT).
 
 > Panduan interaktif dengan centang otomatis per langkah: **[bagipanen.vercel.app/coba](https://bagipanen.vercel.app/coba)**.
+>
+> **Tanpa MetaMask?** Buka **[/masuk](https://bagipanen.vercel.app/masuk)** → *Coba tanpa dompet* dan pilih peran **Investor**, **Petani**, atau **Koperasi** (akun demo testnet), atau **Admin** (lihat saja). Alur yang bisa dicoba penuh: sebagai Petani kirim foto ke *Proyek demo juri #1* → agen AI di cloud menilainya ±1 menit → sebagai Koperasi konfirmasi sampai dana tahap cair. Kunci akun demo hanya ada di server (`/api/demo-tx` menandatangani transaksi ke kontrak BagiPanen saja); di BagiPanen sungguhan setiap orang masuk dengan dompetnya sendiri.
 
 1. Buka **[bagipanen.vercel.app](https://bagipanen.vercel.app)**, klik **Hubungkan dompet**, lalu pilih MetaMask. Kalau diminta pindah jaringan, setujui pindah ke **BSC Testnet** (chain 97). Di HP, buka tautannya dari browser di dalam aplikasi MetaMask.
 2. Ambil tBNB gratis dari [faucet QuickNode](https://faucet.quicknode.com/binance-smart-chain/bnb-testnet) atau [faucet BNB Chain](https://www.bnbchain.org/en/testnet-faucet). Faucet BNB Chain mensyaratkan saldo BNB mainnet. 0,005 tBNB sudah cukup untuk puluhan transaksi.
