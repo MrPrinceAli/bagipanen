@@ -77,20 +77,20 @@ function SignedIn() {
   const Icon = ROLES.find((r) => r.role === role)?.icon ?? ShieldCheck;
   return (
     <div className="flex flex-col items-center text-center">
-      <span className="relative grid size-20 place-items-center rounded-3xl bg-hutan-900 text-emas-300 shadow-lift">
-        <Icon className="size-9" aria-hidden />
+      <span className="relative grid size-16 place-items-center rounded-3xl bg-hutan-900 text-emas-300 shadow-lift">
+        <Icon className="size-8" aria-hidden />
         <span className="absolute -right-1.5 -bottom-1.5 grid size-7 place-items-center rounded-full bg-hutan-500 text-white ring-4 ring-white">
           <Check className="size-4" aria-hidden />
         </span>
       </span>
-      <p className="mt-5 text-sm text-stone-500">Selamat datang kembali</p>
-      <h2 className="mt-1 font-display text-3xl font-semibold text-hutan-950">Kamu masuk sebagai {ROLE_LABEL[role]}</h2>
+      <p className="mt-4 text-sm text-stone-500">Selamat datang kembali</p>
+      <h2 className="mt-1 font-display text-2xl font-semibold text-hutan-950">Kamu masuk sebagai {ROLE_LABEL[role]}</h2>
       <p className="mt-2 font-mono text-sm text-stone-500">{address ? shortAddress(address) : ""}</p>
       {target && (
         <>
           <Link
             href={target.href}
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-hutan-900 px-5 py-3.5 font-semibold text-white transition hover:bg-hutan-800"
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-hutan-900 px-5 py-3 font-semibold text-white transition hover:bg-hutan-800"
           >
             Buka {target.label} <ArrowRight className="size-4" aria-hidden />
           </Link>
@@ -109,7 +109,7 @@ function SignedIn() {
           <JudgePanel />
         </div>
       )}
-      <button type="button" onClick={() => disconnect()} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-red-700">
+      <button type="button" onClick={() => disconnect()} className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-red-700">
         <LogOut className="size-4" aria-hidden /> Ganti dompet / keluar
       </button>
     </div>
@@ -124,18 +124,18 @@ function JudgePanel() {
   const [error, setError] = useState("");
   const icons: Record<string, LucideIcon> = { investor: HandCoins, petani: Sprout, koperasi: Building2, admin: UserCog };
   return (
-    <div className="mt-7 rounded-2xl border-2 border-dashed border-emas-300 bg-emas-50/70 p-4">
+    <div className="mt-5 rounded-2xl border-2 border-dashed border-emas-300 bg-emas-50/70 p-3.5">
       <div className="flex items-start gap-2">
         <FlaskConical className="mt-0.5 size-4 shrink-0 text-emas-700" aria-hidden />
         <div>
           <p className="text-sm font-semibold text-hutan-950">{connector?.id === "judgeDemo" ? "Ganti peran akun demo" : "Coba tanpa dompet: akun demo untuk juri"}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-pretty text-stone-600">
-            Khusus pengujian. Di BagiPanen sungguhan, setiap orang masuk dengan dompet kripto miliknya sendiri. Akun demo ini memakai
-            wallet testnet yang ditandatangani server, bukan uang sungguhan.
+          <p className="mt-0.5 text-[11px] leading-snug text-pretty text-stone-600">
+            Khusus pengujian. Aslinya setiap orang masuk dengan dompet kripto miliknya sendiri. Akun demo memakai wallet testnet yang
+            ditandatangani server, bukan uang sungguhan.
           </p>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-1.5">
         {JUDGE_ACCOUNTS.map((a) => {
           const Icon = icons[a.key] ?? Wallet;
           return (
@@ -154,9 +154,10 @@ function JudgePanel() {
                   setBusy(null);
                 }
               }}
-              className="group flex items-start gap-2.5 rounded-xl bg-white p-3 text-left ring-1 ring-krem-200 transition hover:ring-hutan-400 disabled:opacity-60"
+              title={a.does}
+              className="group flex items-center gap-2 rounded-xl bg-white px-2.5 py-2 text-left ring-1 ring-krem-200 transition hover:ring-hutan-400 disabled:opacity-60"
             >
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-hutan-900 text-emas-300">
+              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-hutan-900 text-emas-300">
                 {busy === a.key ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Icon className="size-4" aria-hidden />}
               </span>
               <span className="min-w-0">
@@ -164,7 +165,7 @@ function JudgePanel() {
                   {a.label}
                   {a.readOnly && <span className="rounded bg-stone-100 px-1 text-[10px] font-medium text-stone-500">lihat saja</span>}
                 </span>
-                <span className="block text-[11px] leading-snug text-stone-500">{a.does}</span>
+                <span className="block truncate text-[10.5px] leading-snug text-stone-500">{a.does}</span>
               </span>
             </button>
           );
@@ -178,13 +179,13 @@ function JudgePanel() {
 function SignIn() {
   return (
     <div>
-      <p className="text-sm font-semibold tracking-[0.18em] text-emas-600 uppercase">Masuk</p>
-      <h1 className="mt-2 font-display text-3xl font-semibold text-hutan-950 sm:text-4xl">Selamat datang di BagiPanen</h1>
-      <p className="mt-2 text-pretty text-stone-600">
+      <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Masuk</p>
+      <h1 className="mt-1.5 font-display text-2xl font-semibold text-hutan-950 sm:text-3xl">Selamat datang di BagiPanen</h1>
+      <p className="mt-1.5 text-sm text-pretty text-stone-600">
         Tidak perlu email atau kata sandi. Dompetmu adalah akunmu, dan peranmu dikenali otomatis dari alamatnya.
       </p>
 
-      <div className="mt-7">
+      <div className="mt-5">
         {IS_LOCAL ? (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-hutan-950">Mode lokal: pilih akun demo</p>
@@ -197,9 +198,9 @@ function SignIn() {
                 type="button"
                 onClick={openConnectModal}
                 disabled={!mounted}
-                className="group flex w-full items-center gap-4 rounded-2xl bg-hutan-900 px-5 py-4 text-left text-white shadow-lift transition hover:bg-hutan-800 disabled:opacity-60"
+                className="group flex w-full items-center gap-3.5 rounded-2xl bg-hutan-900 px-4 py-3 text-left text-white shadow-lift transition hover:bg-hutan-800 disabled:opacity-60"
               >
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emas-400 text-hutan-950">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emas-400 text-hutan-950">
                   <Wallet className="size-5" aria-hidden />
                 </span>
                 <span className="flex-1">
@@ -211,32 +212,15 @@ function SignIn() {
             )}
           </ConnectButton.Custom>
         )}
-        <p className="mt-3 flex items-start gap-2 text-xs text-stone-500">
-          <KeyRound className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          BagiPanen tidak pernah meminta kunci rahasia (seed phrase). Masuk hanya membagikan alamat dompet, bukan izin memindahkan dana.
+        <p className="mt-2 flex items-start gap-2 text-[11px] leading-snug text-stone-500">
+          <KeyRound className="mt-px size-3.5 shrink-0" aria-hidden />
+          Tidak pernah meminta seed phrase. Masuk hanya membagikan alamat dompet, bukan izin memindahkan dana.
         </p>
       </div>
 
       {JUDGE_ACCOUNTS.length > 0 && <JudgePanel />}
 
-      <div className="mt-8">
-        <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">Peran dikenali otomatis</p>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {ROLES.map(({ role, icon: Icon, desc }) => (
-            <li key={role} className="flex gap-3 rounded-2xl bg-krem-50 p-3 ring-1 ring-krem-200">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-hutan-700 ring-1 ring-krem-200">
-                <Icon className="size-4" aria-hidden />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-hutan-950">{ROLE_LABEL[role]}</span>
-                <span className="block text-xs leading-snug text-stone-500">{desc}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-krem-200 pt-5 text-sm">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-krem-200 pt-4 text-sm">
         <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="font-semibold text-hutan-700 hover:text-hutan-900">
           Belum punya dompet? Pasang MetaMask
         </a>
@@ -255,22 +239,22 @@ function LoginCard() {
 
 export default function LoginPage() {
   return (
-    <div className="relative min-h-[calc(100svh-4rem)] bg-krem-50 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div className="relative min-h-[calc(100svh-7rem)] bg-krem-50 lg:grid lg:h-[calc(100svh-4rem)] lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       {/* Panel visual */}
       <aside className="relative hidden overflow-hidden bg-hutan-950 text-white lg:block">
         <Image src={heroImage} alt="" fill sizes="50vw" placeholder="blur" className="object-cover opacity-40" />
         <div className="absolute inset-0 bg-linear-to-t from-hutan-950 via-hutan-950/60 to-hutan-950/30" aria-hidden />
         <div className="glow-hutan absolute inset-0" aria-hidden />
-        <div className="relative flex h-full flex-col justify-between p-10 xl:p-14">
+        <div className="relative flex h-full flex-col justify-between p-8 xl:p-12">
           <div className="flex items-center gap-3">
             <LogoMark className="size-11" />
             <span className="font-display text-2xl font-semibold">BagiPanen</span>
           </div>
           <div>
-            <p className="max-w-md font-display text-4xl leading-tight font-semibold text-balance xl:text-5xl">
+            <p className="max-w-md font-display text-3xl leading-tight font-semibold text-balance xl:text-4xl">
               Satu dompet, <span className="text-emas-300 italic">semua peran</span> dikenali kontrak.
             </p>
-            <ul className="mt-8 flex flex-col gap-3 text-white/80">
+            <ul className="mt-6 flex flex-col gap-2.5 text-sm text-white/80">
               {[
                 "Tanpa email & kata sandi, tanpa server yang menyimpan data akunmu",
                 "Dana tetap di kontrak, bukan di dompet BagiPanen",
@@ -290,9 +274,9 @@ export default function LoginPage() {
       </aside>
 
       {/* Kartu masuk */}
-      <main className="relative flex items-center justify-center px-4 py-12 sm:px-8">
+      <main className="relative flex items-center justify-center px-4 py-6 sm:px-8 lg:overflow-y-auto">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(19_46_34/0.07)_1px,transparent_1.4px)] bg-[size:22px_22px] lg:hidden" aria-hidden />
-        <div className={cn("relative w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-lift ring-1 ring-krem-200 sm:p-9")}>
+        <div className={cn("relative w-full max-w-md rounded-[1.75rem] bg-white p-5 shadow-lift ring-1 ring-krem-200 sm:p-7")}>
           <Suspense fallback={null}>
             <LoginCard />
           </Suspense>
