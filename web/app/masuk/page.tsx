@@ -198,9 +198,9 @@ function SignIn() {
                 type="button"
                 onClick={openConnectModal}
                 disabled={!mounted}
-                className="group flex w-full items-center gap-3.5 rounded-2xl bg-hutan-900 px-4 py-3 text-left text-white shadow-lift transition hover:bg-hutan-800 disabled:opacity-60"
+                className="shine group flex w-full items-center gap-3.5 rounded-2xl bg-linear-to-r from-hutan-900 via-hutan-800 to-hutan-900 px-4 py-3 text-left text-white shadow-lift ring-1 ring-emas-300/30 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-14px_rgb(230_176_67/0.55)] disabled:opacity-60"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emas-400 text-hutan-950">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emas-400 text-hutan-950 shadow-[0_0_0_0_rgb(237_197_106/0.6)] transition group-hover:shadow-[0_0_18px_2px_rgb(237_197_106/0.6)]">
                   <Wallet className="size-5" aria-hidden />
                 </span>
                 <span className="flex-1">
