@@ -267,6 +267,7 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
   const [error, setError] = useState("");
   const attemptsLeft = 3 - milestone.attempts;
   const retry = milestone.status === MStatus.Rejected;
+  const judge = useAccount().connector?.id === "judgeDemo";
 
   if (attemptsLeft <= 0)
     return (
@@ -314,6 +315,16 @@ function ProofPanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone
         <Field label="Foto lahan terbaru" htmlFor="proof" hint="Ambil langsung dari galeri kamera. Foto yang sudah lewat WhatsApp biasanya kehilangan data GPS dan tanggal.">
           <FilePicker id="proof" file={file} onChange={setFile} label="Pilih foto lahan" />
         </Field>
+        {judge && (
+          <Notice tone="info">
+            Akun demo juri: unduh{" "}
+            <a href={DEMO_PHOTO[milestone.name] ?? DEMO_PHOTO.Tanam} download className="font-semibold underline">
+              foto contoh tahap {milestone.name}
+            </a>
+            , lalu pilih di atas. Agen AI di cloud akan menilainya dalam ±1 menit. Foto contoh yang sudah pernah dipakai akan ditolak
+            sebagai foto daur ulang. Itu juga bagian dari demo.
+          </Notice>
+        )}
         {error && <Notice tone="error">{error}</Notice>}
         <Button size="lg" disabled={!file} loading={uploading || tx.busy} onClick={submit}>
           {uploading ? "Mengunggah foto…" : "Kirim bukti"}
@@ -429,6 +440,13 @@ function HarvestPanel({ c }: { c: CampaignSummary }) {
     </Card>
   );
 }
+
+/** Foto contoh untuk akun demo juri (web/public/demo/foto-contoh, sumber di docs/demo-photos/SUMBER.md). */
+const DEMO_PHOTO: Record<string, string> = {
+  Tanam: "/demo/foto-contoh/1-tanam-jagung.jpg",
+  Tumbuh: "/demo/foto-contoh/2-tumbuh-jagung.jpg",
+  "Pra-panen": "/demo/foto-contoh/3-pra-panen-jagung.jpg",
+};
 
 export function CooperativePanel({ c, milestone }: { c: CampaignSummary; milestone: Milestone }) {
   const tx = useTx();
