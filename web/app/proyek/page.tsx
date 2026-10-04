@@ -45,9 +45,9 @@ const ISLANDS = [
   { name: "Kalimantan", lat: -0.6, lon: 113.6, rot: 0 },
   { name: "Jawa", lat: -8.95, lon: 110.6, rot: 0 },
   { name: "Sulawesi", lat: -2.3, lon: 120.9, rot: 0 },
-  { name: "Maluku", lat: -3.6, lon: 128.6, rot: 0 },
+  { name: "Maluku", lat: -1.9, lon: 129.4, rot: 0 },
   { name: "Papua", lat: -4.6, lon: 138.3, rot: 0 },
-  { name: "Nusa Tenggara", lat: -10.3, lon: 120.2, rot: 0 },
+  { name: "Nusa Tenggara", lat: -10.9, lon: 119.2, rot: 0 },
 ];
 
 function MapTooltip({ c }: { c: CampaignSummary }) {
@@ -121,7 +121,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
           })}
         </g>
         <g fill={ink} fillOpacity="0.55" fontSize="9" fontStyle="italic" fontFamily={serif}>
-          {lonLines.map((lon) => (
+          {lonLines.slice(0, -1).map((lon) => (
             <text key={lon} x={projectToMap(0, lon).x + 3} y={24}>
               {lon}° BT
             </text>
@@ -148,7 +148,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
         <path d={INDONESIA_PATH} fill="none" stroke={ink} strokeWidth="0.9" strokeLinejoin="round" />
 
         {/* Nama pulau besar */}
-        <g fill={ink} fillOpacity="0.75" fontSize="13" fontStyle="italic" textAnchor="middle" fontFamily={serif}>
+        <g fill={ink} fillOpacity="0.8" fontSize="13" fontStyle="italic" textAnchor="middle" fontFamily={serif} stroke="#efdcae" strokeWidth="3" strokeLinejoin="round" paintOrder="stroke">
           {ISLANDS.map((l) => {
             const { x, y } = projectToMap(l.lat, l.lon);
             return (
@@ -284,15 +284,10 @@ export default function ProjectsPage() {
           <div className="p-2 sm:p-4">
             {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-[#e6d3a6]" /> : <ProjectMap items={visible} highlight={matches} />}
           </div>
-          <div className="pointer-events-none absolute top-9 left-9 hidden rounded-xl border border-[#5c3d16]/40 bg-[#f6ecd4]/90 px-3 py-2 text-[#5c3d16] sm:block">
-            <p className="font-display text-lg leading-none font-semibold sm:text-2xl">
-              {visible.length} <span className="text-sm font-normal italic text-[#5c3d16]/70">proyek</span>
-            </p>
-            <p className="mt-0.5 font-display text-[11px] italic text-[#5c3d16]/65">{provinces.length} provinsi · BSC Testnet</p>
-          </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#5c3d16]/25 bg-[#f6ecd4] px-4 py-3 font-display text-xs text-[#5c3d16] italic sm:absolute sm:bottom-9 sm:left-9 sm:rounded-xl sm:border sm:border-[#5c3d16]/40 sm:bg-[#f6ecd4]/90">
-            <span className="w-full font-semibold not-italic sm:hidden">
+            <span className="w-full font-semibold not-italic">
               {visible.length} proyek · {provinces.length} provinsi
+              <span className="hidden font-normal italic opacity-70 sm:inline"> · BSC Testnet</span>
             </span>
             {[
               ["#edc56a", "Cari dana"],
