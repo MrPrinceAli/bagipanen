@@ -433,6 +433,10 @@ html[data-intro="hold"] body > :not(#page-loader) {
   transform: scale(1.05);
   filter: blur(8px);
 }
+/* Pusat pembesaran = tengah layar (bukan tengah halaman yang panjang), agar isi tidak bergeser. */
+html[data-intro] body > :not(#page-loader) {
+  transform-origin: 50% 50vh;
+}
 
 /* Loader: tetes air yang jatuh ke tunas */
 .loader-drop {
