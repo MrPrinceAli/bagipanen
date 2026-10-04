@@ -205,7 +205,7 @@ function SignIn() {
                 </span>
                 <span className="flex-1">
                   <span className="block font-semibold">Masuk dengan dompet</span>
-                  <span className="block text-sm text-white/65">MetaMask, WalletConnect, dan lainnya</span>
+                  <span className="block truncate text-sm text-white/65">MetaMask, WalletConnect, dll.</span>
                 </span>
                 <ArrowRight className="size-5 transition group-hover:translate-x-1" aria-hidden />
               </button>
@@ -220,9 +220,9 @@ function SignIn() {
 
       {JUDGE_ACCOUNTS.length > 0 && <JudgePanel />}
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-krem-200 pt-4 text-sm">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-krem-200 pt-3 text-xs sm:mt-5 sm:pt-4 sm:text-sm">
         <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="font-semibold text-hutan-700 hover:text-hutan-900">
-          Belum punya dompet? Pasang MetaMask
+          Pasang MetaMask
         </a>
         <Link href="/coba" className="inline-flex items-center gap-1 text-stone-500 hover:text-hutan-800">
           Panduan demo <ArrowRight className="size-3.5" aria-hidden />
@@ -274,9 +274,9 @@ export default function LoginPage() {
       </aside>
 
       {/* Kartu masuk */}
-      <main className="relative flex items-center justify-center px-4 py-6 sm:px-8 lg:overflow-y-auto">
+      <main className="relative flex items-center justify-center px-3 py-3 sm:px-8 sm:py-6 lg:overflow-y-auto">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(19_46_34/0.07)_1px,transparent_1.4px)] bg-[size:22px_22px] lg:hidden" aria-hidden />
-        <div className={cn("relative w-full max-w-md rounded-[1.75rem] bg-white p-5 shadow-lift ring-1 ring-krem-200 sm:p-7")}>
+        <div className={cn("relative w-full max-w-md rounded-[1.75rem] bg-white p-4 shadow-lift ring-1 ring-krem-200 sm:p-7")}>
           <Suspense fallback={null}>
             <LoginCard />
           </Suspense>
