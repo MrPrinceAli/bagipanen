@@ -73,6 +73,22 @@ export function PlantProgress({ value, className }: { value: number; className?:
 /* ------------------------------------------------------- Loader awal (layar penuh) */
 
 const INTRO_MS = 7000; // durasi animasi pembuka, sama untuk kunjungan pertama maupun refresh
+const INTERNAL_MS = 1000; // muat ulang otomatis dari dalam web (mis. Next.js mengambil versi terbaru)
+
+/**
+ * Kunjungan baru & refresh → animasi penuh. Pemuatan penuh yang dipicu dari dalam web sendiri
+ * (tipe "navigate" dengan referrer situs ini, mis. Next.js memuat ulang setelah ada deploy baru)
+ * → singkat, agar tidak terasa ada loading dobel saat pengguna sekadar pindah halaman.
+ */
+function introDuration() {
+  try {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const internal = nav?.type === "navigate" && document.referrer && new URL(document.referrer).origin === location.origin;
+    return internal ? INTERNAL_MS : INTRO_MS;
+  } catch {
+    return INTRO_MS;
+  }
+}
 const MAX_MS = 12_000; // pengaman bila event load tidak kunjung datang
 
 /**
@@ -89,7 +105,7 @@ export function InitialLoader() {
   useEffect(() => {
     // Selama layar pembuka, halaman di belakangnya sedikit diperbesar & buram (lihat globals.css).
     document.documentElement.dataset.intro = "hold";
-    const minMs = INTRO_MS;
+    const minMs = introDuration();
     let loaded = false;
     Promise.all([
       document.readyState === "complete" ? Promise.resolve() : new Promise((r) => window.addEventListener("load", r, { once: true })),
