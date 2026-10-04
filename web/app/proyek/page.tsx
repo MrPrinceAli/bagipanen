@@ -41,13 +41,13 @@ const provinceOf = (c: CampaignSummary) => c.locationName.split(",").map((s) => 
 
 const PX_PER_DEG = MAP_WIDTH / (MAP_BOUNDS.lon1 - MAP_BOUNDS.lon0);
 const ISLANDS = [
-  { name: "SUMATRA", lat: -0.4, lon: 101.6, rot: -38 },
-  { name: "KALIMANTAN", lat: -0.6, lon: 113.6, rot: 0 },
-  { name: "JAWA", lat: -8.95, lon: 110.6, rot: 0 },
-  { name: "SULAWESI", lat: -2.3, lon: 120.9, rot: 0 },
-  { name: "MALUKU", lat: -3.6, lon: 128.6, rot: 0 },
-  { name: "PAPUA", lat: -4.6, lon: 138.3, rot: 0 },
-  { name: "NUSA TENGGARA", lat: -10.3, lon: 120.2, rot: 0 },
+  { name: "Sumatra", lat: -0.4, lon: 101.6, rot: -38 },
+  { name: "Kalimantan", lat: -0.6, lon: 113.6, rot: 0 },
+  { name: "Jawa", lat: -8.95, lon: 110.6, rot: 0 },
+  { name: "Sulawesi", lat: -2.3, lon: 120.9, rot: 0 },
+  { name: "Maluku", lat: -3.6, lon: 128.6, rot: 0 },
+  { name: "Papua", lat: -4.6, lon: 138.3, rot: 0 },
+  { name: "Nusa Tenggara", lat: -10.3, lon: 120.2, rot: 0 },
 ];
 
 function MapTooltip({ c }: { c: CampaignSummary }) {
@@ -79,36 +79,38 @@ function MapTooltip({ c }: { c: CampaignSummary }) {
 function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight: (c: CampaignSummary) => boolean }) {
   const router = useRouter();
   const [hover, setHover] = useState<CampaignSummary | null>(null);
-  const lonLines = [95, 100, 105, 110, 115, 120, 125, 130, 135, 140];
-  const latLines = [5, 0, -5, -10];
+  const lonLines = [100, 110, 120, 130, 140];
+  const latLines = [5, -5, -10];
   const scale500 = (500 / 111.32) * PX_PER_DEG; // 500 km di khatulistiwa
   // Pin yang paling selatan digambar terakhir agar tumpukan pin tampak wajar.
   const ordered = [...items].sort((a, b) => b.latE6 - a.latE6);
+  const ink = "#5c3d16";
+  const serif = "var(--font-fraunces), Georgia, serif";
 
   return (
     <div className="relative">
       <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="block h-auto w-full" role="img" aria-label="Peta sebaran proyek tanam di Indonesia">
         <defs>
-          <linearGradient id="map-land" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#3d855d" />
-            <stop offset="1" stopColor="#1f4d36" />
-          </linearGradient>
-          <filter id="map-lift" x="-5%" y="-5%" width="110%" height="120%">
-            <feDropShadow dx="0" dy="3" stdDeviation="2.5" floodColor="#000" floodOpacity="0.55" />
-          </filter>
+          <pattern id="atlas-waves" width="18" height="10" patternUnits="userSpaceOnUse">
+            <path d="M0 6 Q4.5 3 9 6 T18 6" stroke="#7d93a0" strokeOpacity="0.35" fill="none" strokeWidth="0.8" />
+          </pattern>
+          <pattern id="atlas-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="5" stroke="#8a6a35" strokeOpacity="0.35" strokeWidth="1" />
+          </pattern>
+          <clipPath id="atlas-land">
+            <path d={INDONESIA_PATH} />
+          </clipPath>
           <filter id="map-blur" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
-          <pattern id="map-waves" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(20)">
-            <path d="M0 7 Q3.5 5 7 7 T14 7" stroke="#ffffff" strokeOpacity="0.035" fill="none" />
-          </pattern>
         </defs>
 
         {/* Laut */}
-        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="url(#map-waves)" />
+        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="#dfe3dc" />
+        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="url(#atlas-waves)" />
 
         {/* Garis lintang & bujur */}
-        <g stroke="#ffffff" strokeOpacity="0.06" strokeWidth="0.6" strokeDasharray="2 4">
+        <g stroke={ink} strokeOpacity="0.14" strokeWidth="0.6">
           {lonLines.map((lon) => {
             const { x } = projectToMap(0, lon);
             return <line key={lon} x1={x} y1={0} x2={x} y2={MAP_HEIGHT} />;
@@ -118,10 +120,10 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
             return <line key={lat} x1={0} y1={y} x2={MAP_WIDTH} y2={y} />;
           })}
         </g>
-        <g fill="#ffffff" fillOpacity="0.28" fontSize="8" fontFamily="ui-monospace, monospace">
-          {lonLines.slice(1).map((lon) => (
-            <text key={lon} x={projectToMap(0, lon).x + 3} y={11}>
-              {lon}°BT
+        <g fill={ink} fillOpacity="0.55" fontSize="9" fontStyle="italic" fontFamily={serif}>
+          {lonLines.map((lon) => (
+            <text key={lon} x={projectToMap(0, lon).x + 3} y={24}>
+              {lon}° BT
             </text>
           ))}
         </g>
@@ -129,24 +131,24 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
           const { y } = projectToMap(0, 0);
           return (
             <g>
-              <line x1={0} y1={y} x2={MAP_WIDTH} y2={y} stroke="#edc56a" strokeOpacity="0.35" strokeWidth="0.8" strokeDasharray="6 5" />
-              <text x={8} y={y - 4} fill="#edc56a" fillOpacity="0.6" fontSize="8" letterSpacing="2" fontFamily="ui-monospace, monospace">
-                KHATULISTIWA 0°
+              <line x1={0} y1={y} x2={MAP_WIDTH} y2={y} stroke={ink} strokeOpacity="0.4" strokeWidth="0.8" strokeDasharray="6 4" />
+              <text x={20} y={y - 4} fill={ink} fillOpacity="0.7" fontSize="9" fontStyle="italic" fontFamily={serif}>
+                Khatulistiwa 0°
               </text>
             </g>
           );
         })()}
 
         {/* Negara tetangga */}
-        <path d={NEIGHBORS_PATH} fill="#ffffff" fillOpacity="0.045" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="0.6" />
+        <path d={NEIGHBORS_PATH} fill="#e9dfc6" stroke="#8a6a35" strokeOpacity="0.4" strokeWidth="0.6" />
 
-        {/* Indonesia: perairan dangkal, daratan timbul, garis pantai */}
-        <path d={INDONESIA_PATH} fill="none" stroke="#3d855d" strokeOpacity="0.28" strokeWidth="7" strokeLinejoin="round" />
-        <path d={INDONESIA_PATH} fill="url(#map-land)" filter="url(#map-lift)" />
-        <path d={INDONESIA_PATH} fill="none" stroke="#8fc2a3" strokeOpacity="0.55" strokeWidth="0.6" strokeLinejoin="round" />
+        {/* Indonesia: daratan kertas, arsiran, garis pantai tinta */}
+        <path d={INDONESIA_PATH} fill="#efdcae" />
+        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="url(#atlas-hatch)" clipPath="url(#atlas-land)" opacity="0.55" />
+        <path d={INDONESIA_PATH} fill="none" stroke={ink} strokeWidth="0.9" strokeLinejoin="round" />
 
         {/* Nama pulau besar */}
-        <g fill="#ffffff" fillOpacity="0.3" fontSize="10" fontWeight="700" letterSpacing="3" textAnchor="middle">
+        <g fill={ink} fillOpacity="0.75" fontSize="13" fontStyle="italic" textAnchor="middle" fontFamily={serif}>
           {ISLANDS.map((l) => {
             const { x, y } = projectToMap(l.lat, l.lon);
             return (
@@ -158,24 +160,30 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
         </g>
 
         {/* Mata angin */}
-        <g transform={`translate(${MAP_WIDTH - 40} 44)`} opacity="0.7">
-          <circle r="17" fill="#0b1d15" stroke="#ffffff" strokeOpacity="0.2" />
-          <path d="M0 -13 L4 0 L0 13 L-4 0 Z" fill="#ffffff" fillOpacity="0.25" />
-          <path d="M0 -13 L4 0 L-4 0 Z" fill="#edc56a" />
-          <text y="-20" textAnchor="middle" fill="#edc56a" fontSize="8" fontWeight="700">
+        <g transform={`translate(${MAP_WIDTH - 50} 52)`}>
+          <circle r="24" fill="#f3e7cb" stroke={ink} strokeWidth="0.8" />
+          <circle r="19" fill="none" stroke={ink} strokeOpacity="0.35" strokeWidth="0.5" />
+          <path d="M0 -18 L4 0 L0 18 L-4 0 Z" fill="#f3e7cb" stroke={ink} strokeWidth="0.7" />
+          <path d="M-18 0 L0 -3 L18 0 L0 3 Z" fill="#f3e7cb" stroke={ink} strokeOpacity="0.5" strokeWidth="0.5" />
+          <path d="M0 -18 L4 0 L-4 0 Z" fill={ink} />
+          <text y="-28" textAnchor="middle" fill={ink} fontSize="11" fontStyle="italic" fontFamily={serif}>
             U
           </text>
         </g>
 
         {/* Skala */}
-        <g transform={`translate(${MAP_WIDTH - 24 - scale500} ${MAP_HEIGHT - 18})`} fill="#ffffff" fillOpacity="0.5" fontSize="8" fontFamily="ui-monospace, monospace">
-          <rect width={scale500 / 2} height="3" fill="#ffffff" fillOpacity="0.55" />
-          <rect x={scale500 / 2} width={scale500 / 2} height="3" fill="#ffffff" fillOpacity="0.2" />
+        <g transform={`translate(${MAP_WIDTH - 28 - scale500} ${MAP_HEIGHT - 24})`} fill={ink} fontSize="9" fontStyle="italic" fontFamily={serif}>
+          <rect width={scale500} height="4" fill="#f3e7cb" stroke={ink} strokeWidth="0.7" />
+          <rect width={scale500 / 2} height="4" fill={ink} />
           <text y="-4">0</text>
           <text x={scale500} y="-4" textAnchor="end">
             500 km
           </text>
         </g>
+
+        {/* Bingkai ganda */}
+        <rect x="6" y="6" width={MAP_WIDTH - 12} height={MAP_HEIGHT - 12} fill="none" stroke={ink} strokeWidth="1.6" />
+        <rect x="11" y="11" width={MAP_WIDTH - 22} height={MAP_HEIGHT - 22} fill="none" stroke={ink} strokeWidth="0.6" />
 
         {/* Pin proyek */}
         {ordered.map((c) => {
@@ -198,7 +206,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
               onClick={() => router.push(`/campaign/${c.address}`)}
               onKeyDown={(e) => e.key === "Enter" && router.push(`/campaign/${c.address}`)}
             >
-              <ellipse cx={x} cy={y} rx="6" ry="2.2" fill="#000" opacity="0.55" filter="url(#map-blur)" />
+              <ellipse cx={x} cy={y} rx="6" ry="2.2" fill="#3b2709" opacity="0.45" filter="url(#map-blur)" />
               {on && c.status === Status.Funding && (
                 <ellipse cx={x} cy={y} rx="10" ry="4" fill="none" stroke={color} strokeWidth="1.5" className="animate-ping [transform-box:fill-box] [transform-origin:center]" />
               )}
@@ -272,18 +280,18 @@ export default function ProjectsPage() {
         description="Setiap pin adalah satu musim tanam satu petani. Arahkan kursor ke pin untuk melihat proyeknya, atau klik untuk membuka detailnya."
       />
       <PageBody>
-        <div className="relative overflow-hidden rounded-3xl bg-[radial-gradient(120%_90%_at_50%_20%,#0f3a28_0%,#0b2a1d_45%,#071710_100%)] shadow-lift ring-1 ring-hutan-900">
+        <div className="relative overflow-hidden rounded-3xl bg-[#f3e7cb] shadow-lift ring-1 ring-[#d9c08c]">
           <div className="p-2 sm:p-4">
-            {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-white/10" /> : <ProjectMap items={visible} highlight={matches} />}
+            {isLoading ? <Skeleton className="aspect-[1000/383] w-full bg-[#e6d3a6]" /> : <ProjectMap items={visible} highlight={matches} />}
           </div>
-          <div className="pointer-events-none absolute top-5 left-5 hidden rounded-2xl bg-hutan-950/60 px-3 py-2 text-white ring-1 ring-white/10 backdrop-blur sm:block">
+          <div className="pointer-events-none absolute top-9 left-9 hidden rounded-xl border border-[#5c3d16]/40 bg-[#f6ecd4]/90 px-3 py-2 text-[#5c3d16] sm:block">
             <p className="font-display text-lg leading-none font-semibold sm:text-2xl">
-              {visible.length} <span className="text-sm font-normal text-white/60">proyek</span>
+              {visible.length} <span className="text-sm font-normal italic text-[#5c3d16]/70">proyek</span>
             </p>
-            <p className="mt-0.5 text-[11px] text-white/55">{provinces.length} provinsi · BSC Testnet</p>
+            <p className="mt-0.5 font-display text-[11px] italic text-[#5c3d16]/65">{provinces.length} provinsi · BSC Testnet</p>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/10 bg-hutan-950/40 px-4 py-3 text-xs text-white/75 sm:absolute sm:bottom-5 sm:left-5 sm:rounded-2xl sm:border-t-0 sm:ring-1 sm:ring-white/10 sm:backdrop-blur">
-            <span className="w-full font-semibold text-white sm:hidden">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#5c3d16]/25 bg-[#f6ecd4] px-4 py-3 font-display text-xs text-[#5c3d16] italic sm:absolute sm:bottom-9 sm:left-9 sm:rounded-xl sm:border sm:border-[#5c3d16]/40 sm:bg-[#f6ecd4]/90">
+            <span className="w-full font-semibold not-italic sm:hidden">
               {visible.length} proyek · {provinces.length} provinsi
             </span>
             {[
