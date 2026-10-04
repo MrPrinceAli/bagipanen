@@ -82,9 +82,13 @@ const MAX_MS = 12_000; // pengaman bila event load tidak kunjung datang
  */
 export function InitialLoader() {
   const [value, setValue] = useState(0);
-  const [phase, setPhase] = useState<"load" | "fade" | "gone">("load");
+  const [phase, setPhase] = useState<"load" | "bloom" | "reveal" | "gone">("load");
+  const root = useRef<HTMLDivElement>(null);
+  const plant = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Selama layar pembuka, halaman di belakangnya sedikit diperbesar & buram (lihat globals.css).
+    document.documentElement.dataset.intro = "hold";
     const minMs = INTRO_MS;
     let loaded = false;
     Promise.all([
@@ -107,8 +111,21 @@ export function InitialLoader() {
       setValue((prev) => (prev === shown ? prev : shown));
       if (shown < 100) raf = requestAnimationFrame(tick);
       else {
-        setTimeout(() => setPhase("fade"), 400);
-        setTimeout(() => setPhase("gone"), 1000);
+        // Peralihan: tunas mekar → lubang lingkaran membesar dari tunas, halaman "mendarat" → selesai.
+        setPhase("bloom");
+        setTimeout(() => {
+          const r = plant.current?.getBoundingClientRect();
+          if (r && root.current) {
+            root.current.style.setProperty("--cx", `${r.left + r.width / 2}px`);
+            root.current.style.setProperty("--cy", `${r.top + r.height / 2}px`);
+          }
+          document.documentElement.dataset.intro = "land";
+          setPhase("reveal");
+        }, 380);
+        setTimeout(() => {
+          delete document.documentElement.dataset.intro;
+          setPhase("gone");
+        }, 380 + 1150);
       }
     };
     raf = requestAnimationFrame(tick);
@@ -119,17 +136,21 @@ export function InitialLoader() {
   return (
     <div
       id="page-loader"
+      ref={root}
+      data-phase={phase}
       role="status"
       aria-live="polite"
       aria-label={`Memuat BagiPanen ${value}%`}
       className={cn(
-        "glow-hutan fixed inset-0 z-[100] grid place-items-center bg-hutan-950 text-white transition-opacity duration-500",
-        phase === "fade" && "pointer-events-none opacity-0",
+        "glow-hutan fixed inset-0 z-[100] grid place-items-center bg-hutan-950 text-white",
+        phase === "reveal" && "pointer-events-none",
       )}
     >
       <div className="pola-bedengan absolute inset-0" aria-hidden />
-      <div className="relative flex flex-col items-center">
-        <PlantProgress value={value} className="size-40 sm:size-48" />
+      <div className="loader-content relative flex flex-col items-center">
+        <div ref={plant} className="loader-plant">
+          <PlantProgress value={value} className="size-40 sm:size-48" />
+        </div>
         <p className="mt-4 font-display text-6xl font-semibold tracking-tight tabular-nums">
           {value}
           <span className="text-emas-300">%</span>

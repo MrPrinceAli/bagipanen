@@ -388,6 +388,52 @@ body {
   }
 }
 
+/* Peralihan layar pembuka → halaman: lubang lingkaran membesar dari tunas (mask), halaman
+   "mendarat" dari sedikit besar & buram ke tajam. Fase diatur PageLoader (data-phase, data-intro). */
+@property --hole {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+#page-loader {
+  --hole: 0px;
+  -webkit-mask-image: radial-gradient(circle at var(--cx, 50%) var(--cy, 42%), transparent var(--hole), #000 calc(var(--hole) + 1.5px));
+  mask-image: radial-gradient(circle at var(--cx, 50%) var(--cy, 42%), transparent var(--hole), #000 calc(var(--hole) + 1.5px));
+}
+#page-loader[data-phase="reveal"] {
+  --hole: 160vmax;
+  transition: --hole 1.1s cubic-bezier(0.65, 0, 0.25, 1);
+}
+#page-loader .loader-plant {
+  transition:
+    transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1),
+    filter 0.4s ease;
+}
+#page-loader[data-phase="bloom"] .loader-plant,
+#page-loader[data-phase="reveal"] .loader-plant {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 24px rgb(237 197 106 / 0.7));
+}
+#page-loader .loader-content {
+  transition:
+    opacity 0.5s ease,
+    transform 0.9s cubic-bezier(0.65, 0, 0.25, 1);
+}
+#page-loader[data-phase="reveal"] .loader-content {
+  opacity: 0;
+  transform: scale(1.4);
+}
+html[data-intro="hold"] body > :not(#page-loader),
+html[data-intro="land"] body > :not(#page-loader) {
+  transition:
+    transform 1.15s cubic-bezier(0.65, 0, 0.25, 1),
+    filter 1.15s cubic-bezier(0.65, 0, 0.25, 1);
+}
+html[data-intro="hold"] body > :not(#page-loader) {
+  transform: scale(1.05);
+  filter: blur(8px);
+}
+
 /* Loader: tetes air yang jatuh ke tunas */
 .loader-drop {
   animation: loader-drop 1.05s ease-in infinite;
@@ -459,6 +505,15 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #page-loader[data-phase="reveal"] {
+    --hole: 160vmax;
+    transition: none;
+  }
+  html[data-intro] body > :not(#page-loader) {
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
   .animate-fade-up,
   .scroll-cue,
   .scan-line,
