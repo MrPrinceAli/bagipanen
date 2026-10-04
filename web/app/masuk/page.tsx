@@ -1,16 +1,17 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ArrowRight, Building2, Check, HandCoins, KeyRound, Loader2, LogOut, ShieldCheck, Sprout, UserCog, Wallet } from "lucide-react";
+import { ArrowRight, Building2, Check, FlaskConical, HandCoins, KeyRound, Loader2, LogOut, ShieldCheck, Sprout, UserCog, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { useDisconnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { LogoMark } from "@/components/Header";
 import { cn } from "@/components/ui";
-import { AccountPicker } from "@/components/wallet";
+import { AccountPicker, useJudgeLogin } from "@/components/wallet";
+import { JUDGE_ACCOUNTS, JUDGE_PROJECT } from "@/lib/demoJudge";
 import { IS_LOCAL } from "@/lib/config";
 import { shortAddress } from "@/lib/format";
 import { ROLE_LABEL, type Role, useRole } from "@/lib/role";
@@ -39,21 +40,31 @@ function SignedIn() {
   const router = useRouter();
   const params = useSearchParams();
   const { address, role, loading } = useRole();
+  const { connector } = useAccount();
+  const judge = connector?.id === "judgeDemo";
   const { disconnect } = useDisconnect();
   const [left, setLeft] = useState(REDIRECT_S);
   const next = params.get("next");
-  const target = next && next.startsWith("/") && !next.startsWith("//") ? { href: next, label: "halaman sebelumnya" } : role ? HOME[role] : null;
+  const isJudgePetani = Boolean(JUDGE_PROJECT && address && JUDGE_ACCOUNTS.find((a) => a.key === "petani")?.address.toLowerCase() === address.toLowerCase());
+  const target =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? { href: next, label: "halaman sebelumnya" }
+      : isJudgePetani
+        ? { href: `/campaign/${JUDGE_PROJECT}`, label: "proyek demo" }
+        : role
+          ? HOME[role]
+          : null;
   const targetHref = target?.href;
 
   useEffect(() => {
-    if (!targetHref || loading) return;
+    if (!targetHref || loading || judge) return;
     if (left <= 0) {
       router.push(targetHref);
       return;
     }
     const t = setTimeout(() => setLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [left, targetHref, loading, router]);
+  }, [left, targetHref, loading, judge, router]);
 
   if (loading || !role)
     return (
@@ -83,15 +94,83 @@ function SignedIn() {
           >
             Buka {target.label} <ArrowRight className="size-4" aria-hidden />
           </Link>
-          <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-krem-200" aria-hidden>
-            <div className="h-full rounded-full bg-emas-400 transition-[width] duration-1000 ease-linear" style={{ width: `${((REDIRECT_S - left) / REDIRECT_S) * 100}%` }} />
-          </div>
-          <p className="mt-2 text-xs text-stone-500">Otomatis dibuka dalam {Math.max(0, left)} detik</p>
+          {!judge && (
+            <>
+              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-krem-200" aria-hidden>
+                <div className="h-full rounded-full bg-emas-400 transition-[width] duration-1000 ease-linear" style={{ width: `${((REDIRECT_S - left) / REDIRECT_S) * 100}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-stone-500">Otomatis dibuka dalam {Math.max(0, left)} detik</p>
+            </>
+          )}
         </>
+      )}
+      {judge && (
+        <div className="w-full text-left">
+          <JudgePanel />
+        </div>
       )}
       <button type="button" onClick={() => disconnect()} className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-red-700">
         <LogOut className="size-4" aria-hidden /> Ganti dompet / keluar
       </button>
+    </div>
+  );
+}
+
+/** Panel akun demo untuk juri: masuk sebagai peran apa pun tanpa dompet. */
+function JudgePanel() {
+  const login = useJudgeLogin();
+  const { connector } = useAccount();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const icons: Record<string, LucideIcon> = { investor: HandCoins, petani: Sprout, koperasi: Building2, admin: UserCog };
+  return (
+    <div className="mt-7 rounded-2xl border-2 border-dashed border-emas-300 bg-emas-50/70 p-4">
+      <div className="flex items-start gap-2">
+        <FlaskConical className="mt-0.5 size-4 shrink-0 text-emas-700" aria-hidden />
+        <div>
+          <p className="text-sm font-semibold text-hutan-950">{connector?.id === "judgeDemo" ? "Ganti peran akun demo" : "Coba tanpa dompet: akun demo untuk juri"}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-pretty text-stone-600">
+            Khusus pengujian. Di BagiPanen sungguhan, setiap orang masuk dengan dompet kripto miliknya sendiri. Akun demo ini memakai
+            wallet testnet yang ditandatangani server, bukan uang sungguhan.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {JUDGE_ACCOUNTS.map((a) => {
+          const Icon = icons[a.key] ?? Wallet;
+          return (
+            <button
+              key={a.key}
+              type="button"
+              disabled={busy !== null}
+              onClick={async () => {
+                setError("");
+                setBusy(a.key);
+                try {
+                  await login(a.key);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Gagal masuk sebagai akun demo.");
+                } finally {
+                  setBusy(null);
+                }
+              }}
+              className="group flex items-start gap-2.5 rounded-xl bg-white p-3 text-left ring-1 ring-krem-200 transition hover:ring-hutan-400 disabled:opacity-60"
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-hutan-900 text-emas-300">
+                {busy === a.key ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Icon className="size-4" aria-hidden />}
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-hutan-950">
+                  {a.label}
+                  {a.readOnly && <span className="rounded bg-stone-100 px-1 text-[10px] font-medium text-stone-500">lihat saja</span>}
+                </span>
+                <span className="block text-[11px] leading-snug text-stone-500">{a.does}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
     </div>
   );
 }
@@ -137,6 +216,8 @@ function SignIn() {
           BagiPanen tidak pernah meminta kunci rahasia (seed phrase). Masuk hanya membagikan alamat dompet, bukan izin memindahkan dana.
         </p>
       </div>
+
+      {JUDGE_ACCOUNTS.length > 0 && <JudgePanel />}
 
       <div className="mt-8">
         <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">Peran dikenali otomatis</p>

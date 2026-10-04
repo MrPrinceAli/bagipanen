@@ -14,7 +14,7 @@ import { formatUsdt } from "@/lib/format";
 import { ROLE_LABEL, useRole } from "@/lib/role";
 import { useTx } from "@/lib/tx";
 import { Button, Container, cn, Spinner } from "./ui";
-import { WalletButton } from "./wallet";
+import { JudgeBanner, WalletButton } from "./wallet";
 
 /** Logo BagiPanen: petani bercaping memikul dua keranjang hasil panen. */
 export function LogoMark({ className }: { className?: string }) {
@@ -103,6 +103,7 @@ export function Header() {
           </div>
         </Container>
       </div>
+      <JudgeBanner />
       <NetworkBanner />
     </header>
   );

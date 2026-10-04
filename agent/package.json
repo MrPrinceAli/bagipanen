@@ -13,6 +13,7 @@
     "cek-foto": "tsx scripts/cek-foto.ts",
     "seed:showcase": "tsx scripts/seed-showcase.ts",
     "feedback:backfill": "tsx scripts/feedback-backfill.ts",
+    "seed:demo": "tsx scripts/seed-demo-judges.ts",
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

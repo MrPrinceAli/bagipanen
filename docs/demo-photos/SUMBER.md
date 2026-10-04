@@ -50,3 +50,15 @@ Dipakai oleh `agent/scripts/seed-showcase.ts` untuk proyek contoh di BSC testnet
 | `demak-tanam.jpg` | Bukti Tanam, Demak | [Young rice seedlings in muddy rice field, Indonesia.jpg](https://commons.wikimedia.org/wiki/File:Young_rice_seedlings_in_muddy_rice_field,_Indonesia.jpg) | Undeka 11 | CC BY-SA 4.0 |
 | `kulonprogo-tanam.jpg` | Bukti Tanam, Kulon Progo (dikirim manual untuk uji pemicu agen langsung `/api/agent-wake`, 4 Okt 2026) | [Peppers planted at SOIL's experimental farm in Pernier, Port-au-Prince, Haiti (16407252610).jpg](https://commons.wikimedia.org/wiki/File:Peppers_planted_at_SOIL%27s_experimental_farm_in_Pernier,_Port-au-Prince,_Haiti_(16407252610).jpg) | SuSanA Secretariat | CC BY 2.0 |
 | `sidrap-nota.jpg`, `tanahlaut-nota.jpg` | Nota setor hasil panen | Dibuat untuk proyek ini, bertanda "CONTOH · DATA DEMO" (nama & angka fiktif) | Tim BagiPanen | — |
+
+## Proyek demo juri (`juri/` dan `web/public/demo/foto-contoh/`)
+
+Dipakai `agent/scripts/seed-demo-judges.ts` (akun demo juri) dan halaman /masuk. Semua dari Wikimedia Commons, diperkecil.
+
+| File | Dipakai untuk | Judul asli | Pembuat | Lisensi |
+| --- | --- | --- | --- | --- |
+| `juri/sampul-jagung.jpg` | Sampul proyek demo juri | [Ladang Jagung.jpg](https://commons.wikimedia.org/wiki/File:Ladang_Jagung.jpg) | Shiroemon | CC BY-SA 4.0 |
+| `foto-contoh/1-tanam-jagung.jpg` | Foto contoh tahap Tanam | [Little bitty corn plants.jpg](https://commons.wikimedia.org/wiki/File:Little_bitty_corn_plants.jpg) | Valerie Everett | CC BY-SA 2.0 |
+| `foto-contoh/2-tumbuh-jagung.jpg` | Foto contoh tahap Tumbuh | [Corn field in Cayce, Richland County, SC.jpg](https://commons.wikimedia.org/wiki/File:Corn_field_in_Cayce,_Richland_County,_SC.jpg) | Dr. Blazer | CC BY-SA 4.0 |
+| `foto-contoh/3-pra-panen-jagung.jpg` | Foto contoh tahap Pra-panen | [Kebun Jagung Wonoayu.jpg](https://commons.wikimedia.org/wiki/File:Kebun_Jagung_Wonoayu.jpg) | Kkn12 wonoayu | CC BY-SA 4.0 |
+

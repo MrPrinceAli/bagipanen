@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import type { Address } from "viem";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { rememberDemoAccount } from "@/lib/anvilConnector";
+import { JUDGE_ACCOUNTS, type JudgeAccount } from "@/lib/demoJudge";
+import { rememberJudgeAccount } from "@/lib/judgeConnector";
 import { IS_LOCAL } from "@/lib/config";
 import { DEMO_ACCOUNTS } from "@/lib/demoAccounts";
 import type { Role } from "@/lib/role";
@@ -145,5 +147,52 @@ export function RoleGate({ need, role, children }: { need: keyof typeof NEED_TEX
       {guest && <ConnectPrompt />}
       {children}
     </Card>
+  );
+}
+
+/* ------------------------------------------------------------- Mode demo juri */
+
+/** Masuk / ganti peran sebagai akun demo juri (testnet). */
+export function useJudgeLogin() {
+  const { connector, isConnected } = useAccount();
+  const { connectors, connectAsync } = useConnect();
+  const { disconnectAsync } = useDisconnect();
+  return async (key: JudgeAccount["key"]) => {
+    const judge = connectors.find((c) => c.id === "judgeDemo");
+    if (!judge) return;
+    if (isConnected && connector?.id === "judgeDemo") {
+      (judge as unknown as { selectRole(k: string): void }).selectRole(key);
+      return;
+    }
+    if (isConnected) await disconnectAsync();
+    rememberJudgeAccount(key);
+    await connectAsync({ connector: judge });
+  };
+}
+
+/** Pita di bawah header selama memakai akun demo juri. */
+export function JudgeBanner() {
+  const { connector, address } = useAccount();
+  const { disconnect } = useDisconnect();
+  if (connector?.id !== "judgeDemo" || !address) return null;
+  const acc = JUDGE_ACCOUNTS.find((a) => a.address.toLowerCase() === address.toLowerCase());
+  return (
+    <div className="border-t border-emas-300/20 bg-emas-400 text-hutan-950">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-1.5 text-xs sm:px-6 lg:px-8 2xl:max-w-[88rem]">
+        <span className="rounded-full bg-hutan-950 px-2 py-0.5 font-bold tracking-wide text-emas-300 uppercase">Mode demo juri</span>
+        <span>
+          Masuk sebagai <strong>{acc?.who ?? "akun demo"}</strong>
+          {acc?.readOnly ? " · lihat saja" : " · transaksi ditandatangani server, bukan dompetmu"}
+        </span>
+        <span className="ml-auto flex gap-3 font-semibold">
+          <Link href="/masuk" className="underline-offset-2 hover:underline">
+            Ganti peran
+          </Link>
+          <button type="button" onClick={() => disconnect()} className="underline-offset-2 hover:underline">
+            Keluar
+          </button>
+        </span>
+      </div>
+    </div>
   );
 }
