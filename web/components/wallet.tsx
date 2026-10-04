@@ -72,7 +72,7 @@ export function WalletButton() {
               href="/masuk"
               className="inline-flex h-9 items-center gap-2 rounded-full bg-emas-400 px-4 text-sm font-semibold text-hutan-950 shadow-soft transition hover:bg-emas-300"
             >
-              <Wallet className="size-4" aria-hidden /> Masuk
+              <Wallet className="size-4" aria-hidden /> Login
             </Link>
           );
         if (chain.unsupported)
