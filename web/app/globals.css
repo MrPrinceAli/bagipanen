@@ -407,46 +407,6 @@ body {
 }
 
 /* ---------- Halaman agen AI ---------- */
-@property --holo {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-/* Bingkai kartu identitas: gradien berputar ala hologram */
-.holo-frame {
-  background: conic-gradient(from var(--holo), #edc56a, #8fc2a3, #3b82f6, #a78bfa, #edc56a);
-  animation: holo-spin 6s linear infinite;
-}
-@keyframes holo-spin {
-  to {
-    --holo: 360deg;
-  }
-}
-/* Kilau yang melintas di permukaan kartu */
-.holo-sheen {
-  background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.14) 45%, rgb(237 197 106 / 0.12) 50%, transparent 65%);
-  background-size: 250% 100%;
-  animation: holo-sheen 5s ease-in-out infinite;
-}
-@keyframes holo-sheen {
-  0%,
-  100% {
-    background-position: 120% 0;
-  }
-  50% {
-    background-position: -20% 0;
-  }
-}
-/* Sapuan radar */
-.radar-sweep {
-  background: conic-gradient(from 0deg, rgb(237 197 106 / 0.55), transparent 70deg);
-  animation: radar 3.2s linear infinite;
-}
-@keyframes radar {
-  to {
-    transform: rotate(360deg);
-  }
-}
 /* Aliran data di jalur pipeline */
 .pipe-flow {
   background: repeating-linear-gradient(90deg, #edc56a 0 10px, transparent 10px 22px);
@@ -469,35 +429,13 @@ body {
   }
 }
 
-/* Konsol agen: garis scan CRT & kursor berkedip */
-.crt-scan {
-  background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
-}
-.crt-glow {
-  text-shadow:
-    0 0 12px rgb(143 194 163 / 0.45),
-    0 0 2px rgb(143 194 163 / 0.6);
-}
-.caret {
-  animation: caret 1s steps(1) infinite;
-}
-@keyframes caret {
-  50% {
-    opacity: 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .scroll-cue,
   .scan-line,
   .loader-drop,
-  .holo-frame,
-  .holo-sheen,
-  .radar-sweep,
   .pipe-flow,
-  .pipe-flow-y,
-  .caret {
+  .pipe-flow-y {
     animation: none;
   }
   .reveal,

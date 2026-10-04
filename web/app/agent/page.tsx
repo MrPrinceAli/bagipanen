@@ -12,13 +12,12 @@ import {
   Fingerprint,
   MapPin,
   ScanEye,
-  ScanLine,
   ShieldCheck,
   X,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { type PointerEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogos";
 import { VerdictSummary } from "@/components/campaign/Timeline";
 import { AddressLink, IpfsImage, TxLink } from "@/components/common";
@@ -30,7 +29,7 @@ import { useCampaignList, useIpfsJson } from "@/lib/campaigns";
 import { AGENT_WORKFLOW_URL, explorerAddressUrl, REPO_URL } from "@/lib/config";
 import { formatDateTime, formatPercent, shortAddress } from "@/lib/format";
 import { INDONESIA_PATH, MAP_HEIGHT, MAP_WIDTH, NEIGHBORS_PATH, projectToMap } from "@/lib/indonesiaMap";
-import { type AgentCard, identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts, type VerdictEntry } from "@/lib/registry";
+import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts, type VerdictEntry } from "@/lib/registry";
 import type { VerdictDocument } from "@/lib/types";
 
 const METHOD_LABEL: Record<string, string> = {
@@ -78,152 +77,125 @@ function timeAgo(iso: string) {
   return `${Math.round(s / 86400)} hari lalu`;
 }
 
-/* ============================================================ Kartu identitas */
+/* ============================================================ Aktivitas terbaru */
 
-/** Kartu identitas agen bergaya hologram; miring mengikuti kursor. */
-function IdentityCard({ agentId, wallet, registry, card, mock }: { agentId: bigint; wallet: string; registry: string; card: AgentCard | null; mock: boolean }) {
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const onMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse") return;
-    const r = e.currentTarget.getBoundingClientRect();
-    setTilt({ x: ((e.clientY - r.top) / r.height - 0.5) * -10, y: ((e.clientX - r.left) / r.width - 0.5) * 12 });
-  };
-  return (
-    <div className="[perspective:1200px]" onPointerMove={onMove} onPointerLeave={() => setTilt({ x: 0, y: 0 })}>
-      <div
-        className="holo-frame rounded-[2rem] p-[2px] shadow-[0_30px_80px_-20px_rgb(237_197_106/0.35)] transition-transform duration-200 ease-out"
-        style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
-      >
-        <div className="relative overflow-hidden rounded-[calc(2rem-2px)] bg-[#06150e] p-6 sm:p-7">
-          <div className="holo-sheen pointer-events-none absolute inset-0" aria-hidden />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)] bg-[size:22px_22px]" aria-hidden />
-          <div className="relative flex items-start justify-between gap-4">
-            <div>
-              <p className="font-mono text-[10px] tracking-[0.3em] text-emas-300/80 uppercase">ERC-8004 · Agent Identity</p>
-              <p className="mt-1 font-display text-5xl font-semibold tracking-tight text-white">#{agentId.toString()}</p>
-            </div>
-            {/* Radar */}
-            <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-hutan-900 ring-1 ring-emas-300/30">
-              <div className="radar-sweep absolute inset-0 rounded-full" aria-hidden />
-              {[0.33, 0.66].map((s) => (
-                <span key={s} className="absolute inset-0 m-auto rounded-full border border-emas-300/20" style={{ width: `${s * 100}%`, height: `${s * 100}%` }} aria-hidden />
-              ))}
-              <span className="absolute top-[30%] left-[62%] size-1.5 animate-ping rounded-full bg-hutan-300" aria-hidden />
-              <ScanLine className="absolute inset-0 m-auto size-7 text-emas-200" aria-hidden />
-            </div>
-          </div>
-          <p className="relative mt-4 font-display text-xl font-semibold text-white">{card?.name ?? "BagiPanen Verifier Agent"}</p>
-          <p className="relative text-sm text-white/55">Verifikator bukti lapangan</p>
-          <dl className="relative mt-5 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-[11px]">
-            {[
-              ["Dompet", shortAddress(wallet)],
-              ["Registri", shortAddress(registry)],
-              ["Jaringan", card?.bagipanen?.network ?? "bsc-testnet"],
-              ["Kepercayaan", (card?.supportedTrust as string[] | undefined)?.join(", ") || "reputation"],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <dt className="tracking-widest text-white/40 uppercase">{k}</dt>
-                <dd className="mt-0.5 text-emas-100">{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="relative mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-            <span className="inline-flex items-center gap-2 text-xs font-semibold text-hutan-200">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-300 opacity-70" />
-                <span className="relative inline-flex size-2 rounded-full bg-hutan-300" />
-              </span>
-              {mock ? "Registri cadangan (lokal)" : "Terverifikasi di registri resmi"}
-            </span>
-            <BrandLogo name="bnb" className="size-5" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+type Step = { icon: LucideIcon; label: string; detail: string; tone: "green" | "gold" | "sky" | "violet" | "red" | "stone" };
 
-/* ============================================================ Terminal */
+const TONE: Record<Step["tone"], string> = {
+  green: "bg-hutan-100 text-hutan-700",
+  gold: "bg-emas-100 text-emas-700",
+  sky: "bg-sky-100 text-sky-700",
+  violet: "bg-violet-100 text-violet-700",
+  red: "bg-red-100 text-red-700",
+  stone: "bg-stone-100 text-stone-500",
+};
 
-type Line = { tag: string; text: string; tone?: "ok" | "bad" | "dim" | "gold" };
-
-/** Log kerja agen untuk satu putusan, disusun dari dokumen putusan sungguhan di IPFS. */
-function buildLog(v: VerdictEntry, d: VerdictDocument | undefined): Line[] {
-  const vis = d?.vision;
-  const exif = d?.exif;
-  const w = d?.weather;
-  const num = (x: number | undefined) => (x === undefined ? "?" : x.toLocaleString("id-ID", { maximumFractionDigits: 1 }));
+/** Langkah pemeriksaan untuk satu putusan, disusun dari dokumen putusan sungguhan di IPFS. */
+function buildSteps(d: VerdictDocument): Step[] {
+  const vis = d.vision;
+  const w = d.weather;
+  const num = (x: number | undefined | null) => (x == null ? "?" : x.toLocaleString("id-ID", { maximumFractionDigits: 1 }));
   return [
-    { tag: "$", text: `agen --periksa ${shortAddress(v.campaign)} --tahap ${v.milestoneName.toLowerCase()}`, tone: "gold" },
-    { tag: "BUKTI", text: `${v.commodity} · tahap ${v.milestoneName} (percobaan ${d?.attempt ?? 1})` },
-    { tag: "FOTO", text: d ? `ipfs://${d.proofCID.slice(0, 18)}… diunduh, sha256 dihitung` : "mengunduh foto dari IPFS…" },
-    { tag: "DUPLIKAT", text: d?.duplicate ? "foto pernah dipakai!" : "aman, foto belum pernah dipakai", tone: d?.duplicate ? "bad" : "ok" },
+    { icon: Fingerprint, label: "Foto diterima", detail: "Diunduh dari IPFS, sidik jari SHA-256 dihitung", tone: "stone" },
     {
-      tag: "EXIF",
-      text: exif?.status === "ok" ? `GPS ${num(exif.distanceKm ?? undefined)} km dari lahan, tanggal cocok` : exif?.status === "mismatch" ? "GPS/tanggal tidak cocok" : "tidak ada GPS & tanggal (dicatat, tidak ditolak)",
-      tone: exif?.status === "mismatch" ? "bad" : "dim",
+      icon: Copy,
+      label: d.duplicate ? "Foto daur ulang!" : "Foto asli",
+      detail: d.duplicate ? "Pernah dipakai di proyek atau tahap lain" : "Belum pernah dipakai sebelumnya",
+      tone: d.duplicate ? "red" : "green",
     },
-    { tag: "CUACA", text: w ? `14 hari: hujan ${num(w.precip14dMm)} mm, maks ${num(w.maxDailyPrecipMm)} mm/hari${w.extreme ? " · EKSTREM" : ""}` : "membaca Open-Meteo…" },
     {
-      tag: "AI",
-      text: vis
-        ? `${d?.agent?.model ?? "gemini"} → ${vis.detected_commodity ?? "?"}, fase ${vis.detected_stage ?? "?"}, kondisi ${vis.plant_condition ?? "?"}, yakin ${vis.confidence?.toFixed(2) ?? "?"}`
-        : "meminta Gemini Vision…",
+      icon: MapPin,
+      label: "GPS & tanggal",
+      detail: d.exif?.status === "ok" ? `${num(d.exif.distanceKm)} km dari lahan, tanggal cocok` : d.exif?.status === "mismatch" ? "Tidak cocok dengan lahan" : "Tidak ada di foto, dicatat saja",
+      tone: d.exif?.status === "mismatch" ? "red" : d.exif?.status === "ok" ? "green" : "stone",
     },
-    { tag: "PUTUSAN", text: `${v.approved ? "DISETUJUI" : "DITOLAK"} → tx ${shortAddress(v.txHash)}`, tone: v.approved ? "ok" : "bad" },
+    { icon: CloudSun, label: "Cuaca 14 hari", detail: w ? `Hujan ${num(w.precip14dMm)} mm${w.extreme ? " · ada hujan ekstrem" : ""}` : "Open-Meteo", tone: "sky" },
+    {
+      icon: ScanEye,
+      label: "Gemini Vision",
+      detail: vis ? `${vis.detected_commodity ?? "?"}, fase ${vis.detected_stage ?? "?"}, kondisi ${vis.plant_condition ?? "?"}` : "Menilai isi foto",
+      tone: "violet",
+    },
   ];
 }
 
-const TAG_W = "w-[5.5rem] sm:w-24";
-
-/** Jendela terminal yang mengetik ulang log putusan terbaru agen, lalu mengulang. */
-function AgentTerminal({ verdict }: { verdict: VerdictEntry | undefined }) {
+/** Kartu "Aktivitas terbaru": foto bukti + langkah pemeriksaan yang tercentang satu per satu, berulang. */
+function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
   const { data: doc } = useIpfsJson<VerdictDocument>(verdict?.reasonCID);
-  const lines = verdict ? buildLog(verdict, doc) : [];
-  const [shown, setShown] = useState(0);
-  const ready = Boolean(verdict && doc);
+  const steps = doc ? buildSteps(doc) : [];
+  const [done, setDone] = useState(0);
+  const total = steps.length + 1; // + putusan
 
   useEffect(() => {
-    if (!ready) return;
-    const t = setTimeout(() => setShown((n) => (n >= lines.length + 6 ? 0 : n + 1)), shown === 0 ? 600 : 520);
+    if (!doc) return;
+    const t = setTimeout(() => setDone((n) => (n >= total + 3 ? 0 : n + 1)), done === 0 ? 700 : 650);
     return () => clearTimeout(t);
-  }, [ready, shown, lines.length]);
+  }, [doc, done, total]);
 
-  const tone = (l: Line) =>
-    l.tone === "ok" ? "text-hutan-300" : l.tone === "bad" ? "text-red-400" : l.tone === "gold" ? "text-emas-300" : l.tone === "dim" ? "text-hutan-100/45" : "text-hutan-100/85";
-
+  const conf = doc?.vision?.confidence;
   return (
-    <div className="overflow-hidden rounded-2xl border border-hutan-400/20 bg-[#050d09]/90 shadow-[0_0_60px_-15px_rgb(61_133_93/0.45)] backdrop-blur">
-      <div className="flex items-center gap-2 border-b border-hutan-400/15 bg-black/40 px-4 py-2.5">
-        <span className="size-3 rounded-full bg-[#ff5f57]" aria-hidden />
-        <span className="size-3 rounded-full bg-[#febc2e]" aria-hidden />
-        <span className="size-3 rounded-full bg-[#28c840]" aria-hidden />
-        <span className="ml-3 truncate font-mono text-xs text-hutan-100/50">agen@github-actions: ~/bagipanen/agent — putusan terbaru</span>
+    <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-[0_30px_70px_-30px_rgb(19_46_34/0.45)] ring-1 ring-krem-200 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3 border-b border-krem-200 px-5 py-3.5">
+        <p className="flex items-center gap-2 text-sm font-semibold text-hutan-950">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-400 opacity-70" />
+            <span className="relative inline-flex size-2 rounded-full bg-hutan-500" />
+          </span>
+          Aktivitas terbaru
+        </p>
+        {verdict && <span className="text-xs text-stone-500">{formatDateTime(verdict.timestamp)}</span>}
       </div>
-      <div className="min-h-[19rem] p-4 font-mono text-[12px] leading-relaxed sm:p-5 sm:text-[13px]" aria-live="off">
-        {!ready ? (
-          <p className="text-hutan-100/50">
-            menghubungkan ke chain…<span className="caret ml-1 inline-block h-[1em] w-[0.5ch] translate-y-[0.15em] bg-hutan-300" aria-hidden />
-          </p>
-        ) : (
-          <>
-            {lines.slice(0, shown).map((l, i) => (
-              <div key={i} className="flex gap-3">
-                <span className={cn("shrink-0", TAG_W, l.tag === "$" ? "text-emas-300" : "text-hutan-400")}>{l.tag === "$" ? "$" : `[${l.tag}]`}</span>
-                <span className={cn("min-w-0 break-words", tone(l))}>{l.text}</span>
-              </div>
-            ))}
-            {shown <= lines.length && <span className="caret mt-1 inline-block h-[1em] w-[0.6ch] bg-hutan-300" aria-hidden />}
-            {shown > lines.length && (
-              <p className="mt-3 text-hutan-100/40">
-                {"// putaran selesai · "}
-                <Link href={`/campaign/${verdict!.campaign}`} className="text-emas-300 underline-offset-2 hover:underline">
-                  buka proyeknya
-                </Link>
-              </p>
+      <div className="grid gap-0 sm:grid-cols-[11rem_1fr]">
+        <div className="relative h-40 bg-hutan-100 sm:h-auto">
+          {doc?.proofCID ? (
+            <IpfsImage cid={doc.proofCID} alt={verdict ? `Foto bukti ${verdict.commodity} tahap ${verdict.milestoneName}` : "Foto bukti"} className="absolute inset-0 h-full rounded-none" link={false} />
+          ) : (
+            <div className="absolute inset-0 animate-pulse bg-hutan-100" />
+          )}
+          {["top-3 left-3 border-t-2 border-l-2", "top-3 right-3 border-t-2 border-r-2", "bottom-3 left-3 border-b-2 border-l-2", "right-3 bottom-3 border-r-2 border-b-2"].map((c) => (
+            <span key={c} className={cn("absolute size-4 rounded-sm border-white/90", c)} aria-hidden />
+          ))}
+          {done > 0 && done <= steps.length && <span className="scan-line pointer-events-none absolute inset-x-0 h-10" aria-hidden />}
+          {verdict && (
+            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-hutan-900 shadow">
+              {verdict.commodity} · {verdict.milestoneName}
+            </span>
+          )}
+        </div>
+        <ol className="relative flex flex-col gap-3 p-5">
+          {(doc ? steps : Array.from({ length: 5 }, () => null)).map((st, i) => {
+            const on = i < done;
+            return (
+              <li key={i} className={cn("flex items-start gap-3 transition duration-500", on ? "opacity-100" : "opacity-35")}>
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-full transition", st && on ? TONE[st.tone] : "bg-stone-100 text-stone-400")}>
+                  {st ? on ? <Check className="size-4" aria-hidden /> : <st.icon className="size-4" aria-hidden /> : null}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-hutan-950">{st?.label ?? "…"}</p>
+                  <p className="truncate text-xs text-stone-500">{st?.detail ?? "memuat"}</p>
+                </div>
+              </li>
+            );
+          })}
+          <li
+            className={cn(
+              "mt-1 flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition duration-500",
+              done >= total ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+              verdict?.approved ? "bg-hutan-900 text-white" : "bg-red-600 text-white",
             )}
-          </>
-        )}
+          >
+            <span className="flex items-center gap-2 font-semibold">
+              {verdict?.approved ? <Check className="size-4" aria-hidden /> : <X className="size-4" aria-hidden />}
+              {verdict?.approved ? "Disetujui" : "Ditolak"}
+              {conf !== undefined && <span className="font-normal text-white/70">· yakin {Math.round(conf * 100)}%</span>}
+            </span>
+            {verdict && (
+              <Link href={`/campaign/${verdict.campaign}`} className="text-xs font-semibold text-emas-300 hover:text-emas-200">
+                Lihat proyek →
+              </Link>
+            )}
+          </li>
+        </ol>
       </div>
     </div>
   );
@@ -352,75 +324,68 @@ export default function AgentPage() {
 
   return (
     <>
-      {/* -------------------------------------------------- Hero: konsol agen */}
-      <section className="relative overflow-hidden bg-[#030806] text-[#cfe7d8]">
-        <div
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(143_194_163/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(143_194_163/0.06)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,#000_40%,transparent_80%)]"
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full bg-hutan-500/15 blur-3xl" aria-hidden />
-        <div className="crt-scan pointer-events-none absolute inset-0 opacity-60" aria-hidden />
-
-        {/* Status bar HUD */}
-        <div className="relative border-b border-hutan-400/15 bg-black/30 font-mono text-[11px] tracking-wider text-hutan-300/80 uppercase">
-          <Container className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
-            <span className="inline-flex items-center gap-2 text-hutan-200">
+      {/* ------------------------------------------------- Hero: dashboard aktivitas */}
+      <section className="relative overflow-hidden border-b border-krem-200 bg-[#f6f8f4]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgb(19_46_34/0.09)_1px,transparent_1.4px)] bg-[size:22px_22px]" aria-hidden />
+        <div className="pointer-events-none absolute -top-32 -left-24 size-[28rem] rounded-full bg-hutan-200/50 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -right-20 -bottom-40 size-[30rem] rounded-full bg-emas-200/60 blur-3xl" aria-hidden />
+        <Container className="relative grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+          <div className="animate-fade-up">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-hutan-800 shadow-soft ring-1 ring-hutan-200">
               <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-300 opacity-70" />
-                <span className="relative inline-flex size-2 rounded-full bg-hutan-300" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-400 opacity-70" />
+                <span className="relative inline-flex size-2 rounded-full bg-hutan-500" />
               </span>
-              Sistem aktif
+              Online
+              {run && (
+                <span className="font-normal text-stone-500">
+                  · {run.status !== "completed" ? "sedang memeriksa" : `putaran terakhir ${timeAgo(run.updated_at)}`}
+                </span>
+              )}
             </span>
-            <span>agen #{agent.agentId.toString()}</span>
-            <span>bsc-testnet · chain 97</span>
-            <span className="hidden sm:inline">dompet {shortAddress(agent.agentWallet)}</span>
-            {run && (
-              <span className="sm:ml-auto">
-                putaran terakhir: {run.status !== "completed" ? "berjalan…" : `${timeAgo(run.updated_at)} · ${run.conclusion === "success" ? "ok" : run.conclusion}`}
-              </span>
-            )}
-          </Container>
-        </div>
-
-        <Container className="relative py-12 sm:py-16">
-          <div className="max-w-3xl">
-            <p className="font-mono text-sm text-hutan-400">
-              <span className="text-emas-300">agent://</span>bagipanen/{agent.agentId.toString()}
-            </p>
-            <h1 className="crt-glow mt-3 font-mono text-3xl leading-tight font-bold tracking-tight text-[#e6f4ea] sm:text-5xl">
-              &gt; verifikator_lapangan<span className="caret ml-1 inline-block h-[0.9em] w-[0.5ch] translate-y-[0.1em] bg-emas-300" aria-hidden />
+            <h1 className="mt-5 text-4xl leading-[1.08] font-extrabold tracking-tight text-balance text-hutan-950 sm:text-5xl xl:text-[3.5rem]">
+              Agen AI yang memeriksa{" "}
+              <span className="bg-linear-to-r from-hutan-600 via-hutan-500 to-emas-500 bg-clip-text text-transparent">setiap foto lahan</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-pretty text-hutan-100/70">
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-stone-600">
               {card?.description ??
                 "Agen ini memeriksa setiap foto bukti dari lahan sebelum dana tahap boleh cair. Identitasnya tercatat di blockchain, dan semua putusannya bisa dibaca siapa saja."}
             </p>
-          </div>
-
-          <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <AgentTerminal verdict={verdicts?.[0]} />
-            <div className="flex flex-col gap-5">
-              <IdentityCard agentId={agent.agentId} wallet={agent.agentWallet} registry={agent.identityRegistry} card={card} mock={mock} />
-              <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+            <dl className="mt-6 flex flex-wrap gap-2 text-sm">
+              {[
+                { k: "Agen", v: `#${agent.agentId.toString()}` },
+                { k: "Dompet", v: shortAddress(agent.agentWallet) },
+                { k: "Registri", v: mock ? "cadangan (lokal)" : "ERC-8004 resmi" },
+              ].map(({ k, v }) => (
+                <div key={k} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 shadow-soft ring-1 ring-krem-200">
+                  <dt className="text-stone-500">{k}</dt>
+                  <dd className="font-semibold text-hutan-950">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a
+                href={AGENT_WORKFLOW_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-hutan-900 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-hutan-800"
+              >
+                <BrandLogo name="github" /> Log kerja agen
+              </a>
+              {registryUrl && (
                 <a
-                  href={AGENT_WORKFLOW_URL}
+                  href={registryUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-hutan-400/30 bg-hutan-400/10 px-3 py-2.5 text-hutan-100 transition hover:bg-hutan-400/20"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-hutan-900 shadow-soft ring-1 ring-krem-300 transition hover:bg-krem-50"
                 >
-                  <BrandLogo name="github" /> log kerja
+                  Registri ERC-8004 <ExternalLink className="size-4" aria-hidden />
                 </a>
-                {registryUrl && (
-                  <a
-                    href={registryUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emas-300/30 bg-emas-300/10 px-3 py-2.5 text-emas-100 transition hover:bg-emas-300/20"
-                  >
-                    registri ERC-8004 <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
-                )}
-              </div>
+              )}
             </div>
+          </div>
+          <div className="animate-fade-up [animation-delay:150ms]">
+            <ActivityFeed verdict={verdicts?.[0]} />
           </div>
         </Container>
       </section>
