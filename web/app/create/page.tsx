@@ -1,5 +1,6 @@
 "use client";
 
+import { tr, trTerm } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Crosshair, ImageIcon, LocateFixed, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,11 +22,11 @@ import type { CampaignMetadata } from "@/lib/types";
 
 const MILESTONES = { names: ["Tanam", "Tumbuh", "Pra-panen"], bps: [4000, 3500, 2500] };
 const DURATIONS = [
-  { value: 600, label: "10 menit (untuk demo)" },
-  { value: 3600, label: "1 jam" },
-  { value: 86_400, label: "1 hari" },
-  { value: 7 * 86_400, label: "7 hari" },
-  { value: 30 * 86_400, label: "30 hari" },
+  { value: 600, label: ["10 menit (untuk demo)", "10 minutes (for demo)"] },
+  { value: 3600, label: ["1 jam", "1 hour"] },
+  { value: 86_400, label: ["1 hari", "1 day"] },
+  { value: 7 * 86_400, label: ["7 hari", "7 days"] },
+  { value: 30 * 86_400, label: ["30 hari", "30 days"] },
 ];
 
 type CostRow = { item: string; usdt: string };
@@ -115,36 +116,39 @@ export default function CreatePage() {
           setLat(gps.latitude.toFixed(6));
           setLon(gps.longitude.toFixed(6));
           setCoordSource("photo");
-          setCoordNote("Koordinat diambil dari GPS foto.");
+          setCoordNote(tr("Koordinat diambil dari GPS foto.", "Coordinates taken from the photo's GPS."));
         }
         return;
       }
-      if (overwrite) setCoordNote("Foto ini tidak menyimpan GPS. Isi manual atau pakai lokasi HP.");
+      if (overwrite) setCoordNote(tr("Foto ini tidak menyimpan GPS. Isi manual atau pakai lokasi HP.", "This photo has no GPS. Fill it in manually or use your phone's location."));
     } catch {
-      if (overwrite) setCoordNote("Data GPS di foto ini tidak terbaca.");
+      if (overwrite) setCoordNote(tr("Data GPS di foto ini tidak terbaca.", "The GPS data in this photo can't be read."));
     }
   }
 
   function coordsFromDevice() {
-    if (!navigator.geolocation) return setCoordNote("Perangkat ini tidak mendukung lokasi.");
-    setCoordNote("Mengambil lokasi…");
+    if (!navigator.geolocation) return setCoordNote(tr("Perangkat ini tidak mendukung lokasi.", "This device doesn't support location."));
+    setCoordNote(tr("Mengambil lokasi…", "Getting your location…"));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLon(pos.coords.longitude.toFixed(6));
         setCoordSource("device");
-        setCoordNote("Koordinat diambil dari lokasi perangkat.");
+        setCoordNote(tr("Koordinat diambil dari lokasi perangkat.", "Coordinates taken from your device's location."));
       },
-      () => setCoordNote("Izin lokasi ditolak atau sinyal GPS belum dapat."),
+      () => setCoordNote(tr("Izin lokasi ditolak atau sinyal GPS belum dapat.", "Location permission was denied or there's no GPS signal yet.")),
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
 
   function fillDemo() {
     setCommodity("Cabai merah");
-    setTitle("Modal tanam cabai merah musim hujan 2026");
+    setTitle(tr("Modal tanam cabai merah musim hujan 2026", "Red chili crop funding, 2026 rainy season"));
     setStory(
-      "Pak Darto menanam cabai merah di lahan 0,5 ha di Cikajang, Garut, bersama Koperasi Tani Makmur. Modal musim ini dipakai untuk bibit, pupuk, obat tanaman, dan upah tenaga kerja.",
+      tr(
+        "Pak Darto menanam cabai merah di lahan 0,5 ha di Cikajang, Garut, bersama Koperasi Tani Makmur. Modal musim ini dipakai untuk bibit, pupuk, obat tanaman, dan upah tenaga kerja.",
+        "Pak Darto grows red chili on 0.5 ha in Cikajang, Garut, with the Koperasi Tani Makmur cooperative. This season's capital goes to seedlings, fertilizer, crop protection, and labor.",
+      ),
     );
     setLocationName("Cikajang, Garut");
     // Koordinat contoh Cikajang (id.wikipedia.org/wiki/Cikajang,_Garut). Tidak menimpa koordinat dari GPS foto.
@@ -152,17 +156,17 @@ export default function CreatePage() {
       setLat("-7.356436");
       setLon("107.806990");
       setCoordSource("demo");
-      setCoordNote("Koordinat contoh: Cikajang, Garut. Ganti kalau kamu pakai foto asli yang ada GPS-nya.");
+      setCoordNote(tr("Koordinat contoh: Cikajang, Garut. Ganti kalau kamu pakai foto asli yang ada GPS-nya.", "Sample coordinates: Cikajang, Garut. Replace them if you use a real photo with GPS."));
     }
     setLandArea("5000");
-    setTarget("1.000");
-    setEstimate("1.650");
+    setTarget(tr("1.000", "1,000"));
+    setEstimate(tr("1.650", "1,650"));
     setHarvestDate(isoDatePlusDays(120));
     setDuration(600);
     setCostPlan([
-      { item: "Bibit", usdt: "250" },
-      { item: "Pupuk & obat tanaman", usdt: "400" },
-      { item: "Upah tenaga kerja", usdt: "350" },
+      { item: tr("Bibit", "Seedlings"), usdt: "250" },
+      { item: tr("Pupuk & obat tanaman", "Fertilizer & crop protection"), usdt: "400" },
+      { item: tr("Upah tenaga kerja", "Labor"), usdt: "350" },
     ]);
   }
 
@@ -181,16 +185,16 @@ export default function CreatePage() {
     const problems: string[] = [];
     if (!commodity.trim()) problems.push("komoditas");
     if (!title.trim()) problems.push("judul");
-    if (!locationName.trim()) problems.push("nama lokasi");
+    if (!locationName.trim()) problems.push(tr("nama lokasi", "location name"));
     if (!Number.isFinite(latN) || Math.abs(latN) > 90 || !lat) problems.push("lintang");
     if (!Number.isFinite(lonN) || Math.abs(lonN) > 180 || !lon) problems.push("bujur");
-    if (!Number.isInteger(area) || area <= 0) problems.push("luas lahan (angka bulat dalam m²)");
-    if (!targetWei || targetWei <= 0n) problems.push("kebutuhan modal");
-    if (!estimateWei || estimateWei <= 0n) problems.push("perkiraan hasil penjualan");
-    if (!harvestUnix || harvestUnix <= nowSeconds()) problems.push("tanggal panen (harus setelah hari ini)");
-    if (!photo) problems.push("foto lahan");
-    if (rows.some((r) => parseUsdtInput(r.usdt) === null)) problems.push("angka di rencana biaya");
-    if (problems.length) return setFormError(`Masih ada yang perlu dilengkapi: ${problems.join(", ")}.`);
+    if (!Number.isInteger(area) || area <= 0) problems.push(tr("luas lahan (angka bulat dalam m²)", "land area (a whole number in m²)"));
+    if (!targetWei || targetWei <= 0n) problems.push(tr("kebutuhan modal", "capital needed"));
+    if (!estimateWei || estimateWei <= 0n) problems.push(tr("perkiraan hasil penjualan", "expected sales"));
+    if (!harvestUnix || harvestUnix <= nowSeconds()) problems.push(tr("tanggal panen (harus setelah hari ini)", "harvest date (must be after today)"));
+    if (!photo) problems.push(tr("foto lahan", "field photo"));
+    if (rows.some((r) => parseUsdtInput(r.usdt) === null)) problems.push(tr("angka di rencana biaya", "numbers in the cost plan"));
+    if (problems.length) return setFormError(tr(`Masih ada yang perlu dilengkapi: ${problems.join(", ")}.`, `Still missing: ${problems.join(", ")}.`));
 
     try {
       setPhase("photo");
@@ -235,12 +239,17 @@ export default function CreatePage() {
       if (created) router.push(`/campaign/${created.args.campaign}`);
     } catch (err) {
       setPhase("idle");
-      setFormError(err instanceof Error ? err.message : "Filenya gagal diunggah. Coba lagi.");
+      setFormError(err instanceof Error ? err.message : tr("Filenya gagal diunggah. Coba lagi.", "The file failed to upload. Try again."));
     }
   }
 
   const hero = (description?: ReactNode, actions?: ReactNode) => (
-    <PageHero eyebrow="Ajukan proyek tanam" title="Ceritakan lahanmu, biar investor ikut menanam" description={description} actions={actions} />
+    <PageHero
+      eyebrow={tr("Ajukan proyek tanam", "Propose a crop project")}
+      title={tr("Ceritakan lahanmu, biar investor ikut menanam", "Tell us about your field, and let investors grow with you")}
+      description={description}
+      actions={actions}
+    />
   );
 
   if (!CONTRACTS_READY)
@@ -248,7 +257,7 @@ export default function CreatePage() {
       <>
         {hero()}
         <PageBody>
-          <Notice tone="warn">Alamat kontrak belum diatur.</Notice>
+          <Notice tone="warn">{tr("Alamat kontrak belum diatur.", "Contract addresses aren't set.")}</Notice>
         </PageBody>
       </>
     );
@@ -264,7 +273,7 @@ export default function CreatePage() {
   if (role !== "petani")
     return (
       <>
-        {hero("Proyek tanam diajukan oleh petani yang sudah didaftarkan koperasinya.")}
+        {hero(tr("Proyek tanam diajukan oleh petani yang sudah didaftarkan koperasinya.", "Crop projects are proposed by farmers registered by their cooperative."))}
         <PageBody>
           <RoleGate need="petani" role={role} />
         </PageBody>
@@ -287,68 +296,78 @@ export default function CreatePage() {
       {hero(
         names.data ? (
           <>
-            {names.data.farmerName} · didampingi {names.data.cooperativeName}
+            {names.data.farmerName} · {tr("didampingi", "supported by")} {names.data.cooperativeName}
           </>
         ) : (
-          "Memuat data petani…"
+          tr("Memuat data petani…", "Loading farmer data…")
         ),
         <Button variant="light" onClick={fillDemo}>
-          <Sparkles className="size-4 text-emas-300" aria-hidden /> Isi contoh data demo
+          <Sparkles className="size-4 text-emas-300" aria-hidden /> {tr("Isi contoh data demo", "Fill in demo data")}
         </Button>,
       )}
       <PageBody>
         {names.data?.blocked ? (
-          <Notice tone="error">Dompet ini tidak bisa mengajukan proyek baru karena pernah gagal bayar. Catatannya ada di Rapor Petani.</Notice>
+          <Notice tone="error">
+            {tr(
+              "Dompet ini tidak bisa mengajukan proyek baru karena pernah gagal bayar. Catatannya ada di Rapor Petani.",
+              "This wallet can't propose new projects because it defaulted before. It's recorded on the farmer report card.",
+            )}
+          </Notice>
         ) : (
           <form onSubmit={onSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="flex min-w-0 flex-col gap-6">
-              <Section n={1} title="Tanaman & cerita" description="Bagian ini yang pertama kali dibaca investor.">
+              <Section n={1} title={tr("Tanaman & cerita", "Crop & story")} description={tr("Bagian ini yang pertama kali dibaca investor.", "This is the first thing investors read.")}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="Komoditas" htmlFor="commodity">
+                  <Field label={tr("Komoditas", "Crop")} htmlFor="commodity">
                     <Input id="commodity" list="commodities" value={commodity} onChange={(e) => setCommodity(e.target.value)} placeholder="Cabai merah" />
                     <datalist id="commodities">
-                      <option value="Cabai merah" />
-                      <option value="Padi" />
-                      <option value="Bawang merah" />
-                      <option value="Tomat" />
-                      <option value="Jagung" />
+                      {["Cabai merah", "Padi", "Bawang merah", "Tomat", "Jagung"].map((v) => (
+                        <option key={v} value={v} label={trTerm(v)} />
+                      ))}
                     </datalist>
                   </Field>
-                  <Field label="Judul proyek" htmlFor="title">
-                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Modal tanam cabai merah musim hujan" />
+                  <Field label={tr("Judul proyek", "Project title")} htmlFor="title">
+                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tr("Modal tanam cabai merah musim hujan", "Red chili crop funding, rainy season")} />
                   </Field>
                   <div className="sm:col-span-2">
-                    <Field label="Cerita singkat" htmlFor="story" hint="Ceritakan siapa kamu, kondisi lahannya, dan modalnya mau dipakai untuk apa.">
+                    <Field
+                      label={tr("Cerita singkat", "Short story")}
+                      htmlFor="story"
+                      hint={tr("Ceritakan siapa kamu, kondisi lahannya, dan modalnya mau dipakai untuk apa.", "Tell us who you are, what the field is like, and what the capital is for.")}
+                    >
                       <Textarea id="story" value={story} onChange={(e) => setStory(e.target.value)} />
                     </Field>
                   </div>
                 </div>
               </Section>
 
-              <Section n={2} title="Lahan" description="Agen AI akan mencocokkan lokasi foto bukti dengan titik lahan ini.">
+              <Section n={2} title={tr("Lahan", "Field")} description={tr("Agen AI akan mencocokkan lokasi foto bukti dengan titik lahan ini.", "The AI agent will match the location of proof photos to this point.")}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <Field
-                      label="Foto lahan saat ini"
+                      label={tr("Foto lahan saat ini", "Current field photo")}
                       htmlFor="photo"
-                      hint="Maksimal 5 MB. Ambil langsung dari galeri kamera supaya data GPS dan tanggalnya tetap ada."
+                      hint={tr(
+                        "Maksimal 5 MB. Ambil langsung dari galeri kamera supaya data GPS dan tanggalnya tetap ada.",
+                        "Max 5 MB. Pick it straight from your camera gallery so the GPS and date data are kept.",
+                      )}
                     >
-                      <FilePicker id="photo" file={photo} onChange={selectPhoto} label="Pilih foto lahan" />
+                      <FilePicker id="photo" file={photo} onChange={selectPhoto} label={tr("Pilih foto lahan", "Choose a field photo")} />
                     </Field>
                   </div>
-                  <Field label="Nama lokasi" htmlFor="loc">
+                  <Field label={tr("Nama lokasi", "Location name")} htmlFor="loc">
                     <Input id="loc" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Cikajang, Garut" />
                   </Field>
-                  <Field label="Luas lahan (m²)" htmlFor="area" hint="0,5 ha = 5.000 m²">
+                  <Field label={tr("Luas lahan (m²)", "Land area (m²)")} htmlFor="area" hint={tr("0,5 ha = 5.000 m²", "0.5 ha = 5,000 m²")}>
                     <Input id="area" inputMode="numeric" value={landArea} onChange={(e) => setLandArea(e.target.value)} placeholder="5000" />
                   </Field>
-                  <Field label="Lintang (latitude)" htmlFor="lat">
+                  <Field label={tr("Lintang (latitude)", "Latitude")} htmlFor="lat">
                     <Input id="lat" inputMode="decimal" value={lat} onChange={(e) => {
                         setLat(e.target.value);
                         setCoordSource("manual");
                       }} placeholder="-7.2" />
                   </Field>
-                  <Field label="Bujur (longitude)" htmlFor="lon">
+                  <Field label={tr("Bujur (longitude)", "Longitude")} htmlFor="lon">
                     <Input id="lon" inputMode="decimal" value={lon} onChange={(e) => {
                         setLon(e.target.value);
                         setCoordSource("manual");
@@ -356,35 +375,46 @@ export default function CreatePage() {
                   </Field>
                   <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
                     <Button size="sm" variant="secondary" disabled={!photo} onClick={() => photo && coordsFromPhoto(photo, true)}>
-                      <Crosshair className="size-4" aria-hidden /> Ambil dari GPS foto
+                      <Crosshair className="size-4" aria-hidden /> {tr("Ambil dari GPS foto", "Use the photo's GPS")}
                     </Button>
                     <Button size="sm" variant="secondary" onClick={coordsFromDevice}>
-                      <LocateFixed className="size-4" aria-hidden /> Pakai lokasi perangkat
+                      <LocateFixed className="size-4" aria-hidden /> {tr("Pakai lokasi perangkat", "Use device location")}
                     </Button>
                     {coordNote && <span className="text-xs text-stone-600">{coordNote}</span>}
                   </div>
                   <p className="text-xs leading-relaxed text-stone-500 sm:col-span-2">
-                    Foto bukti nanti harus diambil paling jauh 2 km dari titik ini, jadi isi sesuai lokasi lahan yang sebenarnya.
+                    {tr(
+                      "Foto bukti nanti harus diambil paling jauh 2 km dari titik ini, jadi isi sesuai lokasi lahan yang sebenarnya.",
+                      "Proof photos must later be taken within 2 km of this point, so enter your field's real location.",
+                    )}
                   </p>
                 </div>
               </Section>
 
-              <Section n={3} title="Pendanaan" description="Dana cair bertahap: tanam 40%, tumbuh 35%, pra-panen 25%.">
+              <Section n={3} title={tr("Pendanaan", "Funding")} description={tr("Dana cair bertahap: tanam 40%, tumbuh 35%, pra-panen 25%.", "Funds are released in stages: planting 40%, growing 35%, pre-harvest 25%.")}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="Butuh modal berapa? (USDT)" htmlFor="target" hint={targetWei ? `Sekitar ${formatRupiah(targetWei)}` : "Pakai koma untuk desimal"}>
-                    <Input id="target" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="1.000" />
+                  <Field
+                    label={tr("Butuh modal berapa? (USDT)", "How much capital do you need? (USDT)")}
+                    htmlFor="target"
+                    hint={targetWei ? `${tr("Sekitar", "About")} ${formatRupiah(targetWei)}` : tr("Pakai koma untuk desimal", "Use a dot for decimals")}
+                  >
+                    <Input id="target" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder={tr("1.000", "1,000")} />
                   </Field>
-                  <Field label="Perkiraan hasil penjualan (USDT)" htmlFor="estimate" hint={estimateWei ? `Sekitar ${formatRupiah(estimateWei)}` : undefined}>
-                    <Input id="estimate" inputMode="decimal" value={estimate} onChange={(e) => setEstimate(e.target.value)} placeholder="1.650" />
+                  <Field
+                    label={tr("Perkiraan hasil penjualan (USDT)", "Expected sales (USDT)")}
+                    htmlFor="estimate"
+                    hint={estimateWei ? `${tr("Sekitar", "About")} ${formatRupiah(estimateWei)}` : undefined}
+                  >
+                    <Input id="estimate" inputMode="decimal" value={estimate} onChange={(e) => setEstimate(e.target.value)} placeholder={tr("1.650", "1,650")} />
                   </Field>
-                  <Field label="Perkiraan tanggal panen" htmlFor="harvest">
+                  <Field label={tr("Perkiraan tanggal panen", "Expected harvest date")} htmlFor="harvest">
                     <Input id="harvest" type="date" min={isoDatePlusDays(1)} value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
                   </Field>
-                  <Field label="Lama pendanaan" htmlFor="duration">
+                  <Field label={tr("Lama pendanaan", "Funding period")} htmlFor="duration">
                     <Select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
                       {DURATIONS.map((d) => (
                         <option key={d.value} value={d.value}>
-                          {d.label}
+                          {tr(d.label[0], d.label[1])}
                         </option>
                       ))}
                     </Select>
@@ -392,18 +422,18 @@ export default function CreatePage() {
                 </div>
               </Section>
 
-              <Section n={4} title="Rencana biaya" description="Rincian pemakaian modal. Tidak wajib, tapi bikin investor lebih yakin.">
+              <Section n={4} title={tr("Rencana biaya", "Cost plan")} description={tr("Rincian pemakaian modal. Tidak wajib, tapi bikin investor lebih yakin.", "How the capital will be used. Optional, but it gives investors more confidence.")}>
                 <div className="flex flex-col gap-2">
                   {costPlan.map((row, i) => (
                     <div key={i} className="flex gap-2">
                       <Input
-                        aria-label={`Pos biaya ${i + 1}`}
+                        aria-label={tr(`Pos biaya ${i + 1}`, `Cost item ${i + 1}`)}
                         value={row.item}
                         onChange={(e) => setCostPlan(costPlan.map((r, j) => (j === i ? { ...r, item: e.target.value } : r)))}
-                        placeholder="Contoh: Bibit"
+                        placeholder={tr("Contoh: Bibit", "e.g. Seedlings")}
                       />
                       <Input
-                        aria-label={`Jumlah USDT ${i + 1}`}
+                        aria-label={tr(`Jumlah USDT ${i + 1}`, `USDT amount ${i + 1}`)}
                         className="w-28 sm:w-36"
                         inputMode="decimal"
                         value={row.usdt}
@@ -412,7 +442,7 @@ export default function CreatePage() {
                       />
                       <button
                         type="button"
-                        aria-label="Hapus baris"
+                        aria-label={tr("Hapus baris", "Remove row")}
                         onClick={() => setCostPlan(costPlan.filter((_, j) => j !== i))}
                         className="flex size-11 shrink-0 items-center justify-center rounded-2xl text-stone-400 transition hover:bg-red-50 hover:text-red-600"
                       >
@@ -422,11 +452,11 @@ export default function CreatePage() {
                   ))}
                   <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setCostPlan([...costPlan, { item: "", usdt: "" }])}>
-                      <Plus className="size-4" aria-hidden /> Tambah pos biaya
+                      <Plus className="size-4" aria-hidden /> {tr("Tambah pos biaya", "Add cost item")}
                     </Button>
                     {targetWei && (
                       <p className="text-xs text-stone-500">
-                        Total {formatUsdt(costSum)} dari {formatUsdt(targetWei)} USDT
+                        {tr(`Total ${formatUsdt(costSum)} dari ${formatUsdt(targetWei)} USDT`, `Total ${formatUsdt(costSum)} of ${formatUsdt(targetWei)} USDT`)}
                       </p>
                     )}
                   </div>
@@ -440,28 +470,28 @@ export default function CreatePage() {
                 <div className="relative h-40 bg-linear-to-br from-hutan-700 to-hutan-950">
                   {preview ? (
                     // eslint-disable-next-line @next/next/no-img-element -- pratinjau file lokal (blob URL)
-                    <img src={preview} alt="Pratinjau foto lahan" className="h-full w-full object-cover" />
+                    <img src={preview} alt={tr("Pratinjau foto lahan", "Field photo preview")} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-1 text-white/50">
                       <ImageIcon className="size-8" aria-hidden />
-                      <span className="text-xs">Foto lahan muncul di sini</span>
+                      <span className="text-xs">{tr("Foto lahan muncul di sini", "Your field photo shows up here")}</span>
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col gap-4 p-5">
                   <div>
-                    <p className="text-xs font-semibold tracking-wide text-emas-700 uppercase">Pratinjau</p>
-                    <p className="mt-1 font-display text-lg leading-snug font-semibold text-hutan-950">{title || "Judul proyekmu"}</p>
-                    <p className="text-sm text-stone-500">{[commodity, locationName].filter(Boolean).join(" · ") || "Komoditas · lokasi"}</p>
+                    <p className="text-xs font-semibold tracking-wide text-emas-700 uppercase">{tr("Pratinjau", "Preview")}</p>
+                    <p className="mt-1 font-display text-lg leading-snug font-semibold text-hutan-950">{title || tr("Judul proyekmu", "Your project title")}</p>
+                    <p className="text-sm text-stone-500">{[trTerm(commodity), locationName].filter(Boolean).join(" · ") || tr("Komoditas · lokasi", "Crop · location")}</p>
                   </div>
                   <dl className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <dt className="text-xs text-stone-500">Kebutuhan modal</dt>
+                      <dt className="text-xs text-stone-500">{tr("Kebutuhan modal", "Capital needed")}</dt>
                       <dd className="font-semibold text-hutan-950">{targetWei ? `${formatUsdt(targetWei)} USDT` : "–"}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-stone-500">Imbal hasil investor</dt>
-                      <dd className="font-semibold text-hutan-700">{ret === null ? "–" : `${formatPercent(ret)} / musim`}</dd>
+                      <dt className="text-xs text-stone-500">{tr("Imbal hasil investor", "Investor return")}</dt>
+                      <dd className="font-semibold text-hutan-700">{ret === null ? "–" : `${formatPercent(ret)} / ${tr("musim", "season")}`}</dd>
                     </div>
                   </dl>
                   {targetWei && (
@@ -479,18 +509,18 @@ export default function CreatePage() {
                   {phase !== "idle" && (
                     <Stepper
                       steps={[
-                        { label: "Unggah foto", status: stepStatus(phase, "photo") },
-                        { label: "Simpan detail", status: stepStatus(phase, "meta") },
-                        { label: "Kirim", status: stepStatus(phase, "chain") },
+                        { label: tr("Unggah foto", "Upload photo"), status: stepStatus(phase, "photo") },
+                        { label: tr("Simpan detail", "Save details"), status: stepStatus(phase, "meta") },
+                        { label: tr("Kirim", "Submit"), status: stepStatus(phase, "chain") },
                       ]}
                     />
                   )}
                   {formError && <Notice tone="error">{formError}</Notice>}
                   <Button type="submit" size="lg" variant="gold" loading={busy}>
-                    Ajukan proyek tanam
+                    {tr("Ajukan proyek tanam", "Propose crop project")}
                   </Button>
-                  <TxStatus state={tx.state} successText="Proyek dibuat. Membuka halamannya…" />
-                  <p className="text-xs leading-relaxed text-stone-500">Setelah diajukan, proyekmu direview admin dulu sebelum pendanaan dibuka.</p>
+                  <TxStatus state={tx.state} successText={tr("Proyek dibuat. Membuka halamannya…", "Project created. Opening its page…")} />
+                  <p className="text-xs leading-relaxed text-stone-500">{tr("Setelah diajukan, proyekmu direview admin dulu sebelum pendanaan dibuka.", "After you submit, the admin reviews your project before funding opens.")}</p>
                 </div>
               </Card>
             </aside>

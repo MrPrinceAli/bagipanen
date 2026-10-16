@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 import { createConnector } from "wagmi";
 import { type Address, type EIP1193RequestFn, getAddress, numberToHex, RpcRequestError, SwitchChainError } from "viem";
 import { rpc } from "viem/utils";
@@ -49,11 +50,11 @@ export function judgeDemo() {
       if (method === "eth_chainId") return numberToHex(testnetChain.id);
       if (method === "wallet_switchEthereumChain") {
         const [{ chainId }] = params as [{ chainId: string }];
-        if (Number(chainId) !== testnetChain.id) throw new SwitchChainError(new Error("Akun demo hanya di BSC Testnet."));
+        if (Number(chainId) !== testnetChain.id) throw new SwitchChainError(new Error(tr("Akun demo hanya di BSC Testnet.", "Demo accounts only work on BSC Testnet.")));
         return null;
       }
       if (method === "eth_sendTransaction") {
-        if (!current || current.readOnly) throw new Error("Akun demo Admin hanya untuk melihat. Transaksi admin tidak tersedia di mode demo.");
+        if (!current || current.readOnly) throw new Error(tr("Akun demo Admin hanya untuk melihat. Transaksi admin tidak tersedia di mode demo.", "The Admin demo account is view-only. Admin transactions aren't available in demo mode."));
         const [tx] = params as [{ to: string; data?: string; value?: string }];
         const res = await fetch("/api/demo-tx", {
           method: "POST",
@@ -61,10 +62,10 @@ export function judgeDemo() {
           body: JSON.stringify({ role: current.key, to: tx.to, data: tx.data ?? "0x", value: tx.value ?? "0x0" }),
         });
         const out = (await res.json().catch(() => ({}))) as { hash?: string; error?: string };
-        if (!res.ok || !out.hash) throw new Error(out.error ?? `Transaksi demo gagal (HTTP ${res.status}).`);
+        if (!res.ok || !out.hash) throw new Error(out.error ?? tr(`Transaksi demo gagal (HTTP ${res.status}).`, `Demo transaction failed (HTTP ${res.status}).`));
         return out.hash;
       }
-      if (method.startsWith("eth_sign") || method === "personal_sign") throw new Error("Akun demo tidak mendukung tanda tangan pesan.");
+      if (method.startsWith("eth_sign") || method === "personal_sign") throw new Error(tr("Akun demo tidak mendukung tanda tangan pesan.", "Demo accounts don't support message signing."));
       const body = { method, params };
       const { result, error } = await rpc.http(url, { body });
       if (error) throw new RpcRequestError({ body, error, url });
@@ -78,7 +79,7 @@ export function judgeDemo() {
       type: "judgeDemo",
       async connect() {
         current = readStored() ?? JUDGE_ACCOUNTS[0];
-        if (!current) throw new Error("Akun demo juri tidak tersedia.");
+        if (!current) throw new Error(tr("Akun demo juri tidak tersedia.", "Judge demo accounts aren't available."));
         writeStored(current);
         return { accounts: [current.address] as never, chainId: testnetChain.id };
       },
@@ -101,7 +102,7 @@ export function judgeDemo() {
       },
       async switchChain({ chainId }) {
         const chain = config.chains.find((c) => c.id === chainId);
-        if (!chain) throw new SwitchChainError(new Error("Chain tidak dikenal."));
+        if (!chain) throw new SwitchChainError(new Error(tr("Chain tidak dikenal.", "Unknown chain.")));
         return chain;
       },
       onAccountsChanged(accounts) {

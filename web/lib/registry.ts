@@ -1,5 +1,6 @@
 "use client";
 
+import { tr } from "./i18n";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, getAbiItem, type Hash, isAddressEqual, zeroAddress } from "viem";
 import { usePublicClient } from "wagmi";
@@ -147,7 +148,7 @@ async function fetchTokenUri(uri: string): Promise<AgentCard> {
     return JSON.parse(meta.includes(";base64") ? atob(data) : decodeURIComponent(data)) as AgentCard;
   }
   const res = await fetch(uri);
-  if (!res.ok) throw new Error(`Agent card tidak bisa diambil (HTTP ${res.status}).`);
+  if (!res.ok) throw new Error(tr(`Agent card tidak bisa diambil (HTTP ${res.status}).`, `Couldn't fetch the agent card (HTTP ${res.status}).`));
   return (await res.json()) as AgentCard;
 }
 
@@ -183,7 +184,7 @@ export function useAgentProfile() {
           tokenURI = await client!.readContract({ address: identityRegistry, abi: mockAgentIdentityAbi, functionName: "tokenURI", args: [agentId] });
           card = await fetchTokenUri(tokenURI);
         } catch (e) {
-          cardError = e instanceof Error ? e.message : "Agent card tidak bisa dibaca.";
+          cardError = e instanceof Error ? e.message : tr("Agent card tidak bisa dibaca.", "Couldn't read the agent card.");
         }
       }
       return { identityRegistry, agentId, agentWallet, configured, isAgent, stats, tokenURI, card, cardError };

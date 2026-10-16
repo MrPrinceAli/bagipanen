@@ -1,5 +1,6 @@
 "use client";
 
+import { tr } from "./i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type { Abi, ContractFunctionArgs, ContractFunctionName, Hash, TransactionReceipt } from "viem";
@@ -49,7 +50,7 @@ export function useTx() {
         hash = await send();
         setState({ status: "pending", hash });
         const receipt = await waitForTransactionReceipt(config, { hash });
-        if (receipt.status !== "success") throw new Error("Transaksi gagal dieksekusi di chain.");
+        if (receipt.status !== "success") throw new Error(tr("Transaksi gagal dieksekusi di chain.", "The transaction failed on chain."));
         setState({ status: "success", hash });
         await queryClient.invalidateQueries();
         return receipt;

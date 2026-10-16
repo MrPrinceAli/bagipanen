@@ -1,5 +1,6 @@
 "use client";
 
+import { tr, trTerm } from "@/lib/i18n";
 import { Bot, Building2, ClipboardList, Gavel, Landmark, Scale, Sprout } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,33 +40,38 @@ function DisputeCard({ summary: c, milestones }: Row) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <CampaignLink c={c} />
         <Badge tone="red" dot>
-          Sengketa · {m.name}
+          {tr("Sengketa", "Dispute")} · {trTerm(m.name)}
         </Badge>
       </div>
-      <p className="mt-1 text-sm text-stone-600">Bukti tahap ini sudah ditolak {m.attempts} kali. Keputusanmu final dan tercatat di blockchain.</p>
+      <p className="mt-1 text-sm text-stone-600">
+        {tr(
+          `Bukti tahap ini sudah ditolak ${m.attempts} kali. Keputusanmu final dan tercatat di blockchain.`,
+          `This stage's proof has been rejected ${m.attempts} times. Your decision is final and recorded on the blockchain.`,
+        )}
+      </p>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[200px_1fr]">
-        <IpfsImage cid={m.proofCID} alt={`Bukti terakhir tahap ${m.name}`} className="h-40" />
+        <IpfsImage cid={m.proofCID} alt={tr(`Bukti terakhir tahap ${m.name}`, `Latest ${trTerm(m.name)} stage proof`)} className="h-40" />
         <div className="flex flex-col gap-3 rounded-2xl bg-krem-50 p-4 ring-1 ring-krem-200">
           <div>
-            <p className="mb-1.5 text-xs font-semibold tracking-wide text-stone-500 uppercase">Putusan AI terakhir</p>
-            {m.aiReasonCID ? <VerdictSummary cid={m.aiReasonCID} ctx={{ commodity: c.commodity, milestone: m.name }} /> : <p className="text-sm text-stone-500">Belum ada.</p>}
+            <p className="mb-1.5 text-xs font-semibold tracking-wide text-stone-500 uppercase">{tr("Putusan AI terakhir", "Latest AI verdict")}</p>
+            {m.aiReasonCID ? <VerdictSummary cid={m.aiReasonCID} ctx={{ commodity: c.commodity, milestone: m.name }} /> : <p className="text-sm text-stone-500">{tr("Belum ada.", "None yet.")}</p>}
           </div>
           <p className="text-sm">
-            <span className="text-stone-500">Koperasi: </span>
-            <span className="font-semibold">{m.verifierApproved ? "setuju" : "menolak"}</span>
+            <span className="text-stone-500">{tr("Koperasi:", "Cooperative:")} </span>
+            <span className="font-semibold">{m.verifierApproved ? tr("setuju", "approved") : tr("menolak", "rejected")}</span>
           </p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button loading={tx.busy && choice === true} disabled={tx.busy} onClick={() => resolve(true)}>
-          Setujui & cairkan dana tahap
+          {tr("Setujui & cairkan dana tahap", "Approve & release stage funds")}
         </Button>
         <ConfirmButton loading={tx.busy && choice === false} disabled={tx.busy} onConfirm={() => resolve(false)}>
-          Tolak final
+          {tr("Tolak final", "Reject finally")}
         </ConfirmButton>
       </div>
       <div className="mt-3">
-        <TxStatus state={tx.state} successText={choice ? "Dana tahap dicairkan." : "Tahap ini ditolak final."} />
+        <TxStatus state={tx.state} successText={choice ? tr("Dana tahap dicairkan.", "Stage funds released.") : tr("Tahap ini ditolak final.", "This stage was finally rejected.")} />
       </div>
     </Card>
   );
@@ -84,12 +90,14 @@ function ActiveCard({ summary: c, milestones, now }: Row & { now: bigint }) {
         <StatusBadge status={c.status} failType={c.failType} />
       </div>
       <p className="mt-1 text-sm text-stone-600">
-        {formatUsdt(c.totalReleased)} dari {formatUsdt(c.raisedAmount)} USDT sudah cair · {m ? `tahap ${m.name}` : "semua tahap cair, menunggu setoran panen"} · perkiraan
-        panen {formatDate(c.expectedHarvestDate)}
+        {tr(
+          `${formatUsdt(c.totalReleased)} dari ${formatUsdt(c.raisedAmount)} USDT sudah cair · ${m ? `tahap ${m.name}` : "semua tahap cair, menunggu setoran panen"} · perkiraan panen ${formatDate(c.expectedHarvestDate)}`,
+          `${formatUsdt(c.totalReleased)} of ${formatUsdt(c.raisedAmount)} USDT released · ${m ? `${trTerm(m.name)} stage` : "all stages released, awaiting the harvest deposit"} · expected harvest ${formatDate(c.expectedHarvestDate)}`,
+        )}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <ConfirmButton size="sm" loading={failTx.busy} onConfirm={() => failTx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "markFailed" })}>
-          Tandai gagal panen
+          {tr("Tandai gagal panen", "Mark crop failure")}
         </ConfirmButton>
         <ConfirmButton
           size="sm"
@@ -98,15 +106,20 @@ function ActiveCard({ summary: c, milestones, now }: Row & { now: bigint }) {
           loading={defaultTx.busy}
           onConfirm={() => defaultTx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "markDefault" })}
         >
-          Tandai gagal bayar
+          {tr("Tandai gagal bayar", "Mark default")}
         </ConfirmButton>
       </div>
       {!canDefault && (
-        <p className="mt-2 text-xs text-stone-500">Gagal bayar baru bisa ditandai mulai {formatDate(defaultAt)}, yaitu 30 hari setelah perkiraan panen.</p>
+        <p className="mt-2 text-xs text-stone-500">
+          {tr(
+            `Gagal bayar baru bisa ditandai mulai ${formatDate(defaultAt)}, yaitu 30 hari setelah perkiraan panen.`,
+            `A default can only be marked from ${formatDate(defaultAt)}, 30 days after the expected harvest.`,
+          )}
+        </p>
       )}
       <div className="mt-3 flex flex-col gap-1">
-        <TxStatus state={failTx.state} successText="Ditandai gagal panen. Sisa dana sekarang bisa diklaim investor." />
-        <TxStatus state={defaultTx.state} successText="Ditandai gagal bayar. Petani tidak bisa mengajukan proyek baru." />
+        <TxStatus state={failTx.state} successText={tr("Ditandai gagal panen. Sisa dana sekarang bisa diklaim investor.", "Marked as crop failure. Investors can now claim the remaining funds.")} />
+        <TxStatus state={defaultTx.state} successText={tr("Ditandai gagal bayar. Petani tidak bisa mengajukan proyek baru.", "Marked as default. The farmer can no longer propose new projects.")} />
       </div>
     </Card>
   );
@@ -121,13 +134,16 @@ function FinalizeCard({ summary: c }: Row) {
         <StatusBadge status={c.status} />
       </div>
       <p className="mt-1 text-sm text-stone-600">
-        Waktu pendanaan habis. Terkumpul {formatUsdt(c.raisedAmount)} dari {formatUsdt(c.targetAmount)} USDT.
+        {tr(
+          `Waktu pendanaan habis. Terkumpul ${formatUsdt(c.raisedAmount)} dari ${formatUsdt(c.targetAmount)} USDT.`,
+          `Funding period ended. Raised ${formatUsdt(c.raisedAmount)} of ${formatUsdt(c.targetAmount)} USDT.`,
+        )}
       </p>
       <Button className="mt-4" size="sm" loading={tx.busy} onClick={() => tx.write({ address: c.address, abi: harvestCampaignAbi, functionName: "finalizeFunding" })}>
-        Tutup pendanaan & buka refund
+        {tr("Tutup pendanaan & buka refund", "Close funding & open refunds")}
       </Button>
       <div className="mt-3">
-        <TxStatus state={tx.state} successText="Pendanaan ditutup. Investor bisa refund 100%." />
+        <TxStatus state={tx.state} successText={tr("Pendanaan ditutup. Investor bisa refund 100%.", "Funding closed. Investors can get a 100% refund.")} />
       </div>
     </Card>
   );
@@ -146,36 +162,41 @@ function ReserveSection({ eligible }: { eligible: Row[] }) {
     <Card>
       <CardTitle
         icon={Landmark}
-        description="Kompensasi hanya bisa dikirim ke proyek yang gagal panen atau gagal bayar, dan langsung menambah dana yang bisa diklaim investor."
+        description={tr(
+          "Kompensasi hanya bisa dikirim ke proyek yang gagal panen atau gagal bayar, dan langsung menambah dana yang bisa diklaim investor.",
+          "Compensation can only go to projects that had a crop failure or default, and it directly adds to what investors can claim.",
+        )}
       >
-        Dana cadangan
+        {tr("Dana cadangan", "Reserve fund")}
       </CardTitle>
       <div className="mb-5 rounded-2xl bg-hutan-950 p-5 text-white">
-        <p className="text-xs font-semibold tracking-wide text-white/60 uppercase">Saldo saat ini</p>
+        <p className="text-xs font-semibold tracking-wide text-white/60 uppercase">{tr("Saldo saat ini", "Current balance")}</p>
         <Usdt value={balance ?? 0n} className="mt-1 font-display text-3xl [&>span:last-child]:font-sans [&>span:last-child]:text-white/60" />
       </div>
       {eligible.length === 0 ? (
-        <EmptyState title="Belum ada proyek yang perlu kompensasi" />
+        <EmptyState title={tr("Belum ada proyek yang perlu kompensasi", "No projects need compensation yet")} />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Proyek" htmlFor="comp-campaign">
+            <Field label={tr("Proyek", "Project")} htmlFor="comp-campaign">
               <Select id="comp-campaign" value={target} onChange={(e) => setTarget(e.target.value)}>
-                <option value="">Pilih proyek…</option>
+                <option value="">{tr("Pilih proyek…", "Choose a project…")}</option>
                 {eligible.map(({ summary: c }) => (
                   <option key={c.address} value={c.address}>
-                    #{c.campaignId.toString()} {c.commodity} · {c.status === Status.Defaulted ? "gagal bayar" : "gagal panen"} · {formatUsdt(c.investorPool)} USDT untuk investor
+                    #{c.campaignId.toString()} {trTerm(c.commodity)} ·{" "}
+                    {c.status === Status.Defaulted ? tr("gagal bayar", "default") : tr("gagal panen", "crop failure")} · {formatUsdt(c.investorPool)}{" "}
+                    {tr("USDT untuk investor", "USDT for investors")}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Jumlah (USDT)" htmlFor="comp-amount">
+            <Field label={tr("Jumlah (USDT)", "Amount (USDT)")} htmlFor="comp-amount">
               <Input id="comp-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="20" />
             </Field>
           </div>
           {tooMuch && (
             <Notice tone="warn" className="mt-3">
-              Jumlahnya melebihi saldo dana cadangan.
+              {tr("Jumlahnya melebihi saldo dana cadangan.", "The amount exceeds the reserve fund balance.")}
             </Notice>
           )}
           <div className="mt-4 flex flex-col gap-2">
@@ -193,9 +214,9 @@ function ReserveSection({ eligible }: { eligible: Row[] }) {
                 if (ok) setAmount("");
               }}
             >
-              Kirim kompensasi
+              {tr("Kirim kompensasi", "Send compensation")}
             </Button>
-            <TxStatus state={tx.state} successText="Kompensasi terkirim. Investor bisa klaim lagi." />
+            <TxStatus state={tx.state} successText={tr("Kompensasi terkirim. Investor bisa klaim lagi.", "Compensation sent. Investors can claim again.")} />
           </div>
         </>
       )}
@@ -212,14 +233,17 @@ function CooperativeSection() {
 
   return (
     <Card>
-      <CardTitle icon={Building2} description="Koperasi mendaftarkan petani anggotanya dan menjadi kunci kedua pencairan dana.">
-        Koperasi
+      <CardTitle
+        icon={Building2}
+        description={tr("Koperasi mendaftarkan petani anggotanya dan menjadi kunci kedua pencairan dana.", "Cooperatives register their member farmers and hold the second key for releasing funds.")}
+      >
+        {tr("Koperasi", "Cooperatives")}
       </CardTitle>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Alamat dompet koperasi" htmlFor="coop-wallet">
+        <Field label={tr("Alamat dompet koperasi", "Cooperative wallet address")} htmlFor="coop-wallet">
           <AddressInput id="coop-wallet" value={wallet} onChange={setWallet} />
         </Field>
-        <Field label="Nama koperasi" htmlFor="coop-name">
+        <Field label={tr("Nama koperasi", "Cooperative name")} htmlFor="coop-name">
           <Input id="coop-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Koperasi Tani Makmur, Garut" />
         </Field>
       </div>
@@ -236,9 +260,9 @@ function CooperativeSection() {
             }
           }}
         >
-          Daftarkan koperasi
+          {tr("Daftarkan koperasi", "Register cooperative")}
         </Button>
-        <TxStatus state={tx.state} successText="Koperasi berhasil didaftarkan." />
+        <TxStatus state={tx.state} successText={tr("Koperasi berhasil didaftarkan.", "Cooperative registered successfully.")} />
       </div>
       {(regs?.cooperatives ?? []).length > 0 && (
         <ul className="mt-5 flex flex-col divide-y divide-krem-200 border-t border-krem-200 text-sm">
@@ -274,40 +298,54 @@ function AgentSection() {
     <Card>
       <CardTitle
         icon={Bot}
-        description="Hubungkan agen AI verifikator dengan identitasnya di registri."
+        description={tr("Hubungkan agen AI verifikator dengan identitasnya di registri.", "Link the AI verifier agent to its identity in the registry.")}
         action={
           <Link href="/agent" className="text-sm font-semibold text-hutan-700 hover:underline">
-            Profil agen →
+            {tr("Profil agen →", "Agent profile →")}
           </Link>
         }
       >
-        Agen AI
+        {tr("Agen AI", "AI agent")}
       </CardTitle>
       {agent && (
         <dl className="mb-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-2xl bg-krem-50 p-4 text-sm ring-1 ring-krem-200">
           <dt className="text-stone-500">Status</dt>
-          <dd>{agent.isAgent ? <Badge tone="green" dot>Aktif</Badge> : <Badge tone="red" dot>Belum diatur</Badge>}</dd>
-          <dt className="text-stone-500">Registri</dt>
+          <dd>
+            {agent.isAgent ? (
+              <Badge tone="green" dot>
+                {tr("Aktif", "Active")}
+              </Badge>
+            ) : (
+              <Badge tone="red" dot>
+                {tr("Belum diatur", "Not set up")}
+              </Badge>
+            )}
+          </dd>
+          <dt className="text-stone-500">{tr("Registri", "Registry")}</dt>
           <dd className="flex flex-wrap items-center gap-2">
             <AddressLink address={agent.identityRegistry} />
             <span className="text-xs text-stone-500">{identityIsMock(agent.identityRegistry) ? "MockAgentIdentity" : "ERC-8004"}</span>
           </dd>
-          <dt className="text-stone-500">ID agen</dt>
+          <dt className="text-stone-500">{tr("ID agen", "Agent ID")}</dt>
           <dd className="font-semibold">#{agent.agentId.toString()}</dd>
-          <dt className="text-stone-500">Dompet agen</dt>
+          <dt className="text-stone-500">{tr("Dompet agen", "Agent wallet")}</dt>
           <dd>
             <AddressLink address={agent.agentWallet} />
           </dd>
         </dl>
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Registri identitas" htmlFor="agent-registry" hint="Kosongkan untuk memakai registri sekarang">
+        <Field label={tr("Registri identitas", "Identity registry")} htmlFor="agent-registry" hint={tr("Kosongkan untuk memakai registri sekarang", "Leave empty to use the current registry")}>
           <AddressInput id="agent-registry" value={registry} onChange={setRegistry} placeholder={agent?.identityRegistry ?? "0x…"} />
         </Field>
-        <Field label="ID agen" htmlFor="agent-id">
+        <Field label={tr("ID agen", "Agent ID")} htmlFor="agent-id">
           <Input id="agent-id" inputMode="numeric" value={agentId} onChange={(e) => setAgentId(e.target.value)} placeholder="1" />
         </Field>
-        <Field label="Dompet agen" htmlFor="agent-wallet" hint="Harus pemilik ID agen itu, dan bukan dompet admin, koperasi, atau petani">
+        <Field
+          label={tr("Dompet agen", "Agent wallet")}
+          htmlFor="agent-wallet"
+          hint={tr("Harus pemilik ID agen itu, dan bukan dompet admin, koperasi, atau petani", "Must own that agent ID, and must not be the admin, cooperative, or farmer wallet")}
+        >
           <AddressInput id="agent-wallet" value={wallet} onChange={setWallet} />
         </Field>
       </div>
@@ -318,9 +356,9 @@ function AgentSection() {
           loading={tx.busy}
           onClick={() => tx.write({ address: addresses.factory!, abi: campaignFactoryAbi, functionName: "setAgent", args: [reg!, id!, w!] })}
         >
-          Simpan konfigurasi agen
+          {tr("Simpan konfigurasi agen", "Save agent configuration")}
         </Button>
-        <TxStatus state={tx.state} successText="Konfigurasi agen tersimpan." />
+        <TxStatus state={tx.state} successText={tr("Konfigurasi agen tersimpan.", "Agent configuration saved.")} />
       </div>
     </Card>
   );
@@ -334,7 +372,11 @@ export default function AdminPage() {
   if (role !== "admin")
     return (
       <>
-        <PageHero eyebrow="Admin" title="Pusat kendali BagiPanen" description="Tempat admin meninjau pengajuan, memutuskan sengketa, dan mengelola dana cadangan." />
+        <PageHero
+          eyebrow="Admin"
+          title={tr("Pusat kendali BagiPanen", "BagiPanen control center")}
+          description={tr("Tempat admin meninjau pengajuan, memutuskan sengketa, dan mengelola dana cadangan.", "Where the admin reviews proposals, resolves disputes, and manages the reserve fund.")}
+        />
         <PageBody>{role === undefined ? <Loading /> : <RoleGate need="admin" role={role} />}</PageBody>
       </>
     );
@@ -349,26 +391,29 @@ export default function AdminPage() {
   );
 
   const nav = [
-    ["#persetujuan", `Pengajuan (${drafts.length})`],
-    ["#sengketa", `Sengketa (${disputes.length})`],
-    ["#berjalan", `Berjalan (${active.length})`],
-    ["#cadangan", "Dana cadangan"],
-    ["#koperasi", "Koperasi"],
-    ["#agen", "Agen AI"],
+    ["#persetujuan", `${tr("Pengajuan", "Proposals")} (${drafts.length})`],
+    ["#sengketa", `${tr("Sengketa", "Disputes")} (${disputes.length})`],
+    ["#berjalan", `${tr("Berjalan", "Running")} (${active.length})`],
+    ["#cadangan", tr("Dana cadangan", "Reserve fund")],
+    ["#koperasi", tr("Koperasi", "Cooperatives")],
+    ["#agen", tr("Agen AI", "AI agent")],
   ];
 
   return (
     <>
       <PageHero
         eyebrow="Admin"
-        title="Pusat kendali BagiPanen"
-        description="Admin hanya menjalankan aturan yang sudah tertulis di kontrak. Dana escrow tidak bisa ditarik siapa pun, termasuk admin."
+        title={tr("Pusat kendali BagiPanen", "BagiPanen control center")}
+        description={tr(
+          "Admin hanya menjalankan aturan yang sudah tertulis di kontrak. Dana escrow tidak bisa ditarik siapa pun, termasuk admin.",
+          "The admin only carries out rules already written in the contracts. Nobody can withdraw escrowed funds, including the admin.",
+        )}
       >
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat variant="glass" icon={ClipboardList} label="Pengajuan baru" value={drafts.length} />
-          <Stat variant="glass" icon={Gavel} label="Sengketa" value={disputes.length} />
-          <Stat variant="glass" icon={Sprout} label="Berjalan" value={active.length} />
-          <Stat variant="glass" icon={Scale} label="Perlu kompensasi" value={eligible.length} />
+          <Stat variant="glass" icon={ClipboardList} label={tr("Pengajuan baru", "New proposals")} value={drafts.length} />
+          <Stat variant="glass" icon={Gavel} label={tr("Sengketa", "Disputes")} value={disputes.length} />
+          <Stat variant="glass" icon={Sprout} label={tr("Berjalan", "Running")} value={active.length} />
+          <Stat variant="glass" icon={Scale} label={tr("Perlu kompensasi", "Need compensation")} value={eligible.length} />
         </div>
       </PageHero>
       <PageBody>
@@ -382,11 +427,11 @@ export default function AdminPage() {
         {isLoading && <Loading />}
 
         <section id="persetujuan" className="scroll-mt-40">
-          <SectionTitle eyebrow="Pengajuan" description="Periksa angka dan ceritanya sebelum pendanaan dibuka.">
-            Proyek yang menunggu review
+          <SectionTitle eyebrow={tr("Pengajuan", "Proposals")} description={tr("Periksa angka dan ceritanya sebelum pendanaan dibuka.", "Check the numbers and the story before funding opens.")}>
+            {tr("Proyek yang menunggu review", "Projects awaiting review")}
           </SectionTitle>
           {drafts.length === 0 ? (
-            <EmptyState icon={ClipboardList} title="Tidak ada pengajuan baru" />
+            <EmptyState icon={ClipboardList} title={tr("Tidak ada pengajuan baru", "No new proposals")} />
           ) : (
             <div className="flex flex-col gap-5">
               {drafts.map(({ summary: c }) => (
@@ -405,11 +450,11 @@ export default function AdminPage() {
         </section>
 
         <section id="sengketa" className="scroll-mt-40">
-          <SectionTitle eyebrow="Sengketa" description="Muncul kalau bukti satu tahap ditolak tiga kali.">
-            Tahap yang perlu diputuskan
+          <SectionTitle eyebrow={tr("Sengketa", "Disputes")} description={tr("Muncul kalau bukti satu tahap ditolak tiga kali.", "Shows up when a stage's proof is rejected three times.")}>
+            {tr("Tahap yang perlu diputuskan", "Stages to decide")}
           </SectionTitle>
           {disputes.length === 0 ? (
-            <EmptyState icon={Gavel} title="Tidak ada sengketa" />
+            <EmptyState icon={Gavel} title={tr("Tidak ada sengketa", "No disputes")} />
           ) : (
             <div className="flex flex-col gap-4">
               {disputes.map((r) => (
@@ -420,11 +465,17 @@ export default function AdminPage() {
         </section>
 
         <section id="berjalan" className="scroll-mt-40">
-          <SectionTitle eyebrow="Berjalan" description="Tandai gagal panen atau gagal bayar hanya kalau memang terjadi. Keduanya tidak bisa dibatalkan.">
-            Proyek yang sedang berjalan
+          <SectionTitle
+            eyebrow={tr("Berjalan", "Running")}
+            description={tr(
+              "Tandai gagal panen atau gagal bayar hanya kalau memang terjadi. Keduanya tidak bisa dibatalkan.",
+              "Only mark a crop failure or default if it really happened. Neither can be undone.",
+            )}
+          >
+            {tr("Proyek yang sedang berjalan", "Running projects")}
           </SectionTitle>
           {active.length === 0 && expired.length === 0 ? (
-            <EmptyState icon={Sprout} title="Tidak ada proyek berjalan" />
+            <EmptyState icon={Sprout} title={tr("Tidak ada proyek berjalan", "No running projects")} />
           ) : (
             <div className="flex flex-col gap-4">
               {expired.map((r) => (
