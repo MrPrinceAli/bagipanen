@@ -31,6 +31,13 @@ export function locale(): string {
 
 export const LANG_STORAGE_KEY = "bagipanen.lang";
 
+/**
+ * Saklar fitur dua bahasa untuk pengunjung (toggle di header + deteksi bahasa browser). Selama
+ * penerjemahan belum lengkap, false: situs tampil dalam Bahasa Indonesia seperti biasa, dan EN hanya
+ * aktif bila `localStorage["bagipanen.lang"] = "en"` diisi manual (untuk pengujian).
+ */
+export const I18N_PUBLIC = false;
+
 /** Bahasa bawaan dari browser: Indonesia jika bahasa utama browser `id`, selain itu Inggris. */
 export function detectLang(): Lang {
   try {
@@ -39,6 +46,7 @@ export function detectLang(): Lang {
   } catch {
     // penyimpanan diblokir: pakai bahasa browser
   }
+  if (!I18N_PUBLIC) return "id";
   const first = (navigator.languages?.[0] ?? navigator.language ?? "id").toLowerCase();
   return first.startsWith("id") ? "id" : "en";
 }

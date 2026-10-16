@@ -1,7 +1,7 @@
 "use client";
 
 import type { Lang } from "@/lib/i18n";
-import { tr } from "@/lib/i18n";
+import { I18N_PUBLIC, tr } from "@/lib/i18n";
 import { useLang } from "@/lib/lang";
 import { cn } from "./ui";
 
@@ -13,6 +13,7 @@ const OPTIONS: { value: Lang; label: string; name: string }[] = [
 /** Toggle bahasa ID / EN di header. */
 export function LangToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLang();
+  if (!I18N_PUBLIC) return null;
   return (
     <div
       role="radiogroup"
