@@ -1,31 +1,57 @@
 import { formatUnits, parseUnits } from "viem";
 import { IDR_PER_USDT } from "./config";
+import { getLang, locale, tr } from "./i18n";
 
 export const USDT_DECIMALS = 18;
 
-const numberFmt = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 });
-const rupiahFmt = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+/** Formatter Intl per bahasa (dibuat sekali per locale). */
+const cache = new Map<string, Intl.NumberFormat | Intl.DateTimeFormat>();
+function nf(maximumFractionDigits: number): Intl.NumberFormat {
+  const key = `n:${locale()}:${maximumFractionDigits}`;
+  if (!cache.has(key)) cache.set(key, new Intl.NumberFormat(locale(), { maximumFractionDigits }));
+  return cache.get(key) as Intl.NumberFormat;
+}
+function df(kind: "date" | "dateTime"): Intl.DateTimeFormat {
+  const key = `d:${locale()}:${kind}`;
+  if (!cache.has(key))
+    cache.set(
+      key,
+      new Intl.DateTimeFormat(
+        locale(),
+        kind === "date"
+          ? { dateStyle: "long", timeZone: "Asia/Jakarta" }
+          : { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" },
+      ),
+    );
+  return cache.get(key) as Intl.DateTimeFormat;
+}
 
 export function usdtToNumber(value: bigint): number {
   return Number(formatUnits(value, USDT_DECIMALS));
 }
 
-/** 1650000000000000000000n → "1.650" */
+/** 1650000000000000000000n → "1.650" (ID) / "1,650" (EN) */
 export function formatUsdt(value: bigint): string {
-  return numberFmt.format(usdtToNumber(value));
+  return nf(2).format(usdtToNumber(value));
+}
+
+/** Angka biasa sesuai bahasa: 1560.5 → "1.560,5" (ID) / "1,560.5" (EN). */
+export function formatNumber(value: number, maximumFractionDigits = 2): string {
+  return nf(maximumFractionDigits).format(value);
 }
 
 /** Perkiraan rupiah dengan kurs tetap: 1000 USDT → "Rp16.000.000" */
 export function formatRupiah(value: bigint): string {
-  return `Rp${rupiahFmt.format(usdtToNumber(value) * IDR_PER_USDT)}`;
+  return `Rp${nf(0).format(usdtToNumber(value) * IDR_PER_USDT)}`;
 }
 
 /**
- * Parse input pengguna format Indonesia ("1.000", "357,5", "1000") ke wei.
- * Titik = pemisah ribuan, koma = desimal. Mengembalikan null jika tidak valid.
+ * Parse input pengguna ke wei, sesuai bahasa: ID "1.000" / "357,5" (titik = ribuan, koma = desimal),
+ * EN "1,000" / "357.5" (koma = ribuan, titik = desimal). Mengembalikan null jika tidak valid.
  */
 export function parseUsdtInput(input: string): bigint | null {
-  const normalized = input.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const compact = input.trim().replace(/\s/g, "");
+  const normalized = getLang() === "en" ? compact.replace(/,/g, "") : compact.replace(/\./g, "").replace(",", ".");
   if (!/^\d+(\.\d{1,18})?$/.test(normalized)) return null;
   try {
     return parseUnits(normalized, USDT_DECIMALS);
@@ -34,13 +60,14 @@ export function parseUsdtInput(input: string): bigint | null {
   }
 }
 
-/** Kebalikan parseUsdtInput untuk mengisi kolom input: 357.5 USDT → "357,5" */
+/** Kebalikan parseUsdtInput untuk mengisi kolom input: 357.5 USDT → "357,5" (ID) / "357.5" (EN) */
 export function usdtToInput(value: bigint): string {
-  return formatUnits(value, USDT_DECIMALS).replace(".", ",");
+  const plain = formatUnits(value, USDT_DECIMALS);
+  return getLang() === "en" ? plain : plain.replace(".", ",");
 }
 
 export function formatPercent(ratio: number): string {
-  return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(ratio * 100)}%`;
+  return `${nf(1).format(ratio * 100)}%`;
 }
 
 export function shortAddress(address: string): string {
@@ -51,34 +78,28 @@ export function shortHash(hash: string): string {
   return `${hash.slice(0, 10)}…${hash.slice(-6)}`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "Asia/Jakarta" });
-const dateTimeFmt = new Intl.DateTimeFormat("id-ID", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Jakarta",
-});
-
 export function formatDate(unixSeconds: bigint | number): string {
-  return dateFmt.format(new Date(Number(unixSeconds) * 1000));
+  return df("date").format(new Date(Number(unixSeconds) * 1000));
 }
 
 export function formatDateTime(unixSeconds: bigint | number): string {
-  return `${dateTimeFmt.format(new Date(Number(unixSeconds) * 1000))} WIB`;
+  return `${df("dateTime").format(new Date(Number(unixSeconds) * 1000))} WIB`;
 }
 
-/** Sisa waktu yang mudah dibaca: "8 menit lagi", "2 hari lagi", "sudah lewat". */
+/** Sisa waktu yang mudah dibaca: "8 menit lagi" / "8 minutes left", "sudah lewat" / "passed". */
 export function formatTimeLeft(deadlineUnix: bigint | number, nowMs = Date.now()): string {
   const secs = Number(deadlineUnix) - Math.floor(nowMs / 1000);
-  if (secs <= 0) return "sudah lewat";
-  if (secs < 60) return `${secs} detik lagi`;
-  if (secs < 3600) return `${Math.ceil(secs / 60)} menit lagi`;
-  if (secs < 86_400) return `${Math.ceil(secs / 3600)} jam lagi`;
-  return `${Math.ceil(secs / 86_400)} hari lagi`;
+  const left = (n: number, idUnit: string, enUnit: string) => tr(`${n} ${idUnit} lagi`, `${n} ${enUnit}${n === 1 ? "" : "s"} left`);
+  if (secs <= 0) return tr("sudah lewat", "passed");
+  if (secs < 60) return left(secs, "detik", "second");
+  if (secs < 3600) return left(Math.ceil(secs / 60), "menit", "minute");
+  if (secs < 86_400) return left(Math.ceil(secs / 3600), "jam", "hour");
+  return left(Math.ceil(secs / 86_400), "hari", "day");
 }
 
 export function formatArea(m2: number): string {
-  if (m2 >= 10_000 || m2 % 1000 === 0) return `${numberFmt.format(m2 / 10_000)} ha (${numberFmt.format(m2)} m²)`;
-  return `${numberFmt.format(m2)} m²`;
+  if (m2 >= 10_000 || m2 % 1000 === 0) return `${nf(2).format(m2 / 10_000)} ha (${nf(2).format(m2)} m²)`;
+  return `${nf(2).format(m2)} m²`;
 }
 
 /** Koordinat x1e6 → derajat desimal. */

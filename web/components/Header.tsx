@@ -11,9 +11,11 @@ import { addresses, CONTRACTS_READY } from "@/lib/addresses";
 import { useUsdtBalance } from "@/lib/campaigns";
 import { FAUCET_AMOUNT, IS_LOCAL, REFRESH_MS, targetChain } from "@/lib/config";
 import { formatUsdt } from "@/lib/format";
+import { tr } from "@/lib/i18n";
 import { ROLE_LABEL, useRole } from "@/lib/role";
 import { useTx } from "@/lib/tx";
 import { Button, Container, cn, Spinner } from "./ui";
+import { LangToggle } from "./LangToggle";
 import { JudgeBanner, WalletButton } from "./wallet";
 
 /** Logo BagiPanen: petani bercaping memikul dua keranjang hasil panen. */
@@ -50,16 +52,16 @@ export function Header() {
     role === "petani" || role === "investor"
       ? { href: "/dashboard", label: "Dashboard" }
       : role === "koperasi"
-        ? { href: "/koperasi", label: "Koperasi" }
+        ? { href: "/koperasi", label: tr("Koperasi", "Cooperative") }
         : role === "admin"
           ? { href: "/admin", label: "Admin" }
           : null;
   const nav: { href: string; label: string; short?: string }[] = [
-    { href: "/", label: "Beranda" },
-    { href: "/proyek", label: "Proyek" },
-    { href: "/petani", label: "Petani" },
-    { href: "/transparansi", label: "Transparansi" },
-    { href: "/agent", label: "Agen AI" },
+    { href: "/", label: tr("Beranda", "Home") },
+    { href: "/proyek", label: tr("Proyek", "Projects") },
+    { href: "/petani", label: tr("Petani", "Farmers") },
+    { href: "/transparansi", label: tr("Transparansi", "Transparency") },
+    { href: "/agent", label: tr("Agen AI", "AI Agent") },
     { href: "/faq", label: "FAQ" },
     ...(roleHome ? [roleHome] : []),
   ];
@@ -92,14 +94,16 @@ export function Header() {
               {ROLE_LABEL[role]}
             </span>
           )}
+          <LangToggle className="hidden sm:flex" />
           <WalletButton />
         </div>
       </Container>
       <div className="border-t border-white/5 xl:hidden">
         <Container className="flex items-center gap-2 py-2">
           <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto">{nav.map((n) => link(n, true))}</nav>
-          <div className="sm:hidden">
+          <div className="flex items-center gap-2 sm:hidden">
             <FaucetButton compact />
+            <LangToggle />
           </div>
         </Container>
       </div>
@@ -119,17 +123,17 @@ function FaucetButton({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2">
       {!compact && balance !== undefined && (
-        <span className="hidden text-xs text-white/60 2xl:inline">Saldo {formatUsdt(balance)} mUSDT</span>
+        <span className="hidden text-xs text-white/60 2xl:inline">{tr("Saldo", "Balance")} {formatUsdt(balance)} mUSDT</span>
       )}
       <Button
         size="sm"
         variant="light"
         loading={tx.busy}
-        title={tx.state.status === "error" ? tx.state.message : "Isi 1.000 mUSDT (token demo) ke dompetmu"}
+        title={tx.state.status === "error" ? tx.state.message : tr("Isi 1.000 mUSDT (token demo) ke dompetmu", "Add 1,000 mUSDT (demo token) to your wallet")}
         onClick={() => tx.write({ address: addresses.usdt!, abi: mockUSDTAbi, functionName: "mint", args: [address, FAUCET_AMOUNT] })}
       >
         {!tx.busy && <Coins className="size-4 text-emas-300" aria-hidden />}
-        {tx.state.status === "success" ? "+1.000 masuk" : compact ? "mUSDT" : "Minta mUSDT"}
+        {tx.state.status === "success" ? tr("+1.000 masuk", "+1,000 added") : compact ? "mUSDT" : tr("Minta mUSDT", "Get mUSDT")}
       </Button>
     </div>
   );
@@ -156,33 +160,35 @@ function NetworkBanner() {
   if (!IS_LOCAL && isConnected && chainId !== targetChain.id) {
     message = (
       <span className="flex flex-wrap items-center justify-center gap-3">
-        Dompetmu sedang terhubung ke jaringan lain.
+        {tr("Dompetmu sedang terhubung ke jaringan lain.", "Your wallet is connected to a different network.")}
         <Button size="sm" variant="primary" onClick={() => switchChain({ chainId: targetChain.id })} disabled={isPending}>
-          {isPending && <Spinner />} Pindah ke {targetChain.name}
+          {isPending && <Spinner />} {tr("Pindah ke", "Switch to")} {targetChain.name}
         </Button>
       </span>
     );
   } else if (health.isError) {
     message = IS_LOCAL ? (
       <>
-        Chain lokal belum jalan. Jalankan <Code>npm run dev:chain</Code> di folder proyek.
+        {tr("Chain lokal belum jalan. Jalankan", "The local chain isn't running. Run")} <Code>npm run dev:chain</Code>{" "}
+        {tr("di folder proyek.", "in the project folder.")}
       </>
     ) : (
-      `Belum bisa terhubung ke ${targetChain.name}. Coba muat ulang halaman.`
+      tr(`Belum bisa terhubung ke ${targetChain.name}. Coba muat ulang halaman.`, `Can't reach ${targetChain.name} yet. Try reloading the page.`)
     );
   } else if (health.data === "no-addresses") {
     message = (
       <>
-        Alamat kontrak belum diatur. Deploy kontrak dulu, lalu jalankan <Code>npm run sync</Code>.
+        {tr("Alamat kontrak belum diatur. Deploy kontrak dulu, lalu jalankan", "Contract addresses aren't set. Deploy the contracts first, then run")}{" "}
+        <Code>npm run sync</Code>.
       </>
     );
   } else if (health.data === "no-contracts") {
     message = IS_LOCAL ? (
       <>
-        Kontrak belum ada di chain lokal. Jalankan ulang <Code>npm run dev:chain</Code>.
+        {tr("Kontrak belum ada di chain lokal. Jalankan ulang", "The contracts aren't on the local chain yet. Rerun")} <Code>npm run dev:chain</Code>.
       </>
     ) : (
-      "Kontraknya tidak ditemukan di jaringan ini. Cek lagi alamat kontrak."
+      tr("Kontraknya tidak ditemukan di jaringan ini. Cek lagi alamat kontrak.", "The contracts weren't found on this network. Check the contract addresses.")
     );
   }
   if (!message) return null;

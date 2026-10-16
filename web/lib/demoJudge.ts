@@ -1,5 +1,6 @@
 import type { Address } from "viem";
 import { IS_LOCAL } from "./config";
+import { tr } from "./i18n";
 
 /**
  * Mode demo juri (testnet): akun demo yang bisa dipakai tanpa MetaMask. Kuncinya hanya ada di
@@ -19,26 +20,42 @@ export const JUDGE_ACCOUNTS: JudgeAccount[] = IS_LOCAL
       {
         key: "investor",
         label: "Investor",
-        who: "Investor Demo",
+        get who() {
+          return tr("Investor Demo", "Demo Investor");
+        },
         address: "0x13F1c1a348FA479EDF12C9c92B7A85Efa57f98b8",
         readOnly: false,
-        does: "Danai proyek, lihat porsi & klaim",
+        get does() {
+          return tr("Danai proyek, lihat porsi & klaim", "Fund projects, see shares & claim");
+        },
       },
       {
         key: "petani",
-        label: "Petani",
-        who: "Pak Juri (petani demo)",
+        get label() {
+          return tr("Petani", "Farmer");
+        },
+        get who() {
+          return tr("Pak Juri (petani demo)", "Pak Juri (demo farmer)");
+        },
         address: "0xb7A91e07aE60Ef0DE8B71FA7d2601F8BEC00F323",
         readOnly: false,
-        does: "Kirim foto lahan, lihat agen AI menilai",
+        get does() {
+          return tr("Kirim foto lahan, lihat agen AI menilai", "Send a field photo, watch the AI agent judge it");
+        },
       },
       {
         key: "koperasi",
-        label: "Koperasi",
-        who: "Koperasi Demo Juri",
+        get label() {
+          return tr("Koperasi", "Cooperative");
+        },
+        get who() {
+          return tr("Koperasi Demo Juri", "Judge Demo Cooperative");
+        },
         address: "0x5D1888F23A2F138858Ca0EfEB67c2cA5805D0347",
         readOnly: false,
-        does: "Konfirmasi tahap, cairkan dana, nilai agen",
+        get does() {
+          return tr("Konfirmasi tahap, cairkan dana, nilai agen", "Confirm stages, release funds, rate the agent");
+        },
       },
       {
         key: "admin",
@@ -46,7 +63,9 @@ export const JUDGE_ACCOUNTS: JudgeAccount[] = IS_LOCAL
         who: "Admin BagiPanen",
         address: ADMIN_ADDRESS,
         readOnly: true,
-        does: "Lihat panel admin (tanpa transaksi)",
+        get does() {
+          return tr("Lihat panel admin (tanpa transaksi)", "View the admin panel (no transactions)");
+        },
       },
     ];
 

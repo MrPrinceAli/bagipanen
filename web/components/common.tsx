@@ -1,10 +1,11 @@
 "use client";
 
+import { tr } from "@/lib/i18n";
 import { AlertTriangle, Check, CheckCircle2, ExternalLink, ImageUp, Loader2, XCircle } from "lucide-react";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { getAddress, isAddress } from "viem";
 import { explorerAddressUrl, explorerTxUrl, IS_LOCAL } from "@/lib/config";
-import { formatRupiah, formatUsdt, shortAddress, shortHash } from "@/lib/format";
+import { formatRupiah, formatUsdt, shortAddress, shortHash, formatNumber } from "@/lib/format";
 import { ipfsUrl } from "@/lib/ipfs";
 import type { TxState } from "@/lib/tx";
 import { FailType, MSTATUS_LABEL, MStatus, STATUS_LABEL, Status } from "@/lib/types";
@@ -16,7 +17,7 @@ export function Usdt({ value, className, showRupiah = true }: { value: bigint; c
   return (
     <span className={cn("inline-flex flex-col", className)}>
       <span className="font-semibold">{formatUsdt(value)} USDT</span>
-      {showRupiah && <span className="text-xs font-normal text-stone-500">sekitar {formatRupiah(value)}</span>}
+      {showRupiah && <span className="text-xs font-normal text-stone-500">{tr("sekitar", "about")} {formatRupiah(value)}</span>}
     </span>
   );
 }
@@ -32,8 +33,8 @@ const STATUS_TONE: Record<number, Tone> = {
 };
 
 export function statusLabel(status: number, failType?: number) {
-  if (status === Status.Failed && failType === FailType.Funding) return "Target tak tercapai";
-  if (status === Status.Failed && failType === FailType.Crop) return "Gagal panen";
+  if (status === Status.Failed && failType === FailType.Funding) return tr("Target tak tercapai", "Target not reached");
+  if (status === Status.Failed && failType === FailType.Crop) return tr("Gagal panen", "Crop failed");
   return STATUS_LABEL[status] ?? "?";
 }
 
@@ -69,7 +70,7 @@ export function IpfsImage({ cid, alt, className, link = true }: { cid: string; a
   const img = <img src={ipfsUrl(cid)} alt={alt} loading="lazy" className={cn("w-full rounded-2xl bg-krem-200 object-cover", className)} />;
   if (!link) return img;
   return (
-    <a href={ipfsUrl(cid)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl transition hover:opacity-90" title="Buka ukuran penuh">
+    <a href={ipfsUrl(cid)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl transition hover:opacity-90" title={tr("Buka ukuran penuh", "Open full size")}>
       {img}
     </a>
   );
@@ -104,7 +105,7 @@ export function AddressLink({ address, full = false, className }: { address: str
 }
 
 /** Status transaksi: menunggu tanda tangan, menunggu jaringan, berhasil, atau gagal dengan pesan yang jelas. */
-export function TxStatus({ state, successText = "Transaksi berhasil." }: { state: TxState; successText?: string }) {
+export function TxStatus({ state, successText = tr("Transaksi berhasil.", "Transaction successful.") }: { state: TxState; successText?: string }) {
   const toast = useToast();
   const successHash = state.status === "success" ? state.hash : undefined;
   // Pesan sukses juga dikirim sebagai toast, karena komponen ini bisa hilang setelah data diperbarui.
@@ -116,13 +117,13 @@ export function TxStatus({ state, successText = "Transaksi berhasil." }: { state
   if (state.status === "signing")
     return (
       <p className="flex items-center gap-2 text-sm text-stone-600">
-        <Loader2 className="size-4 animate-spin" aria-hidden /> {IS_LOCAL ? "Mengirim transaksi…" : "Konfirmasi di dompetmu dulu, ya…"}
+        <Loader2 className="size-4 animate-spin" aria-hidden /> {IS_LOCAL ? tr("Mengirim transaksi…", "Sending transaction…") : tr("Konfirmasi di dompetmu dulu, ya…", "Please confirm in your wallet…")}
       </p>
     );
   if (state.status === "pending")
     return (
       <p className="flex flex-wrap items-center gap-2 text-sm text-stone-600">
-        <Loader2 className="size-4 animate-spin" aria-hidden /> Menunggu jaringan mengonfirmasi… <TxLink hash={state.hash} />
+        <Loader2 className="size-4 animate-spin" aria-hidden /> {tr("Menunggu jaringan mengonfirmasi…", "Waiting for the network to confirm…")} <TxLink hash={state.hash} />
       </p>
     );
   if (state.status === "success")
@@ -175,7 +176,7 @@ export function Stepper({ steps }: { steps: { label: string; status: StepStatus 
  */
 export function ConfirmButton({
   children,
-  confirmText = "Yakin? Klik sekali lagi",
+  confirmText = tr("Yakin? Klik sekali lagi", "Sure? Click once more"),
   onConfirm,
   variant = "danger",
   loading,
@@ -230,7 +231,7 @@ export function AddressInput({ id, value, onChange, placeholder = "0x…" }: { i
   return (
     <div className="flex flex-col gap-1">
       <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} spellCheck={false} className="font-mono" />
-      {invalid && <p className="text-xs text-red-700">Alamat dompetnya belum benar. Cek lagi, ya.</p>}
+      {invalid && <p className="text-xs text-red-700">{tr("Alamat dompetnya belum benar. Cek lagi, ya.", "That wallet address doesn't look right. Please check it.")}</p>}
     </div>
   );
 }
@@ -240,8 +241,8 @@ export function FilePicker({
   id,
   file,
   onChange,
-  label = "Pilih foto",
-  hint = "JPEG, PNG, atau WebP",
+  label = tr("Pilih foto", "Choose a photo"),
+  hint = tr("JPEG, PNG, atau WebP", "JPEG, PNG, or WebP"),
 }: {
   id?: string;
   file: File | null;
@@ -264,7 +265,7 @@ export function FilePicker({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-hutan-950">{file ? file.name : label}</span>
-        <span className="block text-xs text-stone-500">{file ? `${(file.size / 1024 / 1024).toLocaleString("id-ID", { maximumFractionDigits: 1 })} MB · klik untuk ganti` : hint}</span>
+        <span className="block text-xs text-stone-500">{file ? `${formatNumber(file.size / 1024 / 1024, 1)} MB · ${tr("klik untuk ganti", "click to change")}` : hint}</span>
       </span>
       <input
         id={inputId}

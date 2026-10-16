@@ -1,3 +1,4 @@
+import { tr } from "@/lib/i18n";
 import { AlertTriangle, CheckCircle2, Info, type LucideIcon, XCircle } from "lucide-react";
 import Link from "next/link";
 import type {
@@ -331,7 +332,7 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Baris "memuat" kecil dengan teks. */
-export function Loading({ children = "Memuat data…" }: { children?: ReactNode }) {
+export function Loading({ children = tr("Memuat data…", "Loading data…") }: { children?: ReactNode }) {
   return (
     <p className="flex items-center gap-2 text-sm text-stone-500">
       <Spinner /> {children}

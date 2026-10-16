@@ -1,19 +1,23 @@
 "use client";
 
+import { tr } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "./ui";
 
 /* ------------------------------------------------------------------ Tunas */
 
-const MESSAGES = [
-  [20, "Menyiapkan lahan…"],
-  [45, "Menyiram bibit…"],
-  [70, "Membaca blockchain…"],
-  [92, "Memanggil agen AI…"],
-  [101, "Siap panen!"],
-] as const;
-const messageFor = (v: number) => MESSAGES.find(([max]) => v < max)?.[1] ?? "Siap panen!";
+const MESSAGES: [number, string, string][] = [
+  [20, "Menyiapkan lahan…", "Preparing the field…"],
+  [45, "Menyiram bibit…", "Watering the seedlings…"],
+  [70, "Membaca blockchain…", "Reading the blockchain…"],
+  [92, "Memanggil agen AI…", "Calling the AI agent…"],
+  [101, "Siap panen!", "Ready to harvest!"],
+];
+const messageFor = (v: number) => {
+  const m = MESSAGES.find(([max]) => v < max) ?? MESSAGES[MESSAGES.length - 1];
+  return tr(m[1], m[2]);
+};
 
 /** Tunas yang tumbuh mengikuti persentase: batang memanjang, daun di 25/50/75%, malai padi di ~100%. */
 export function PlantProgress({ value, className }: { value: number; className?: string }) {
@@ -156,7 +160,7 @@ export function InitialLoader() {
       data-phase={phase}
       role="status"
       aria-live="polite"
-      aria-label={`Memuat BagiPanen ${value}%`}
+      aria-label={`${tr("Memuat BagiPanen", "Loading BagiPanen")} ${value}%`}
       className={cn(
         "glow-hutan fixed inset-0 z-[100] grid place-items-center bg-hutan-950 text-white",
         phase === "reveal" && "pointer-events-none",
@@ -246,7 +250,7 @@ export function NavigationLoader() {
   if (value === null) return null;
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-[90] h-1 bg-transparent" role="progressbar" aria-valuenow={value} aria-label="Memuat halaman">
+      <div className="fixed inset-x-0 top-0 z-[90] h-1 bg-transparent" role="progressbar" aria-valuenow={value} aria-label={tr("Memuat halaman", "Loading page")}>
         <div
           className="h-full bg-linear-to-r from-hutan-400 via-emas-300 to-emas-400 shadow-[0_0_12px_rgb(237_197_106/0.8)] transition-[width] duration-200 ease-out"
           style={{ width: `${value}%` }}

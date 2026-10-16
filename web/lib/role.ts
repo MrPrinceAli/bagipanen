@@ -1,5 +1,6 @@
 "use client";
 
+import { tr } from "./i18n";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, isAddressEqual, zeroAddress } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
@@ -10,11 +11,19 @@ import { REFRESH_MS } from "./config";
 export type Role = "tamu" | "admin" | "koperasi" | "petani" | "agen" | "investor";
 
 export const ROLE_LABEL: Record<Role, string> = {
-  tamu: "Tamu",
+  get tamu() {
+    return tr("Tamu", "Guest");
+  },
   admin: "Admin",
-  koperasi: "Koperasi",
-  petani: "Petani",
-  agen: "Agen AI",
+  get koperasi() {
+    return tr("Koperasi", "Cooperative");
+  },
+  get petani() {
+    return tr("Petani", "Farmer");
+  },
+  get agen() {
+    return tr("Agen AI", "AI agent");
+  },
   investor: "Investor",
 };
 

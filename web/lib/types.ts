@@ -1,3 +1,4 @@
+import { trMap } from "./i18n";
 import type { Address, ContractFunctionReturnType } from "viem";
 import type { harvestCampaignAbi } from "./abi/HarvestCampaign";
 
@@ -23,24 +24,24 @@ export const MStatus = {
   Released: 5,
 } as const;
 
-export const STATUS_LABEL: Record<number, string> = {
-  [Status.Draft]: "Menunggu review",
-  [Status.Funding]: "Cari dana",
-  [Status.Active]: "Berjalan",
-  [Status.Harvested]: "Sudah panen",
-  [Status.Failed]: "Gagal",
-  [Status.Cancelled]: "Tidak disetujui",
-  [Status.Defaulted]: "Gagal bayar",
-};
+export const STATUS_LABEL = trMap<number>({
+  [Status.Draft]: ["Menunggu review", "Awaiting review"],
+  [Status.Funding]: ["Cari dana", "Funding"],
+  [Status.Active]: ["Berjalan", "Running"],
+  [Status.Harvested]: ["Sudah panen", "Harvested"],
+  [Status.Failed]: ["Gagal", "Failed"],
+  [Status.Cancelled]: ["Tidak disetujui", "Not approved"],
+  [Status.Defaulted]: ["Gagal bayar", "Defaulted"],
+});
 
-export const MSTATUS_LABEL: Record<number, string> = {
-  [MStatus.Pending]: "Belum ada bukti",
-  [MStatus.ProofSubmitted]: "Bukti masuk",
-  [MStatus.AIReviewed]: "Sudah dicek AI",
-  [MStatus.Rejected]: "Ditolak",
-  [MStatus.Disputed]: "Sengketa",
-  [MStatus.Released]: "Dana cair",
-};
+export const MSTATUS_LABEL = trMap<number>({
+  [MStatus.Pending]: ["Belum ada bukti", "No proof yet"],
+  [MStatus.ProofSubmitted]: ["Bukti masuk", "Proof submitted"],
+  [MStatus.AIReviewed]: ["Sudah dicek AI", "Checked by AI"],
+  [MStatus.Rejected]: ["Ditolak", "Rejected"],
+  [MStatus.Disputed]: ["Sengketa", "Disputed"],
+  [MStatus.Released]: ["Dana cair", "Funds released"],
+});
 
 export type Summary = ContractFunctionReturnType<typeof harvestCampaignAbi, "view", "getSummary">;
 export type Milestone = ContractFunctionReturnType<typeof harvestCampaignAbi, "view", "getMilestones">[number];
