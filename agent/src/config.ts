@@ -93,8 +93,8 @@ export const config = {
   retryAttempts: 3,
   retryDelayMs: Number(env("RETRY_DELAY_MS") ?? 15_000),
   /**
-   * Rentang blok maksimal per getLogs. RPC publik resmi BNB menolak eth_getLogs; RPC publik
-   * pihak ketiga (mis. publicnode) membatasi 50.000 blok per panggilan (docs/erc8004-notes.md).
+   * Rentang blok maksimal per getLogs. RPC publik resmi BNB menolak eth_getLogs; Sentio (RPC log
+   * yang dipakai) membatasi 5.000 blok per panggilan sejak Okt 2026 (sebelumnya 50.000).
    */
-  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 50_000)),
+  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 5_000)),
 };

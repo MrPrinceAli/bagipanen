@@ -72,7 +72,7 @@ BSC testnet ≈ 0,45 detik per blok ≈ 192.000 blok per hari.
 
 Keputusan:
 - Deploy memakai RPC resmi BNB.
-- Agen dan web membagi `getLogs` per 50.000 blok.
+- Agen dan web membagi `getLogs` per 50.000 blok. **Pembaruan 16 Okt 2026:** Sentio kini membatasi 5.000 blok per panggilan; agen membaca per 5.000 blok, web membaca lewat indeks `/api/logs` (lihat `docs/decisions.md`).
 - publicnode juga **mewajibkan filter `address`** di `eth_getLogs` ("Please specify an address in your request"). Masalah ini baru terlihat di testnet sungguhan, tidak di fork Anvil.
   - Agen memakai **sentio**, supaya polling `ProofSubmitted` tetap tanpa filter alamat sesuai PRD. Jika RPC-nya menolak, agen otomatis beralih ke filter `factory.getCampaigns()`.
   - Web memakai publicnode dengan filter alamat kampanye resmi.
