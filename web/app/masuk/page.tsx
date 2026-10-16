@@ -1,5 +1,6 @@
 "use client";
 
+import { tr } from "@/lib/i18n";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ArrowRight, Building2, Check, FlaskConical, HandCoins, KeyRound, Loader2, LogOut, ShieldCheck, Sprout, UserCog, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -17,22 +18,30 @@ import { shortAddress } from "@/lib/format";
 import { ROLE_LABEL, type Role, useRole } from "@/lib/role";
 import heroImage from "@/public/hero-lahan.jpg";
 
-const ROLES: { role: Role; icon: LucideIcon; desc: string }[] = [
-  { role: "investor", icon: HandCoins, desc: "Dompet apa pun. Danai proyek, pantau porsi, klaim bagi hasil." },
-  { role: "petani", icon: Sprout, desc: "Didaftarkan koperasi. Ajukan proyek, kirim foto lahan, setor panen." },
-  { role: "koperasi", icon: Building2, desc: "Didaftarkan admin. Daftarkan petani, cek lahan, nilai agen AI." },
-  { role: "admin", icon: UserCog, desc: "Pemilik kontrak. Setujui proyek, putuskan sengketa." },
+const ROLES: { role: Role; icon: LucideIcon }[] = [
+  { role: "investor", icon: HandCoins },
+  { role: "petani", icon: Sprout },
+  { role: "koperasi", icon: Building2 },
+  { role: "admin", icon: UserCog },
 ];
 
 /** Ruang kerja tujuan setelah masuk, sesuai peran. */
-const HOME: Record<Role, { href: string; label: string }> = {
-  tamu: { href: "/", label: "Beranda" },
-  investor: { href: "/dashboard", label: "Dashboard investor" },
-  petani: { href: "/dashboard", label: "Dashboard petani" },
-  koperasi: { href: "/koperasi", label: "Ruang kerja koperasi" },
-  admin: { href: "/admin", label: "Panel admin" },
-  agen: { href: "/agent", label: "Profil agen" },
-};
+function home(role: Role): { href: string; label: string } {
+  switch (role) {
+    case "investor":
+      return { href: "/dashboard", label: tr("Dashboard investor", "investor dashboard") };
+    case "petani":
+      return { href: "/dashboard", label: tr("Dashboard petani", "farmer dashboard") };
+    case "koperasi":
+      return { href: "/koperasi", label: tr("Ruang kerja koperasi", "cooperative workspace") };
+    case "admin":
+      return { href: "/admin", label: tr("Panel admin", "admin panel") };
+    case "agen":
+      return { href: "/agent", label: tr("Profil agen", "agent profile") };
+    default:
+      return { href: "/", label: tr("Beranda", "home") };
+  }
+}
 
 const REDIRECT_S = 4;
 
@@ -48,11 +57,11 @@ function SignedIn() {
   const isJudgePetani = Boolean(JUDGE_PROJECT && address && JUDGE_ACCOUNTS.find((a) => a.key === "petani")?.address.toLowerCase() === address.toLowerCase());
   const target =
     next && next.startsWith("/") && !next.startsWith("//")
-      ? { href: next, label: "halaman sebelumnya" }
+      ? { href: next, label: tr("halaman sebelumnya", "previous page") }
       : isJudgePetani
-        ? { href: `/campaign/${JUDGE_PROJECT}`, label: "proyek demo" }
+        ? { href: `/campaign/${JUDGE_PROJECT}`, label: tr("proyek demo", "demo project") }
         : role
-          ? HOME[role]
+          ? home(role)
           : null;
   const targetHref = target?.href;
 
@@ -70,7 +79,7 @@ function SignedIn() {
     return (
       <div className="flex flex-col items-center gap-3 py-10 text-center">
         <Loader2 className="size-8 animate-spin text-hutan-600" aria-hidden />
-        <p className="text-sm text-stone-600">Mengenali peran dompetmu di blockchain…</p>
+        <p className="text-sm text-stone-600">{tr("Mengenali peran dompetmu di blockchain…", "Recognizing your wallet's role on the blockchain…")}</p>
       </div>
     );
 
@@ -83,8 +92,8 @@ function SignedIn() {
           <Check className="size-4" aria-hidden />
         </span>
       </span>
-      <p className="mt-4 text-sm text-stone-500">Selamat datang kembali</p>
-      <h2 className="mt-1 font-display text-2xl font-semibold text-hutan-950">Kamu masuk sebagai {ROLE_LABEL[role]}</h2>
+      <p className="mt-4 text-sm text-stone-500">{tr("Selamat datang kembali", "Welcome back")}</p>
+      <h2 className="mt-1 font-display text-2xl font-semibold text-hutan-950">{tr("Kamu masuk sebagai", "You're signed in as")} {ROLE_LABEL[role]}</h2>
       <p className="mt-2 font-mono text-sm text-stone-500">{address ? shortAddress(address) : ""}</p>
       {target && (
         <>
@@ -92,14 +101,14 @@ function SignedIn() {
             href={target.href}
             className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-hutan-900 px-5 py-3 font-semibold text-white transition hover:bg-hutan-800"
           >
-            Buka {target.label} <ArrowRight className="size-4" aria-hidden />
+            {tr("Buka", "Open")} {target.label} <ArrowRight className="size-4" aria-hidden />
           </Link>
           {!judge && (
             <>
               <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-krem-200" aria-hidden>
                 <div className="h-full rounded-full bg-emas-400 transition-[width] duration-1000 ease-linear" style={{ width: `${((REDIRECT_S - left) / REDIRECT_S) * 100}%` }} />
               </div>
-              <p className="mt-2 text-xs text-stone-500">Otomatis dibuka dalam {Math.max(0, left)} detik</p>
+              <p className="mt-2 text-xs text-stone-500">{tr(`Otomatis dibuka dalam ${Math.max(0, left)} detik`, `Opening automatically in ${Math.max(0, left)} s`)}</p>
             </>
           )}
         </>
@@ -110,7 +119,7 @@ function SignedIn() {
         </div>
       )}
       <button type="button" onClick={() => disconnect()} className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-red-700">
-        <LogOut className="size-4" aria-hidden /> Ganti dompet / keluar
+        <LogOut className="size-4" aria-hidden /> {tr("Ganti dompet / keluar", "Switch wallet / sign out")}
       </button>
     </div>
   );
@@ -128,10 +137,12 @@ function JudgePanel() {
       <div className="flex items-start gap-2">
         <FlaskConical className="mt-0.5 size-4 shrink-0 text-emas-700" aria-hidden />
         <div>
-          <p className="text-sm font-semibold text-hutan-950">{connector?.id === "judgeDemo" ? "Ganti peran akun demo" : "Coba tanpa dompet: akun demo untuk juri"}</p>
+          <p className="text-sm font-semibold text-hutan-950">{connector?.id === "judgeDemo" ? tr("Ganti peran akun demo", "Switch demo account role") : tr("Coba tanpa dompet: akun demo untuk juri", "Try without a wallet: demo accounts for judges")}</p>
           <p className="mt-0.5 text-[11px] leading-snug text-pretty text-stone-600">
-            Khusus pengujian. Aslinya setiap orang masuk dengan dompet kripto miliknya sendiri. Akun demo memakai wallet testnet yang
-            ditandatangani server, bukan uang sungguhan.
+            {tr(
+              "Khusus pengujian. Aslinya setiap orang masuk dengan dompet kripto miliknya sendiri. Akun demo memakai wallet testnet yang ditandatangani server, bukan uang sungguhan.",
+              "For testing only. Normally everyone signs in with their own crypto wallet. Demo accounts use testnet wallets signed by the server, not real money.",
+            )}
           </p>
         </div>
       </div>
@@ -149,7 +160,7 @@ function JudgePanel() {
                 try {
                   await login(a.key);
                 } catch (e) {
-                  setError(e instanceof Error ? e.message : "Gagal masuk sebagai akun demo.");
+                  setError(e instanceof Error ? e.message : tr("Gagal masuk sebagai akun demo.", "Couldn't sign in with the demo account."));
                 } finally {
                   setBusy(null);
                 }
@@ -163,7 +174,7 @@ function JudgePanel() {
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-hutan-950">
                   {a.label}
-                  {a.readOnly && <span className="rounded bg-stone-100 px-1 text-[10px] font-medium text-stone-500">lihat saja</span>}
+                  {a.readOnly && <span className="rounded bg-stone-100 px-1 text-[10px] font-medium text-stone-500">{tr("lihat saja", "view only")}</span>}
                 </span>
                 <span className="block truncate text-[10.5px] leading-snug text-stone-500">{a.does}</span>
               </span>
@@ -179,16 +190,19 @@ function JudgePanel() {
 function SignIn() {
   return (
     <div>
-      <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Masuk</p>
-      <h1 className="mt-1.5 font-display text-2xl font-semibold text-hutan-950 sm:text-3xl">Selamat datang di BagiPanen</h1>
+      <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">{tr("Masuk", "Sign in")}</p>
+      <h1 className="mt-1.5 font-display text-2xl font-semibold text-hutan-950 sm:text-3xl">{tr("Selamat datang di BagiPanen", "Welcome to BagiPanen")}</h1>
       <p className="mt-1.5 text-sm text-pretty text-stone-600">
-        Tidak perlu email atau kata sandi. Dompetmu adalah akunmu, dan peranmu dikenali otomatis dari alamatnya.
+        {tr(
+          "Tidak perlu email atau kata sandi. Dompetmu adalah akunmu, dan peranmu dikenali otomatis dari alamatnya.",
+          "No email or password needed. Your wallet is your account, and your role is recognized automatically from its address.",
+        )}
       </p>
 
       <div className="mt-5">
         {IS_LOCAL ? (
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold text-hutan-950">Mode lokal: pilih akun demo</p>
+            <p className="text-sm font-semibold text-hutan-950">{tr("Mode lokal: pilih akun demo", "Local mode: pick a demo account")}</p>
             <AccountPicker className="[&_select]:h-12 [&_select]:max-w-none" />
           </div>
         ) : (
@@ -204,8 +218,8 @@ function SignIn() {
                   <Wallet className="size-5" aria-hidden />
                 </span>
                 <span className="flex-1">
-                  <span className="block font-semibold">Masuk dengan dompet</span>
-                  <span className="block truncate text-sm text-white/65">MetaMask, WalletConnect, dll.</span>
+                  <span className="block font-semibold">{tr("Masuk dengan dompet", "Sign in with a wallet")}</span>
+                  <span className="block truncate text-sm text-white/65">{tr("MetaMask, WalletConnect, dll.", "MetaMask, WalletConnect, etc.")}</span>
                 </span>
                 <ArrowRight className="size-5 transition group-hover:translate-x-1" aria-hidden />
               </button>
@@ -214,7 +228,10 @@ function SignIn() {
         )}
         <p className="mt-2 flex items-start gap-2 text-[11px] leading-snug text-stone-500">
           <KeyRound className="mt-px size-3.5 shrink-0" aria-hidden />
-          Tidak pernah meminta seed phrase. Masuk hanya membagikan alamat dompet, bukan izin memindahkan dana.
+          {tr(
+            "Tidak pernah meminta seed phrase. Masuk hanya membagikan alamat dompet, bukan izin memindahkan dana.",
+            "We never ask for your seed phrase. Signing in only shares your wallet address, not permission to move funds.",
+          )}
         </p>
       </div>
 
@@ -222,10 +239,10 @@ function SignIn() {
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-krem-200 pt-3 text-xs sm:mt-5 sm:pt-4 sm:text-sm">
         <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" className="font-semibold text-hutan-700 hover:text-hutan-900">
-          Pasang MetaMask
+          {tr("Pasang MetaMask", "Install MetaMask")}
         </a>
         <Link href="/coba" className="inline-flex items-center gap-1 text-stone-500 hover:text-hutan-800">
-          Panduan demo <ArrowRight className="size-3.5" aria-hidden />
+          {tr("Panduan demo", "Demo guide")} <ArrowRight className="size-3.5" aria-hidden />
         </Link>
       </div>
     </div>
@@ -254,13 +271,14 @@ export default function LoginPage() {
             <span className="font-display text-2xl font-semibold">BagiPanen</span>
           </div>
           <p className="mt-10 max-w-lg font-display text-4xl leading-tight font-semibold text-balance xl:text-5xl">
-            Satu dompet, <span className="text-emas-300 italic">semua peran</span> dikenali kontrak.
+            {tr("Satu dompet,", "One wallet,")} <span className="text-emas-300 italic">{tr("semua peran", "every role")}</span>{" "}
+            {tr("dikenali kontrak.", "recognized by the contract.")}
           </p>
           <ul className="mt-7 flex flex-col gap-3 text-white/80">
             {[
-              "Tanpa email & kata sandi, tanpa server yang menyimpan data akunmu",
-              "Dana tetap di kontrak, bukan di dompet BagiPanen",
-              "Peran petani, koperasi, admin, dan investor dibaca langsung dari BNB Chain",
+              tr("Tanpa email & kata sandi, tanpa server yang menyimpan data akunmu", "No email & password, no server storing your account data"),
+              tr("Dana tetap di kontrak, bukan di dompet BagiPanen", "Funds stay in the contracts, not in a BagiPanen wallet"),
+              tr("Peran petani, koperasi, admin, dan investor dibaca langsung dari BNB Chain", "Farmer, cooperative, admin, and investor roles are read straight from BNB Chain"),
             ].map((t) => (
               <li key={t} className="flex gap-3">
                 <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emas-400 text-hutan-950">
@@ -270,7 +288,7 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-10 text-xs text-white/45">{IS_LOCAL ? "Mode lokal · chain Anvil" : "BNB Smart Chain Testnet · token demo, bukan uang sungguhan"}</p>
+          <p className="mt-10 text-xs text-white/45">{IS_LOCAL ? tr("Mode lokal · chain Anvil", "Local mode · Anvil chain") : tr("BNB Smart Chain Testnet · token demo, bukan uang sungguhan", "BNB Smart Chain Testnet · demo tokens, not real money")}</p>
         </div>
 
         {/* Kartu masuk melayang di atas sawah */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { tr } from "@/lib/i18n";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Children, type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "./ui";
@@ -99,21 +100,21 @@ export function CardSlider({ children, label, footer }: { children: ReactNode; l
               {first + 1}
               {perView > 1 && n > 1 ? `–${Math.min(n, first + perView)}` : ""}
             </span>{" "}
-            dari {n}
+            {tr("dari", "of")} {n}
           </span>
           {footer}
         </div>
         <div className="flex gap-2">
           {[
-            { dir: -1 as const, Icon: ChevronLeft, text: "Sebelumnya", disabled: first <= 0 },
-            { dir: 1 as const, Icon: ChevronRight, text: "Berikutnya", disabled: first >= maxStart },
+            { dir: -1 as const, Icon: ChevronLeft, text: tr("Sebelumnya", "Previous"), disabled: first <= 0 },
+            { dir: 1 as const, Icon: ChevronRight, text: tr("Berikutnya", "Next"), disabled: first >= maxStart },
           ].map(({ dir, Icon, text, disabled }) => (
             <button
               key={text}
               type="button"
               onClick={() => go(dir)}
               disabled={disabled}
-              aria-label={`${text} di daftar proyek`}
+              aria-label={tr(`${text} di daftar proyek`, `${text} in the project list`)}
               className={cn(
                 "grid size-11 place-items-center rounded-full border transition",
                 disabled ? "cursor-not-allowed border-krem-200 text-stone-300" : "border-hutan-900 bg-hutan-900 text-white hover:bg-hutan-700",

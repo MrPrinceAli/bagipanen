@@ -1,5 +1,6 @@
 "use client";
 
+import { getLang, tr, trTerm } from "@/lib/i18n";
 import {
   ArrowDown,
   ArrowRight,
@@ -52,10 +53,10 @@ const TECH_STACK = [
 ];
 
 const FILTERS = [
-  { key: "all", label: "Semua" },
-  { key: "funding", label: "Cari dana" },
-  { key: "active", label: "Berjalan" },
-  { key: "done", label: "Selesai" },
+  { key: "all", label: ["Semua", "All"] },
+  { key: "funding", label: ["Cari dana", "Funding"] },
+  { key: "active", label: ["Berjalan", "Running"] },
+  { key: "done", label: ["Selesai", "Done"] },
 ] as const;
 type FilterKey = (typeof FILTERS)[number]["key"];
 
@@ -117,34 +118,35 @@ export default function HomePage() {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-emas-300 opacity-60" />
                   <span className="relative inline-flex size-2 rounded-full bg-emas-300" />
                 </span>
-                {IS_LOCAL ? "Mode demo lokal" : "Sudah berjalan di BNB Smart Chain Testnet"}
+                {IS_LOCAL ? tr("Mode demo lokal", "Local demo mode") : tr("Sudah berjalan di BNB Smart Chain Testnet", "Live on BNB Smart Chain Testnet")}
               </span>
               <h1 className="mt-6 font-display text-[2.15rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl xl:text-[3.4rem]">
-                Tanpa ijon, tanpa tengkulak.{" "}
+                {tr("Tanpa ijon, tanpa tengkulak.", "No ijon, no middlemen.")}{" "}
                 <span className="box-decoration-clone bg-linear-to-r from-emas-200 via-emas-300 to-emas-500 bg-clip-text pe-[0.12em] text-transparent italic">
-                  Hasil panen dibagi smart&nbsp;contract.
+                  {tr("Hasil panen dibagi smart\u00a0contract.", "The harvest is split by smart\u00a0contract.")}
                 </span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-pretty text-white/75">
-                Pendanaan modal tanam berbasis RWA di BNB&nbsp;Chain. Investor mendanai petani sejak awal musim tanam dan mendapat
-                bagian hasil panen saat proyek berhasil. Agen AI beridentitas ERC-8004 bersama koperasi memverifikasi setiap tahap,
-                sehingga penggunaan modal sampai pembagian hasil tercatat transparan.
+                {tr(
+                  "Pendanaan modal tanam berbasis RWA di BNB\u00a0Chain. Investor mendanai petani sejak awal musim tanam dan mendapat bagian hasil panen saat proyek berhasil. Agen AI beridentitas ERC-8004 bersama koperasi memverifikasi setiap tahap, sehingga penggunaan modal sampai pembagian hasil tercatat transparan.",
+                  "RWA-based crop financing on BNB\u00a0Chain. Investors back farmers from the start of the planting season and earn a share of the harvest when the project succeeds. An ERC-8004 AI agent and the cooperative verify every stage, so everything from how the capital is used to how the harvest is shared is recorded in the open.",
+                )}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <ButtonLink href="/#proyek" variant="gold" size="lg">
-                  Lihat proyek tanam <ArrowRight className="size-4" aria-hidden />
+                  {tr("Lihat proyek tanam", "See crop projects")} <ArrowRight className="size-4" aria-hidden />
                 </ButtonLink>
                 {role === "petani" ? (
                   <ButtonLink href="/create" variant="light" size="lg">
-                    Ajukan proyek tanam
+                    {tr("Ajukan proyek tanam", "Propose a crop project")}
                   </ButtonLink>
                 ) : (
                   <ButtonLink href="/#cara-kerja" variant="light" size="lg">
-                    Begini cara kerjanya
+                    {tr("Begini cara kerjanya", "See how it works")}
                   </ButtonLink>
                 )}
               </div>
-              <ul aria-label="Teknologi yang dipakai" className="mt-8 flex flex-wrap gap-2">
+              <ul aria-label={tr("Teknologi yang dipakai", "Technologies used")} className="mt-8 flex flex-wrap gap-2">
                 {TECH_STACK.map(({ icon: Icon, label }) => (
                   <li
                     key={label}
@@ -166,7 +168,7 @@ export default function HomePage() {
           href="#kenapa"
           className="mx-auto mb-6 hidden flex-col items-center gap-1.5 text-xs font-medium tracking-wide text-white/55 transition hover:text-white sm:flex"
         >
-          Gulir untuk lanjut
+          {tr("Gulir untuk lanjut", "Scroll to continue")}
           <ArrowDown className="scroll-cue size-4" aria-hidden />
         </a>
       </section>
@@ -180,27 +182,29 @@ export default function HomePage() {
           {[
             {
               icon: HandCoins,
-              label: "Dana tersalurkan",
+              label: tr("Dana tersalurkan", "Funds deployed"),
               value: campaigns ? formatUsdt(totalFunded) : "…",
-              sub: campaigns ? `USDT · sekitar ${formatRupiah(totalFunded)}` : "memuat dari blockchain",
+              sub: campaigns ? `USDT · ${tr("sekitar", "about")} ${formatRupiah(totalFunded)}` : tr("memuat dari blockchain", "loading from the blockchain"),
             },
             {
               icon: Wheat,
-              label: "Proyek aktif",
+              label: tr("Proyek aktif", "Active projects"),
               value: campaigns ? activeCount : "…",
-              sub: campaigns ? `cari dana atau berjalan, dari ${visible.length} proyek` : "memuat…",
+              sub: campaigns
+                ? tr(`cari dana atau berjalan, dari ${visible.length} proyek`, `funding or running, out of ${visible.length} projects`)
+                : tr("memuat…", "loading…"),
             },
             {
               icon: Landmark,
-              label: "Dana cadangan",
+              label: tr("Dana cadangan", "Reserve fund"),
               value: reserve === undefined ? "…" : formatUsdt(reserve),
-              sub: "USDT untuk kompensasi gagal panen",
+              sub: tr("USDT untuk kompensasi gagal panen", "USDT to compensate crop failures"),
             },
             {
               icon: Users,
-              label: "Petani",
+              label: tr("Petani", "Farmers"),
               value: regs ? regs.farmers.length : "…",
-              sub: regs ? `didampingi ${regs.cooperatives.length} koperasi` : "memuat…",
+              sub: regs ? tr(`didampingi ${regs.cooperatives.length} koperasi`, `supported by ${regs.cooperatives.length} cooperatives`) : tr("memuat…", "loading…"),
             },
           ].map((s, i) => (
             <Reveal key={s.label} delay={i * 90}>
@@ -215,8 +219,11 @@ export default function HomePage() {
         <Container>
           <Reveal>
             <SectionTitle
-              eyebrow="Proyek tanam"
-              description="Setiap proyek adalah satu musim tanam satu petani, lengkap dengan rencana biaya dan perkiraan panennya."
+              eyebrow={tr("Proyek tanam", "Crop projects")}
+              description={tr(
+                "Setiap proyek adalah satu musim tanam satu petani, lengkap dengan rencana biaya dan perkiraan panennya.",
+                "Each project is one growing season of one farmer, complete with a cost plan and a harvest estimate.",
+              )}
               action={
                 <div className="flex flex-wrap gap-1 rounded-full border border-krem-200 bg-white p-1 shadow-soft">
                   {FILTERS.map((f) => {
@@ -231,14 +238,14 @@ export default function HomePage() {
                           filter === f.key ? "bg-hutan-900 text-white" : "text-stone-600 hover:bg-krem-100",
                         )}
                       >
-                        {f.label} <span className={cn("ml-0.5 text-xs", filter === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
+                        {tr(f.label[0], f.label[1])} <span className={cn("ml-0.5 text-xs", filter === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
                       </button>
                     );
                   })}
                 </div>
               }
             >
-              Pilih petani yang mau kamu dukung
+              {tr("Pilih petani yang mau kamu dukung", "Choose a farmer to support")}
             </SectionTitle>
           </Reveal>
 
@@ -249,24 +256,36 @@ export default function HomePage() {
               ))}
             </div>
           ) : isError ? (
-            <Notice tone="error">Data proyek belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.</Notice>
+            <Notice tone="error">
+              {tr(
+                "Data proyek belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.",
+                "Project data can't be read from the blockchain yet. Check your internet connection, then reload the page.",
+              )}
+            </Notice>
           ) : shown.length === 0 ? (
-            <EmptyState icon={Sprout} title={visible.length === 0 ? "Belum ada proyek tanam yang dibuka" : "Belum ada proyek di kategori ini"}>
+            <EmptyState icon={Sprout} title={
+                visible.length === 0
+                  ? tr("Belum ada proyek tanam yang dibuka", "No crop projects are open yet")
+                  : tr("Belum ada proyek di kategori ini", "No projects in this category yet")
+              }>
               {role === "petani" ? (
                 <Link href="/create" className="font-semibold text-hutan-700 underline">
-                  Ajukan proyek tanam pertamamu
+                  {tr("Ajukan proyek tanam pertamamu", "Propose your first crop project")}
                 </Link>
               ) : (
-                "Proyek baru muncul di sini setelah petani mengajukan dan admin menyetujuinya."
+                tr(
+                  "Proyek baru muncul di sini setelah petani mengajukan dan admin menyetujuinya.",
+                  "New projects appear here after a farmer proposes them and the admin approves.",
+                )
               )}
             </EmptyState>
           ) : (
             <CardSlider
               key={filter}
-              label="Daftar proyek tanam"
+              label={tr("Daftar proyek tanam", "Crop projects")}
               footer={
                 <Link href="/proyek" className="inline-flex items-center gap-1 text-sm font-semibold text-hutan-700 hover:text-hutan-900">
-                  Lihat semua di peta <ArrowRight className="size-4" aria-hidden />
+                  {tr("Lihat semua di peta", "See all on the map")} <ArrowRight className="size-4" aria-hidden />
                 </Link>
               }
             >
@@ -280,7 +299,7 @@ export default function HomePage() {
 
           {drafts.length > 0 && (role === "admin" || role === "petani") && (
             <div className="mt-12">
-              <h3 className="mb-4 font-display text-xl font-semibold text-hutan-950">Menunggu review admin ({drafts.length})</h3>
+              <h3 className="mb-4 font-display text-xl font-semibold text-hutan-950">{tr("Menunggu review admin", "Awaiting admin review")} ({drafts.length})</h3>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {drafts.map((c) => (
                   <CampaignCard key={c.address} c={c} />
@@ -299,34 +318,39 @@ export default function HomePage() {
         <Container className="grid gap-6 lg:grid-cols-2">
           <Reveal className="h-full">
             <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
-              <PoweredBy items={[{ badge: "ERC-8004", label: "Agen #2544" }, { logo: "bnb", label: "BNB Smart Chain" }]} />
+              <PoweredBy items={[{ badge: "ERC-8004", label: tr("Agen #2544", "Agent #2544") }, { logo: "bnb", label: "BNB Smart Chain" }]} />
               <div>
-                <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Dua kunci pencairan</p>
-                <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Uang baru keluar kalau dua pihak setuju</h2>
+                <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">{tr("Dua kunci pencairan", "Two-key release")}</p>
+                <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">{tr("Uang baru keluar kalau dua pihak setuju", "Money only moves when both sides agree")}</h2>
                 <p className="mt-2 text-pretty text-stone-600">
-                  Agen AI memeriksa foto: lokasi GPS, tanggal, jenis tanaman, fase tumbuh, sampai cuaca 14 hari terakhir. Koperasi yang
-                  kenal lahannya ikut memastikan. Kalau salah satu menolak, dananya tetap terkunci.
+                  {tr(
+                    "Agen AI memeriksa foto: lokasi GPS, tanggal, jenis tanaman, fase tumbuh, sampai cuaca 14 hari terakhir. Koperasi yang kenal lahannya ikut memastikan. Kalau salah satu menolak, dananya tetap terkunci.",
+                    "The AI agent checks each photo: GPS location, date, crop type, growth stage, even the last 14 days of weather. The cooperative, who knows the land, confirms too. If either one says no, the funds stay locked.",
+                  )}
                 </p>
               </div>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                 <div className="flex flex-col items-center gap-2 rounded-2xl bg-hutan-50 p-4 text-center">
                   <Bot className="size-6 text-hutan-700" aria-hidden />
-                  <p className="text-sm font-semibold text-hutan-900">Agen AI</p>
+                  <p className="text-sm font-semibold text-hutan-900">{tr("Agen AI", "AI agent")}</p>
                 </div>
                 <span className="font-display text-2xl text-emas-500">+</span>
                 <div className="flex flex-col items-center gap-2 rounded-2xl bg-hutan-50 p-4 text-center">
                   <Users className="size-6 text-hutan-700" aria-hidden />
-                  <p className="text-sm font-semibold text-hutan-900">Koperasi</p>
+                  <p className="text-sm font-semibold text-hutan-900">{tr("Koperasi", "Cooperative")}</p>
                 </div>
               </div>
               <div className="mt-auto">
                 <div className="grow-x flex h-12 overflow-hidden rounded-2xl text-sm font-semibold">
-                  <div className="flex w-[40%] items-center justify-center bg-hutan-800 text-white">Tanam 40%</div>
-                  <div className="flex w-[35%] items-center justify-center bg-hutan-600 text-white">Tumbuh 35%</div>
-                  <div className="flex w-[25%] items-center justify-center bg-emas-400 text-hutan-950">Pra-panen 25%</div>
+                  <div className="flex w-[40%] items-center justify-center bg-hutan-800 text-white">{tr("Tanam", "Planting")} 40%</div>
+                  <div className="flex w-[35%] items-center justify-center bg-hutan-600 text-white">{tr("Tumbuh", "Growing")} 35%</div>
+                  <div className="flex w-[25%] items-center justify-center bg-emas-400 text-hutan-950">{tr("Pra-panen", "Pre-harvest")} 25%</div>
                 </div>
                 <p className="mt-2 text-xs text-pretty text-stone-500">
-                  Kalau ditolak tiga kali berturut-turut, admin yang memutuskan, dan keputusannya tercatat publik.
+                  {tr(
+                    "Kalau ditolak tiga kali berturut-turut, admin yang memutuskan, dan keputusannya tercatat publik.",
+                    "If a stage is rejected three times in a row, the admin decides, and the decision is recorded publicly.",
+                  )}
                 </p>
               </div>
             </Card>
@@ -336,19 +360,22 @@ export default function HomePage() {
             <Card className="flex h-full flex-col gap-6 p-6 sm:p-8">
               <PoweredBy items={[{ logo: "solidity" }, { logo: "openzeppelin", label: "OpenZeppelin v5" }, { logo: "bnb" }]} />
               <div>
-                <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Bagi hasil</p>
-                <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">Modal kembali dulu, baru untung dibagi</h2>
+                <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">{tr("Bagi hasil", "Profit sharing")}</p>
+                <h2 className="mt-2 font-display text-3xl font-semibold text-balance text-hutan-950">{tr("Modal kembali dulu, baru untung dibagi", "Capital comes back first, then profit is shared")}</h2>
                 <p className="mt-2 text-pretty text-stone-600">
-                  Contoh dari proyek demo cabai merah: modal 1.000&nbsp;USDT, panen terjual 1.650&nbsp;USDT, jadi untungnya 650&nbsp;USDT.
+                  {tr(
+                    "Contoh dari proyek demo cabai merah: modal 1.000\u00a0USDT, panen terjual 1.650\u00a0USDT, jadi untungnya 650\u00a0USDT.",
+                    "Example from the red chili demo project: 1,000\u00a0USDT of capital, the harvest sold for 1,650\u00a0USDT, so the profit is 650\u00a0USDT.",
+                  )}
                 </p>
               </div>
               <SplitBar />
               <dl className="grid grid-cols-2 gap-4 text-sm">
                 {[
-                  ["bg-hutan-800", "Modal investor", "1.000 USDT kembali utuh"],
-                  ["bg-hutan-500", "Investor (40% untung)", "260 USDT, imbal hasil 26%"],
-                  ["bg-emas-400", "Petani (55% untung)", "357,5 USDT di luar modal kerja"],
-                  ["bg-emas-700", "Dana cadangan (5%)", "32,5 USDT untuk musim gagal panen"],
+                  ["bg-hutan-800", tr("Modal investor", "Investor capital"), tr("1.000 USDT kembali utuh", "1,000 USDT returned in full")],
+                  ["bg-hutan-500", tr("Investor (40% untung)", "Investors (40% of profit)"), tr("260 USDT, imbal hasil 26%", "260 USDT, a 26% return")],
+                  ["bg-emas-400", tr("Petani (55% untung)", "Farmer (55% of profit)"), tr("357,5 USDT di luar modal kerja", "357.5 USDT on top of working capital")],
+                  ["bg-emas-700", tr("Dana cadangan (5%)", "Reserve fund (5%)"), tr("32,5 USDT untuk musim gagal panen", "32.5 USDT for crop-failure seasons")],
                 ].map(([color, label, value]) => (
                   <div key={label} className="flex gap-2.5">
                     <span className={cn("mt-1 size-3 shrink-0 rounded-full", color)} aria-hidden />
@@ -379,17 +406,20 @@ export default function HomePage() {
           <Reveal>
             <div className="relative overflow-hidden rounded-[2rem] bg-linear-to-br from-emas-300 via-emas-400 to-emas-500 px-6 py-12 text-hutan-950 sm:px-12 sm:py-16">
               <Wheat className="absolute -right-6 -bottom-8 size-48 text-hutan-950/10" aria-hidden />
-              <h2 className="max-w-2xl font-display text-3xl font-semibold text-balance sm:text-4xl">Siap ikut menanam bersama petani?</h2>
+              <h2 className="max-w-2xl font-display text-3xl font-semibold text-balance sm:text-4xl">{tr("Siap ikut menanam bersama petani?", "Ready to grow with farmers?")}</h2>
               <p className="mt-3 max-w-xl text-pretty text-hutan-950/75">
-                Mulai dari nominal kecil. Semua langkahnya bisa kamu pantau sendiri, dari foto lahan sampai nota penjualan.
+                {tr(
+                  "Mulai dari nominal kecil. Semua langkahnya bisa kamu pantau sendiri, dari foto lahan sampai nota penjualan.",
+                  "Start small. You can follow every step yourself, from field photos to the sales receipt.",
+                )}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <ButtonLink href="/#proyek" variant="primary" size="lg">
-                  Pilih proyek tanam <ArrowRight className="size-4" aria-hidden />
+                  {tr("Pilih proyek tanam", "Choose a crop project")} <ArrowRight className="size-4" aria-hidden />
                 </ButtonLink>
                 {role === "petani" && (
                   <ButtonLink href="/create" variant="secondary" size="lg">
-                    Ajukan proyek tanam
+                    {tr("Ajukan proyek tanam", "Propose a crop project")}
                   </ButtonLink>
                 )}
               </div>
@@ -407,14 +437,20 @@ export default function HomePage() {
  * Paragraf masalah lalu paragraf solusi, menyala kata demi kata mengikuti gulir (berlanjut dari
  * paragraf pertama ke kedua). `*kata*` = sorotan emas.
  */
-const STATEMENT = [
-  "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* Semua risikonya ditanggung petani sendirian.",
-  "BagiPanen menggantinya dengan modal yang transparan: dikunci di kontrak, cair per tahap, *risikonya ditanggung bersama investor,* dan *untungnya dibagi adil.*",
-];
+const STATEMENT = {
+  id: [
+    "Selama ini modal tanam petani kecil datang dari *tengkulak.* Panen dibeli *murah sebelum waktunya,* dan kalau gagal, petani yang *terjerat utang.* Semua risikonya ditanggung petani sendirian.",
+    "BagiPanen menggantinya dengan modal yang transparan: dikunci di kontrak, cair per tahap, *risikonya ditanggung bersama investor,* dan *untungnya dibagi adil.*",
+  ],
+  en: [
+    "Until now, small farmers' working capital has come from *middlemen.* The harvest is bought *cheap, before it's even grown,* and when it fails, the farmer is *left in debt.* All the risk falls on the farmer alone.",
+    "BagiPanen replaces that with transparent capital: locked in a contract, released stage by stage, *with the risk shared by investors,* and *the profit split fairly.*",
+  ],
+};
 
-const STATEMENT_PARAGRAPHS = (() => {
+function statementParagraphs() {
   let index = 0;
-  return STATEMENT.map((paragraph) => {
+  return STATEMENT[getLang()].map((paragraph) => {
     let accent = false;
     return paragraph.split(" ").map((raw) => {
       if (raw.startsWith("*")) accent = true;
@@ -423,19 +459,19 @@ const STATEMENT_PARAGRAPHS = (() => {
       return word;
     });
   });
-})();
-const STATEMENT_WORD_COUNT = STATEMENT_PARAGRAPHS.flat().length;
+}
 
-const FACTS = [
-  { value: "55%", label: "untung untuk petani" },
-  { value: "3 tahap", label: "pencairan terverifikasi" },
-  { value: "100%", label: "refund jika target gagal" },
+const facts = () => [
+  { value: "55%", label: tr("untung untuk petani", "profit to the farmer") },
+  { value: tr("3 tahap", "3 stages"), label: tr("pencairan terverifikasi", "verified releases") },
+  { value: "100%", label: tr("refund jika target gagal", "refund if the target fails") },
 ];
 
 function ProblemStatement() {
   const reduced = useReducedMotion();
   const [ref, progress] = useScrollProgress<HTMLElement>();
-  const n = STATEMENT_WORD_COUNT;
+  const [paragraphs] = useState(statementParagraphs);
+  const n = paragraphs.flat().length;
   const lit = reduced ? n : Math.round(Math.min(1, Math.max(0, (progress - 0.06) / 0.72)) * n);
   const factsShown = reduced || progress > 0.8;
 
@@ -444,8 +480,8 @@ function ProblemStatement() {
       <div className="sticky top-28 flex h-[calc(100svh-7rem)] items-center overflow-hidden lg:top-16 lg:h-[calc(100svh-4rem)]">
         <div className="pola-bedengan absolute inset-0" aria-hidden />
         <Container className="relative">
-          <p className="mb-4 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase sm:mb-6">Kenapa BagiPanen</p>
-          {STATEMENT_PARAGRAPHS.map((words, p) => (
+          <p className="mb-4 text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase sm:mb-6">{tr("Kenapa BagiPanen", "Why BagiPanen")}</p>
+          {paragraphs.map((words, p) => (
             <p
               key={p}
               className={cn(
@@ -472,7 +508,7 @@ function ProblemStatement() {
               factsShown ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
             )}
           >
-            {FACTS.map((f) => (
+            {facts().map((f) => (
               <div key={f.label} className="border-l border-emas-300/40 pl-3 sm:pl-4">
                 <dt className="font-display text-2xl font-semibold text-emas-300 sm:text-4xl">{f.value}</dt>
                 <dd className="mt-1 text-xs leading-snug text-balance text-white/60 sm:text-sm">{f.label}</dd>
@@ -487,22 +523,34 @@ function ProblemStatement() {
 
 /* ============================================================ Cara kerja */
 
-const STEPS: { title: string; body: string }[] = [
+const steps = (): { title: string; body: string }[] => [
   {
-    title: "Petani mengajukan",
-    body: "Petani anggota koperasi menulis kebutuhan modal, rencana biaya, dan perkiraan panennya. Admin memeriksa dulu sebelum pendanaan dibuka.",
+    title: tr("Petani mengajukan", "A farmer proposes"),
+    body: tr(
+      "Petani anggota koperasi menulis kebutuhan modal, rencana biaya, dan perkiraan panennya. Admin memeriksa dulu sebelum pendanaan dibuka.",
+      "A cooperative member farmer writes down the capital needed, a cost plan, and the harvest estimate. The admin reviews it before funding opens.",
+    ),
   },
   {
-    title: "Kamu ikut mendanai",
-    body: "Danai berapa pun yang kamu mau. Setiap 1 USDT jadi 1 token porsi yang mencatat bagianmu dan tidak bisa dipindahtangankan.",
+    title: tr("Kamu ikut mendanai", "You fund it"),
+    body: tr(
+      "Danai berapa pun yang kamu mau. Setiap 1 USDT jadi 1 token porsi yang mencatat bagianmu dan tidak bisa dipindahtangankan.",
+      "Fund any amount you like. Every 1 USDT becomes 1 non-transferable share token that records your portion.",
+    ),
   },
   {
-    title: "Dana cair per tahap",
-    body: "Tanam, tumbuh, pra-panen. Tiap tahap baru cair setelah foto lahan terbaru lolos pengecekan agen AI dan koperasi.",
+    title: tr("Dana cair per tahap", "Funds released in stages"),
+    body: tr(
+      "Tanam, tumbuh, pra-panen. Tiap tahap baru cair setelah foto lahan terbaru lolos pengecekan agen AI dan koperasi.",
+      "Planting, growing, pre-harvest. Each stage is released only after a fresh field photo passes the AI agent and the cooperative.",
+    ),
   },
   {
-    title: "Panen dibagi otomatis",
-    body: "Hasil penjualan disetor ke kontrak. Modal investor kembali dulu, sisanya dibagi ke petani, investor, dan dana cadangan.",
+    title: tr("Panen dibagi otomatis", "Harvest split automatically"),
+    body: tr(
+      "Hasil penjualan disetor ke kontrak. Modal investor kembali dulu, sisanya dibagi ke petani, investor, dan dana cadangan.",
+      "Sales proceeds are deposited into the contract. Investors get their capital back first, and the rest is split between the farmer, investors, and the reserve fund.",
+    ),
   },
 ];
 
@@ -522,6 +570,7 @@ const SCENES = [
 function HowItWorks() {
   const reduced = useReducedMotion();
   const [ref, progress] = useScrollProgress<HTMLDivElement>(400);
+  const STEPS = steps();
   const n = STEPS.length;
   const active = Math.min(n - 1, Math.floor(progress * n));
   const local = progress * n - active;
@@ -540,10 +589,13 @@ function HowItWorks() {
       <Container className="pt-16 pb-10 sm:pt-24 sm:pb-14">
         <Reveal>
           <SectionTitle
-            eyebrow="Cara kerja"
-            description={<>Tidak ada perantara yang memegang uangmu. Semua aturan main sudah ditulis di smart&nbsp;contract sejak awal.</>}
+            eyebrow={tr("Cara kerja", "How it works")}
+            description={tr(
+              "Tidak ada perantara yang memegang uangmu. Semua aturan main sudah ditulis di smart\u00a0contract sejak awal.",
+              "No middleman holds your money. All the rules are written into the smart\u00a0contract from day one.",
+            )}
           >
-            Dari lahan sampai bagi hasil
+            {tr("Dari lahan sampai bagi hasil", "From the field to the profit split")}
           </SectionTitle>
         </Reveal>
       </Container>
@@ -587,13 +639,13 @@ function HowItWorks() {
           })}
 
           {/* Navigasi titik: posisi langkah & lompat langsung */}
-          <nav aria-label="Langkah cara kerja" className="absolute top-1/2 right-3 z-20 flex -translate-y-1/2 flex-col gap-2.5 sm:right-6">
+          <nav aria-label={tr("Langkah cara kerja", "How-it-works steps")} className="absolute top-1/2 right-3 z-20 flex -translate-y-1/2 flex-col gap-2.5 sm:right-6">
             {STEPS.map((s, i) => (
               <button
                 key={s.title}
                 type="button"
                 onClick={() => jump(i)}
-                aria-label={`Langkah ${i + 1}: ${s.title}`}
+                aria-label={`${tr("Langkah", "Step")} ${i + 1}: ${s.title}`}
                 aria-current={i === active ? "step" : undefined}
                 className="group flex items-center justify-end gap-2"
               >
@@ -631,10 +683,10 @@ function HowItWorks() {
 function SplitBar() {
   return (
     <div className="grow-x flex h-12 overflow-hidden rounded-2xl text-xs font-semibold sm:text-sm">
-      <div className="flex w-[60.6%] items-center justify-center bg-hutan-800 text-white">Modal 1.000</div>
+      <div className="flex w-[60.6%] items-center justify-center bg-hutan-800 text-white">{tr("Modal 1.000", "Capital 1,000")}</div>
       <div className="flex w-[15.8%] items-center justify-center bg-hutan-500 text-white">260</div>
-      <div className="flex w-[21.7%] items-center justify-center bg-emas-400 text-hutan-950">357,5</div>
-      <div className="w-[1.9%] bg-emas-700" title="Dana cadangan 32,5" />
+      <div className="flex w-[21.7%] items-center justify-center bg-emas-400 text-hutan-950">{tr("357,5", "357.5")}</div>
+      <div className="w-[1.9%] bg-emas-700" title={tr("Dana cadangan 32,5", "Reserve fund 32.5")} />
     </div>
   );
 }
@@ -648,15 +700,17 @@ function AgentSection() {
       <div className="pola-bedengan absolute inset-0" aria-hidden />
       <Container className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
         <Reveal>
-          <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Agen AI verifikator</p>
-          <h2 className="mt-2 font-display text-3xl font-semibold text-balance sm:text-4xl">Pemeriksa lapangan yang punya identitas dan rekam jejak</h2>
+          <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">{tr("Agen AI verifikator", "AI verifier agent")}</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold text-balance sm:text-4xl">{tr("Pemeriksa lapangan yang punya identitas dan rekam jejak", "A field inspector with an identity and a track record")}</h2>
           <p className="mt-4 max-w-xl leading-relaxed text-pretty text-white/70">
-            Agen kami terdaftar di registri identitas ERC-8004 dan memakai dompetnya sendiri, terpisah dari admin, koperasi, dan petani.
-            Setiap putusan disertai alasan yang bisa dibaca siapa saja, dan statistiknya tidak bisa dihapus.
+            {tr(
+              "Agen kami terdaftar di registri identitas ERC-8004 dan memakai dompetnya sendiri, terpisah dari admin, koperasi, dan petani. Setiap putusan disertai alasan yang bisa dibaca siapa saja, dan statistiknya tidak bisa dihapus.",
+              "Our agent is registered in the ERC-8004 identity registry and uses its own wallet, separate from the admin, cooperatives, and farmers. Every verdict comes with reasons anyone can read, and its statistics can't be erased.",
+            )}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ButtonLink href="/agent" variant="gold">
-              Lihat profil agen <ArrowRight className="size-4" aria-hidden />
+              {tr("Lihat profil agen", "View agent profile")} <ArrowRight className="size-4" aria-hidden />
             </ButtonLink>
           </div>
         </Reveal>
@@ -664,23 +718,34 @@ function AgentSection() {
           {[
             {
               icon: BadgeCheck,
-              label: "Identitas",
+              label: tr("Identitas", "Identity"),
               value: agent?.configured ? `#${agent.agentId.toString()}` : "…",
-              sub: agent?.configured ? (identityIsMock(agent.identityRegistry) ? "registri cadangan (lokal)" : "registri ERC-8004") : undefined,
+              sub: agent?.configured
+                ? identityIsMock(agent.identityRegistry)
+                  ? tr("registri cadangan (lokal)", "fallback registry (local)")
+                  : tr("registri ERC-8004", "ERC-8004 registry")
+                : undefined,
             },
             {
               icon: ShieldCheck,
-              label: "Tingkat terima",
+              label: tr("Tingkat terima", "Approval rate"),
               value: agent?.configured && agent.stats.verdicts > 0 ? formatPercent(agent.stats.approvals / agent.stats.verdicts) : "–",
-              sub: agent?.configured ? `dari ${agent.stats.verdicts} foto` : undefined,
+              sub: agent?.configured ? tr(`dari ${agent.stats.verdicts} foto`, `of ${agent.stats.verdicts} photos`) : undefined,
             },
             {
               icon: Bot,
-              label: "Foto dicek",
+              label: tr("Foto dicek", "Photos checked"),
               value: agent?.configured ? agent.stats.verdicts : "…",
-              sub: agent?.configured ? `${agent.stats.approvals} diterima · ${agent.stats.rejections} ditolak` : undefined,
+              sub: agent?.configured
+                ? tr(`${agent.stats.approvals} diterima · ${agent.stats.rejections} ditolak`, `${agent.stats.approvals} approved · ${agent.stats.rejections} rejected`)
+                : undefined,
             },
-            { icon: Scale, label: "Dikoreksi admin", value: agent?.configured ? agent.stats.overturned : "…", sub: "putusan AI yang dikoreksi" },
+            {
+              icon: Scale,
+              label: tr("Dikoreksi admin", "Overruled by admin"),
+              value: agent?.configured ? agent.stats.overturned : "…",
+              sub: tr("putusan AI yang dikoreksi", "AI verdicts corrected"),
+            },
           ].map((s, i) => (
             <Reveal key={s.label} delay={i * 90}>
               <Stat variant="glass" icon={s.icon} label={s.label} value={s.value} sub={s.sub} />
@@ -739,7 +804,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
     <div
       role="region"
       aria-roledescription="carousel"
-      aria-label="Proyek tanam pilihan"
+      aria-label={tr("Proyek tanam pilihan", "Featured crop projects")}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -782,7 +847,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
             <div
               key={c.address}
               aria-roledescription="slide"
-              aria-label={`${i + 1} dari ${n}`}
+              aria-label={tr(`${i + 1} dari ${n}`, `${i + 1} of ${n}`)}
               aria-hidden={r !== 0}
               inert={r !== 0}
               className="relative [grid-area:1/1]"
@@ -808,7 +873,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
           <button
             type="button"
             onClick={() => setIndex((i) => i - 1)}
-            aria-label="Proyek sebelumnya"
+            aria-label={tr("Proyek sebelumnya", "Previous project")}
             className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
           >
             <ChevronLeft className="size-4" aria-hidden />
@@ -819,7 +884,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
                 key={c.address}
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={`Tampilkan proyek ${i + 1}`}
+                aria-label={tr(`Tampilkan proyek ${i + 1}`, `Show project ${i + 1}`)}
                 aria-current={i === current}
                 className="grid h-6 place-items-center px-0.5"
               >
@@ -830,7 +895,7 @@ function FeaturedCarousel({ items }: { items: CampaignSummary[] }) {
           <button
             type="button"
             onClick={() => setIndex((i) => i + 1)}
-            aria-label="Proyek berikutnya"
+            aria-label={tr("Proyek berikutnya", "Next project")}
             className="grid size-9 place-items-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
           >
             <ChevronRight className="size-4" aria-hidden />
@@ -861,18 +926,18 @@ function FeaturedCampaign({ c }: { c: CampaignSummary }) {
         </p>
       </div>
       <div className="flex flex-col gap-3 p-3 pt-4">
-        <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Proyek pilihan</p>
-        <h3 className="font-display text-xl leading-snug font-semibold text-balance">{meta?.title ?? `${c.commodity} di ${c.locationName}`}</h3>
+        <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">{tr("Proyek pilihan", "Featured project")}</p>
+        <h3 className="font-display text-xl leading-snug font-semibold text-balance">{meta?.title ?? `${trTerm(c.commodity)} ${tr("di", "in")} ${c.locationName}`}</h3>
         <ProgressBar value={c.raisedAmount} max={c.targetAmount} dark />
         <div className="flex items-baseline justify-between text-sm text-white/70">
           <span>
-            <span className="font-semibold text-white">{formatUsdt(c.raisedAmount)}</span> dari {formatUsdt(c.targetAmount)} USDT
+            <span className="font-semibold text-white">{formatUsdt(c.raisedAmount)}</span> {tr("dari", "of")} {formatUsdt(c.targetAmount)} USDT
           </span>
           <span className="font-semibold text-emas-300">{pct}%</span>
         </div>
         <div className="flex items-center justify-between border-t border-white/10 pt-3 text-sm">
-          <span className="text-white/60">Proyeksi imbal hasil</span>
-          <span className="font-semibold text-emas-200">{formatPercent(projectedInvestorReturn(c.targetAmount, c.estimatedRevenue))} / musim</span>
+          <span className="text-white/60">{tr("Proyeksi imbal hasil", "Projected return")}</span>
+          <span className="font-semibold text-emas-200">{formatPercent(projectedInvestorReturn(c.targetAmount, c.estimatedRevenue))} / {tr("musim", "season")}</span>
         </div>
       </div>
     </Link>

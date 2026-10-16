@@ -85,6 +85,11 @@ const TERMS: Record<string, string> = {
   kakao: "Cocoa",
   tebu: "Sugarcane",
   sayuran: "Vegetables",
+  // kondisi tanaman dari penilaian Gemini
+  baik: "good",
+  sedang: "fair",
+  buruk: "poor",
+  rusak: "damaged",
 };
 
 /** "Padi" → "Rice" (EN); istilah tak dikenal dikembalikan apa adanya. */

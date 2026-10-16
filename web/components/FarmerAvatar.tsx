@@ -1,3 +1,4 @@
+import { tr } from "@/lib/i18n";
 import { useId } from "react";
 import { cn } from "./ui";
 
@@ -168,7 +169,7 @@ export function FarmerAvatar({
   const wide = s.smile === "lebar";
 
   return (
-    <svg viewBox="0 0 120 120" className={cn("block", className)} role="img" aria-label={`Ilustrasi ${name}`}>
+    <svg viewBox="0 0 120 120" className={cn("block", className)} role="img" aria-label={tr(`Ilustrasi ${name}`, `Illustration of ${name}`)}>
       <defs>
         <clipPath id={`clip-${uid}`}>
           <rect width="120" height="120" rx="30" />

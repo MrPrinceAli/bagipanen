@@ -1,5 +1,6 @@
 "use client";
 
+import { tr, trTerm } from "@/lib/i18n";
 import { ChevronDown, MapPin, RotateCcw, Sprout } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,10 +14,10 @@ import { INDONESIA_PATH, MAP_BOUNDS, MAP_HEIGHT, MAP_WIDTH, NEIGHBORS_PATH, proj
 import { type CampaignMetadata, type CampaignSummary, Status } from "@/lib/types";
 
 const STATUS_FILTERS = [
-  { key: "all", label: "Semua" },
-  { key: "funding", label: "Cari dana" },
-  { key: "active", label: "Berjalan" },
-  { key: "done", label: "Selesai" },
+  { key: "all", label: ["Semua", "All"] },
+  { key: "funding", label: ["Cari dana", "Funding"] },
+  { key: "active", label: ["Berjalan", "Running"] },
+  { key: "done", label: ["Selesai", "Done"] },
 ] as const;
 type StatusKey = (typeof STATUS_FILTERS)[number]["key"];
 
@@ -67,11 +68,11 @@ function MapTooltip({ c }: { c: CampaignSummary }) {
         <span className="size-2 rounded-full ring-1 ring-hutan-950/30" style={{ background: pinColor(c) }} aria-hidden />
         {statusLabel(c.status, c.failType)}
       </p>
-      <p className="mt-1 text-sm leading-snug font-semibold text-hutan-950">{meta?.title ?? `${c.commodity} di ${c.locationName}`}</p>
+      <p className="mt-1 text-sm leading-snug font-semibold text-hutan-950">{meta?.title ?? `${trTerm(c.commodity)} ${tr("di", "in")} ${c.locationName}`}</p>
       <p className="mt-1 flex items-center gap-1 text-xs text-stone-500">
         <MapPin className="size-3" aria-hidden /> {c.locationName}
       </p>
-      <p className="mt-2 text-[11px] font-semibold text-hutan-700">Klik pin untuk membuka →</p>
+      <p className="mt-2 text-[11px] font-semibold text-hutan-700">{tr("Klik pin untuk membuka →", "Click the pin to open →")}</p>
     </div>
   );
 }
@@ -89,7 +90,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
 
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="block h-auto w-full" role="img" aria-label="Peta sebaran proyek tanam di Indonesia">
+      <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="block h-auto w-full" role="img" aria-label={tr("Peta sebaran proyek tanam di Indonesia", "Map of crop projects across Indonesia")}>
         <defs>
           <pattern id="atlas-waves" width="18" height="10" patternUnits="userSpaceOnUse">
             <path d="M0 6 Q4.5 3 9 6 T18 6" stroke="#7d93a0" strokeOpacity="0.35" fill="none" strokeWidth="0.8" />
@@ -133,7 +134,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
             <g>
               <line x1={0} y1={y} x2={MAP_WIDTH} y2={y} stroke={ink} strokeOpacity="0.4" strokeWidth="0.8" strokeDasharray="6 4" />
               <text x={20} y={y - 4} fill={ink} fillOpacity="0.7" fontSize="9" fontStyle="italic" fontFamily={serif}>
-                Khatulistiwa 0°
+                {tr("Khatulistiwa 0°", "Equator 0°")}
               </text>
             </g>
           );
@@ -153,7 +154,7 @@ function ProjectMap({ items, highlight }: { items: CampaignSummary[]; highlight:
             const { x, y } = projectToMap(l.lat, l.lon);
             return (
               <text key={l.name} x={x} y={y} transform={l.rot ? `rotate(${l.rot} ${x} ${y})` : undefined}>
-                {l.name}
+                {l.name === "Jawa" ? tr("Jawa", "Java") : l.name}
               </text>
             );
           })}
@@ -245,7 +246,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
         <option value="all">{label}</option>
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {trTerm(o)}
           </option>
         ))}
       </select>
@@ -275,9 +276,12 @@ export default function ProjectsPage() {
   return (
     <>
       <PageHero
-        eyebrow="Proyek tanam"
-        title="Lahan yang didanai, dari berbagai penjuru Indonesia"
-        description="Setiap pin adalah satu musim tanam satu petani. Arahkan kursor ke pin untuk melihat proyeknya, atau klik untuk membuka detailnya."
+        eyebrow={tr("Proyek tanam", "Crop projects")}
+        title={tr("Lahan yang didanai, dari berbagai penjuru Indonesia", "Funded fields from across Indonesia")}
+        description={tr(
+          "Setiap pin adalah satu musim tanam satu petani. Arahkan kursor ke pin untuk melihat proyeknya, atau klik untuk membuka detailnya.",
+          "Each pin is one growing season of one farmer. Hover over a pin to preview the project, or click to open its details.",
+        )}
       />
       <PageBody>
         <div className="relative overflow-hidden rounded-3xl bg-[#f3e7cb] shadow-lift ring-1 ring-[#d9c08c]">
@@ -289,10 +293,10 @@ export default function ProjectsPage() {
               {visible.length} proyek · {provinces.length} provinsi
             </span>
             {[
-              ["#edc56a", "Cari dana"],
-              ["#5fa27b", "Berjalan"],
-              ["#f8f3e8", "Sudah panen"],
-              ["#ef6b5b", "Gagal"],
+              ["#edc56a", tr("Cari dana", "Funding")],
+              ["#5fa27b", tr("Berjalan", "Running")],
+              ["#f8f3e8", tr("Sudah panen", "Harvested")],
+              ["#ef6b5b", tr("Gagal", "Failed")],
             ].map(([color, label]) => (
               <span key={label} className="inline-flex items-center gap-1.5">
                 <svg viewBox="-10 -27 20 28" className="h-3.5 w-2.5" aria-hidden>
@@ -306,7 +310,7 @@ export default function ProjectsPage() {
 
         {/* Bar filter */}
         <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 shadow-soft ring-1 ring-krem-200 lg:flex-row lg:items-center">
-          <div className="grid grid-cols-4 gap-1 rounded-xl bg-krem-100 p-1 lg:flex" role="tablist" aria-label="Status proyek">
+          <div className="grid grid-cols-4 gap-1 rounded-xl bg-krem-100 p-1 lg:flex" role="tablist" aria-label={tr("Status proyek", "Project status")}>
             {STATUS_FILTERS.map((f) => {
               const n = f.key === "all" ? visible.length : visible.filter((c) => statusKey(c) === f.key).length;
               return (
@@ -321,18 +325,18 @@ export default function ProjectsPage() {
                     status === f.key ? "bg-hutan-900 text-white shadow-soft" : "text-stone-600 hover:bg-white/70",
                   )}
                 >
-                  {f.label} <span className={cn("ml-0.5 hidden text-xs sm:inline", status === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
+                  {tr(f.label[0], f.label[1])} <span className={cn("ml-0.5 hidden text-xs sm:inline", status === f.key ? "text-emas-300" : "text-stone-400")}>{n}</span>
                 </button>
               );
             })}
           </div>
           <div className="flex gap-2 lg:ml-2">
-            <Select label="Komoditas" value={commodity} onChange={setCommodity} options={commodities} />
-            <Select label="Provinsi" value={province} onChange={setProvince} options={provinces} />
+            <Select label={tr("Komoditas", "Crop")} value={commodity} onChange={setCommodity} options={commodities} />
+            <Select label={tr("Provinsi", "Province")} value={province} onChange={setProvince} options={provinces} />
           </div>
           <div className="flex items-center justify-between gap-3 px-1.5 lg:ml-auto lg:justify-end">
             <span className="text-sm text-stone-500">
-              <span className="font-semibold text-hutan-950">{shown.length}</span> proyek
+              <span className="font-semibold text-hutan-950">{shown.length}</span> {tr("proyek", "projects")}
             </span>
             {filtered && (
               <button
@@ -344,7 +348,7 @@ export default function ProjectsPage() {
                 }}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-hutan-700 hover:bg-hutan-50"
               >
-                <RotateCcw className="size-3.5" aria-hidden /> Atur ulang
+                <RotateCcw className="size-3.5" aria-hidden /> {tr("Atur ulang", "Reset")}
               </button>
             )}
           </div>
@@ -357,9 +361,14 @@ export default function ProjectsPage() {
             ))}
           </div>
         ) : isError ? (
-          <Notice tone="error">Data proyek belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.</Notice>
+          <Notice tone="error">
+            {tr(
+              "Data proyek belum bisa dibaca dari blockchain. Cek koneksi internetmu, lalu muat ulang halaman.",
+              "Project data can't be read from the blockchain yet. Check your internet connection, then reload the page.",
+            )}
+          </Notice>
         ) : shown.length === 0 ? (
-          <EmptyState icon={Sprout} title="Tidak ada proyek yang cocok dengan filter ini" />
+          <EmptyState icon={Sprout} title={tr("Tidak ada proyek yang cocok dengan filter ini", "No projects match these filters")} />
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((c, i) => (

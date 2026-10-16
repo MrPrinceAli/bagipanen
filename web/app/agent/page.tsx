@@ -1,5 +1,6 @@
 "use client";
 
+import { tr, trMap, trTerm } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -27,26 +28,54 @@ import { REPUTATION_REGISTRY } from "@/lib/addresses";
 import { useAgentReputation } from "@/lib/agentReputation";
 import { useCampaignList, useIpfsJson } from "@/lib/campaigns";
 import { AGENT_WORKFLOW_URL, explorerAddressUrl, REPO_URL } from "@/lib/config";
-import { formatDateTime, formatPercent, shortAddress } from "@/lib/format";
+import { formatDateTime, formatNumber, formatPercent, shortAddress } from "@/lib/format";
 import { INDONESIA_PATH, MAP_HEIGHT, MAP_WIDTH, NEIGHBORS_PATH, projectToMap } from "@/lib/indonesiaMap";
 import { identityIsMock, tokenUriHref, useAgentProfile, useRecentVerdicts, type VerdictEntry } from "@/lib/registry";
 import type { VerdictDocument } from "@/lib/types";
 
-const METHOD_LABEL: Record<string, string> = {
-  "vision-llm": "Penilaian foto dengan AI",
-  "exif-gps-check": "Cek GPS & tanggal foto",
-  "weather-open-meteo": "Cuaca 14 hari (Open-Meteo)",
-  "duplicate-hash": "Deteksi foto daur ulang",
-};
+const METHOD_LABEL = trMap<string>({
+  "vision-llm": ["Penilaian foto dengan AI", "AI photo assessment"],
+  "exif-gps-check": ["Cek GPS & tanggal foto", "Photo GPS & date check"],
+  "weather-open-meteo": ["Cuaca 14 hari (Open-Meteo)", "14-day weather (Open-Meteo)"],
+  "duplicate-hash": ["Deteksi foto daur ulang", "Recycled-photo detection"],
+});
 
-const PIPELINE: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: Database, title: "Baca proyek", body: "Komoditas, lokasi, tahap, dan perkiraan panen dari kontrak." },
-  { icon: Fingerprint, title: "Sidik jari foto", body: "Foto diunduh dari IPFS, lalu dihitung SHA-256-nya." },
-  { icon: Copy, title: "Cek daur ulang", body: "Foto yang sama tidak boleh dipakai di proyek atau tahap lain." },
-  { icon: MapPin, title: "GPS & tanggal", body: "Maksimal 2 km dari lahan dan diambil ≤ 7 hari sebelum dikirim." },
-  { icon: CloudSun, title: "Cuaca 14 hari", body: "Hujan & suhu di koordinat lahan dari Open-Meteo." },
-  { icon: ScanEye, title: "Gemini Vision", body: "Jenis tanaman, fase, kondisi, dan tingkat keyakinan." },
-  { icon: FileCheck2, title: "Putusan onchain", body: "Alasan disimpan di IPFS, putusan dicatat ke kontrak." },
+const pipeline = (): { icon: LucideIcon; title: string; body: string }[] => [
+  {
+    icon: Database,
+    title: tr("Baca proyek", "Read the project"),
+    body: tr("Komoditas, lokasi, tahap, dan perkiraan panen dari kontrak.", "Crop, location, stage, and harvest estimate from the contract."),
+  },
+  {
+    icon: Fingerprint,
+    title: tr("Sidik jari foto", "Photo fingerprint"),
+    body: tr("Foto diunduh dari IPFS, lalu dihitung SHA-256-nya.", "The photo is downloaded from IPFS and its SHA-256 is computed."),
+  },
+  {
+    icon: Copy,
+    title: tr("Cek daur ulang", "Recycled-photo check"),
+    body: tr("Foto yang sama tidak boleh dipakai di proyek atau tahap lain.", "The same photo can't be reused in another project or stage."),
+  },
+  {
+    icon: MapPin,
+    title: tr("GPS & tanggal", "GPS & date"),
+    body: tr("Maksimal 2 km dari lahan dan diambil ≤ 7 hari sebelum dikirim.", "Within 2 km of the field and taken ≤ 7 days before it was sent."),
+  },
+  {
+    icon: CloudSun,
+    title: tr("Cuaca 14 hari", "14-day weather"),
+    body: tr("Hujan & suhu di koordinat lahan dari Open-Meteo.", "Rain & temperature at the field's coordinates from Open-Meteo."),
+  },
+  {
+    icon: ScanEye,
+    title: "Gemini Vision",
+    body: tr("Jenis tanaman, fase, kondisi, dan tingkat keyakinan.", "Crop type, growth stage, condition, and confidence level."),
+  },
+  {
+    icon: FileCheck2,
+    title: tr("Putusan onchain", "Onchain verdict"),
+    body: tr("Alasan disimpan di IPFS, putusan dicatat ke kontrak.", "The reasons go to IPFS, the verdict is recorded in the contract."),
+  },
 ];
 
 /* ============================================================ Data tambahan */
@@ -71,10 +100,10 @@ function useLastAgentRun() {
 
 function timeAgo(iso: string) {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 90) return "baru saja";
-  if (s < 3600) return `${Math.round(s / 60)} menit lalu`;
-  if (s < 86400) return `${Math.round(s / 3600)} jam lalu`;
-  return `${Math.round(s / 86400)} hari lalu`;
+  if (s < 90) return tr("baru saja", "just now");
+  if (s < 3600) return tr(`${Math.round(s / 60)} menit lalu`, `${Math.round(s / 60)} min ago`);
+  if (s < 86400) return tr(`${Math.round(s / 3600)} jam lalu`, `${Math.round(s / 3600)} h ago`);
+  return tr(`${Math.round(s / 86400)} hari lalu`, `${Math.round(s / 86400)} days ago`);
 }
 
 /* ============================================================ Aktivitas terbaru */
@@ -94,26 +123,50 @@ const TONE: Record<Step["tone"], string> = {
 function buildSteps(d: VerdictDocument): Step[] {
   const vis = d.vision;
   const w = d.weather;
-  const num = (x: number | undefined | null) => (x == null ? "?" : x.toLocaleString("id-ID", { maximumFractionDigits: 1 }));
+  const num = (x: number | undefined | null) => (x == null ? "?" : formatNumber(x, 1));
   return [
-    { icon: Fingerprint, label: "Foto diterima", detail: "Diunduh dari IPFS, sidik jari SHA-256 dihitung", tone: "stone" },
+    {
+      icon: Fingerprint,
+      label: tr("Foto diterima", "Photo received"),
+      detail: tr("Diunduh dari IPFS, sidik jari SHA-256 dihitung", "Downloaded from IPFS, SHA-256 fingerprint computed"),
+      tone: "stone",
+    },
     {
       icon: Copy,
-      label: d.duplicate ? "Foto daur ulang!" : "Foto asli",
-      detail: d.duplicate ? "Pernah dipakai di proyek atau tahap lain" : "Belum pernah dipakai sebelumnya",
+      label: d.duplicate ? tr("Foto daur ulang!", "Recycled photo!") : tr("Foto asli", "Original photo"),
+      detail: d.duplicate
+        ? tr("Pernah dipakai di proyek atau tahap lain", "Already used in another project or stage")
+        : tr("Belum pernah dipakai sebelumnya", "Never used before"),
       tone: d.duplicate ? "red" : "green",
     },
     {
       icon: MapPin,
-      label: "GPS & tanggal",
-      detail: d.exif?.status === "ok" ? `${num(d.exif.distanceKm)} km dari lahan, tanggal cocok` : d.exif?.status === "mismatch" ? "Tidak cocok dengan lahan" : "Tidak ada di foto, dicatat saja",
+      label: tr("GPS & tanggal", "GPS & date"),
+      detail:
+        d.exif?.status === "ok"
+          ? tr(`${num(d.exif.distanceKm)} km dari lahan, tanggal cocok`, `${num(d.exif.distanceKm)} km from the field, date matches`)
+          : d.exif?.status === "mismatch"
+            ? tr("Tidak cocok dengan lahan", "Doesn't match the field")
+            : tr("Tidak ada di foto, dicatat saja", "Not in the photo, just noted"),
       tone: d.exif?.status === "mismatch" ? "red" : d.exif?.status === "ok" ? "green" : "stone",
     },
-    { icon: CloudSun, label: "Cuaca 14 hari", detail: w ? `Hujan ${num(w.precip14dMm)} mm${w.extreme ? " · ada hujan ekstrem" : ""}` : "Open-Meteo", tone: "sky" },
+    {
+      icon: CloudSun,
+      label: tr("Cuaca 14 hari", "14-day weather"),
+      detail: w
+        ? tr(`Hujan ${num(w.precip14dMm)} mm${w.extreme ? " · ada hujan ekstrem" : ""}`, `Rain ${num(w.precip14dMm)} mm${w.extreme ? " · extreme rain" : ""}`)
+        : "Open-Meteo",
+      tone: "sky",
+    },
     {
       icon: ScanEye,
       label: "Gemini Vision",
-      detail: vis ? `${vis.detected_commodity ?? "?"}, fase ${vis.detected_stage ?? "?"}, kondisi ${vis.plant_condition ?? "?"}` : "Menilai isi foto",
+      detail: vis
+        ? tr(
+            `${vis.detected_commodity ?? "?"}, fase ${vis.detected_stage ?? "?"}, kondisi ${vis.plant_condition ?? "?"}`,
+            `${trTerm(vis.detected_commodity ?? "?")}, ${trTerm(vis.detected_stage ?? "?").toLowerCase()} stage, ${trTerm(vis.plant_condition ?? "?")} condition`,
+          )
+        : tr("Menilai isi foto", "Assessing the photo"),
       tone: "violet",
     },
   ];
@@ -141,14 +194,14 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-400 opacity-70" />
             <span className="relative inline-flex size-2 rounded-full bg-hutan-500" />
           </span>
-          Aktivitas terbaru
+          {tr("Aktivitas terbaru", "Latest activity")}
         </p>
         {verdict && <span className="text-xs text-stone-500">{formatDateTime(verdict.timestamp)}</span>}
       </div>
       <div className="grid gap-0 sm:grid-cols-[15rem_1fr] lg:grid-cols-[19rem_1fr]">
         <div className="relative h-40 bg-hutan-100 sm:h-auto">
           {doc?.proofCID ? (
-            <IpfsImage cid={doc.proofCID} alt={verdict ? `Foto bukti ${verdict.commodity} tahap ${verdict.milestoneName}` : "Foto bukti"} className="absolute inset-0 h-full rounded-none" link={false} />
+            <IpfsImage cid={doc.proofCID} alt={verdict ? tr(`Foto bukti ${verdict.commodity} tahap ${verdict.milestoneName}`, `${trTerm(verdict.commodity)} ${trTerm(verdict.milestoneName)} proof photo`) : tr("Foto bukti", "Proof photo")} className="absolute inset-0 h-full rounded-none" link={false} />
           ) : (
             <div className="absolute inset-0 animate-pulse bg-hutan-100" />
           )}
@@ -172,7 +225,7 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-hutan-950">{st?.label ?? "…"}</p>
-                  <p className="truncate text-xs text-stone-500">{st?.detail ?? "memuat"}</p>
+                  <p className="truncate text-xs text-stone-500">{st?.detail ?? tr("memuat", "loading")}</p>
                 </div>
               </li>
             );
@@ -186,12 +239,16 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
           >
             <span className="flex items-center gap-2 font-semibold">
               {verdict?.approved ? <Check className="size-4" aria-hidden /> : <X className="size-4" aria-hidden />}
-              {verdict?.approved ? "Disetujui" : "Ditolak"}
-              {conf !== undefined && <span className="font-normal text-white/70">· yakin {Math.round(conf * 100)}%</span>}
+              {verdict?.approved ? tr("Disetujui", "Approved") : tr("Ditolak", "Rejected")}
+              {conf !== undefined && (
+                <span className="font-normal text-white/70">
+                  · {tr("yakin", "confidence")} {Math.round(conf * 100)}%
+                </span>
+              )}
             </span>
             {verdict && (
               <Link href={`/campaign/${verdict.campaign}`} className="text-xs font-semibold text-emas-300 hover:text-emas-200">
-                Lihat proyek →
+                {tr("Lihat proyek →", "View project →")}
               </Link>
             )}
           </li>
@@ -212,7 +269,7 @@ function Ring({ value, label, sub, tone = "gold" }: { value: number | null; labe
         className="relative grid size-20 shrink-0 place-items-center rounded-full"
         style={{ background: `conic-gradient(${color} ${pct * 360}deg, #efe6d3 0)` }}
         role="img"
-        aria-label={`${label}: ${value === null ? "belum ada data" : formatPercent(pct)}`}
+        aria-label={`${label}: ${value === null ? tr("belum ada data", "no data yet") : formatPercent(pct)}`}
       >
         <div className="grid size-[3.9rem] place-items-center rounded-full bg-white">
           <span className="font-display text-lg font-semibold text-hutan-950">{value === null ? "–" : formatPercent(pct)}</span>
@@ -232,7 +289,7 @@ function CoverageMap() {
   const { data: campaigns } = useCampaignList();
   const pins = campaigns ?? [];
   return (
-    <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="block h-auto w-full" role="img" aria-label="Lahan yang diperiksa agen">
+    <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="block h-auto w-full" role="img" aria-label={tr("Lahan yang diperiksa agen", "Fields checked by the agent")}>
       <path d={NEIGHBORS_PATH} fill="#ffffff" fillOpacity="0.04" />
       <path d={INDONESIA_PATH} fill="#1f4d36" stroke="#5fa27b" strokeOpacity="0.5" strokeWidth="0.6" />
       {pins.map((c) => {
@@ -256,7 +313,7 @@ function VerdictCard({ v }: { v: VerdictEntry }) {
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-krem-200 sm:flex-row">
       <div className="relative h-44 shrink-0 bg-hutan-900 sm:h-auto sm:w-44">
         {doc?.proofCID ? (
-          <IpfsImage cid={doc.proofCID} alt={`Foto bukti ${v.commodity} tahap ${v.milestoneName}`} className="absolute inset-0 h-full rounded-none" link={false} />
+          <IpfsImage cid={doc.proofCID} alt={tr(`Foto bukti ${v.commodity} tahap ${v.milestoneName}`, `${trTerm(v.commodity)} ${trTerm(v.milestoneName)} proof photo`)} className="absolute inset-0 h-full rounded-none" link={false} />
         ) : (
           <div className="absolute inset-0 animate-pulse bg-hutan-800" />
         )}
@@ -267,21 +324,21 @@ function VerdictCard({ v }: { v: VerdictEntry }) {
           )}
         >
           {v.approved ? <Check className="size-3.5" aria-hidden /> : <X className="size-3.5" aria-hidden />}
-          {v.approved ? "Diterima" : "Ditolak"}
+          {v.approved ? tr("Diterima", "Approved") : tr("Ditolak", "Rejected")}
         </span>
         {doc?.vision?.confidence !== undefined && (
           <span className="absolute right-3 bottom-3 rounded-full bg-hutan-950/75 px-2 py-0.5 font-mono text-[10px] text-emas-200 backdrop-blur">
-            yakin {Math.round(doc.vision.confidence * 100)}%
+            {tr("yakin", "confidence")} {Math.round(doc.vision.confidence * 100)}%
           </span>
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
         <div>
           <Link href={`/campaign/${v.campaign}`} className="font-display text-lg leading-snug font-semibold text-hutan-950 hover:text-hutan-700">
-            {v.commodity} · tahap {v.milestoneName}
+            {trTerm(v.commodity)} · {tr(`tahap ${v.milestoneName}`, `${trTerm(v.milestoneName)} stage`)}
           </Link>
           <p className="text-xs text-stone-500">
-            Proyek {shortAddress(v.campaign)} · {formatDateTime(v.timestamp)}
+            {tr("Proyek", "Project")} {shortAddress(v.campaign)} · {formatDateTime(v.timestamp)}
           </p>
         </div>
         {v.reasonCID && <VerdictSummary cid={v.reasonCID} ctx={{ commodity: v.commodity, milestone: v.milestoneName }} />}
@@ -304,12 +361,17 @@ export default function AgentPage() {
   if (isLoading || !agent || !agent.configured)
     return (
       <>
-        <PageHero eyebrow="Agen AI" title="Agen verifikator lapangan" />
+        <PageHero eyebrow={tr("Agen AI", "AI agent")} title={tr("Agen verifikator lapangan", "Field verifier agent")} />
         <PageBody>
           {isLoading || !agent ? (
-            <Loading>Membaca identitas agen dari blockchain…</Loading>
+            <Loading>{tr("Membaca identitas agen dari blockchain…", "Reading the agent's identity from the blockchain…")}</Loading>
           ) : (
-            <Notice tone="warn">Agen verifikator belum diatur. Admin perlu mendaftarkan agennya dulu (di mode lokal cukup jalankan npm run dev:chain).</Notice>
+            <Notice tone="warn">
+              {tr(
+                "Agen verifikator belum diatur. Admin perlu mendaftarkan agennya dulu (di mode lokal cukup jalankan npm run dev:chain).",
+                "The verifier agent isn't set up yet. The admin needs to register it first (in local mode, just run npm run dev:chain).",
+              )}
+            </Notice>
           )}
         </PageBody>
       </>
@@ -339,23 +401,28 @@ export default function AgentPage() {
               Online
               {run && (
                 <span className="font-normal text-stone-500">
-                  · {run.status !== "completed" ? "sedang memeriksa" : `putaran terakhir ${timeAgo(run.updated_at)}`}
+                  · {run.status !== "completed" ? tr("sedang memeriksa", "checking now") : `${tr("putaran terakhir", "last round")} ${timeAgo(run.updated_at)}`}
                 </span>
               )}
             </span>
             <h1 className="mt-5 max-w-4xl text-4xl leading-[1.05] font-extrabold tracking-tight text-balance text-hutan-950 sm:text-6xl xl:text-7xl">
-              Agen AI yang memeriksa{" "}
-              <span className="bg-linear-to-r from-hutan-600 via-hutan-500 to-emas-500 bg-clip-text text-transparent">setiap foto lahan</span>
+              {tr("Agen AI yang memeriksa", "The AI agent that checks")}{" "}
+              <span className="bg-linear-to-r from-hutan-600 via-hutan-500 to-emas-500 bg-clip-text text-transparent">
+                {tr("setiap foto lahan", "every field photo")}
+              </span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-balance text-stone-600">
-              {card?.description ??
-                "Agen ini memeriksa setiap foto bukti dari lahan sebelum dana tahap boleh cair. Identitasnya tercatat di blockchain, dan semua putusannya bisa dibaca siapa saja."}
+              {tr(
+                card?.description ??
+                  "Agen ini memeriksa setiap foto bukti dari lahan sebelum dana tahap boleh cair. Identitasnya tercatat di blockchain, dan semua putusannya bisa dibaca siapa saja.",
+                "This agent checks every proof photo from the field before a stage's funds can be released. Its identity is recorded on the blockchain, and anyone can read all of its verdicts.",
+              )}
             </p>
             <dl className="mt-6 flex flex-wrap justify-center gap-2 text-sm">
               {[
-                { k: "Agen", v: `#${agent.agentId.toString()}` },
-                { k: "Dompet", v: shortAddress(agent.agentWallet) },
-                { k: "Registri", v: mock ? "cadangan (lokal)" : "ERC-8004 resmi" },
+                { k: tr("Agen", "Agent"), v: `#${agent.agentId.toString()}` },
+                { k: tr("Dompet", "Wallet"), v: shortAddress(agent.agentWallet) },
+                { k: tr("Registri", "Registry"), v: mock ? tr("cadangan (lokal)", "fallback (local)") : tr("ERC-8004 resmi", "official ERC-8004") },
               ].map(({ k, v }) => (
                 <div key={k} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 shadow-soft ring-1 ring-krem-200">
                   <dt className="text-stone-500">{k}</dt>
@@ -370,7 +437,7 @@ export default function AgentPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-hutan-900 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-hutan-800"
               >
-                <BrandLogo name="github" /> Log kerja agen
+                <BrandLogo name="github" /> {tr("Log kerja agen", "Agent work log")}
               </a>
               {registryUrl && (
                 <a
@@ -379,7 +446,7 @@ export default function AgentPage() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-hutan-900 shadow-soft ring-1 ring-krem-300 transition hover:bg-krem-50"
                 >
-                  Registri ERC-8004 <ExternalLink className="size-4" aria-hidden />
+                  {tr("Registri ERC-8004", "ERC-8004 registry")} <ExternalLink className="size-4" aria-hidden />
                 </a>
               )}
             </div>
@@ -395,15 +462,32 @@ export default function AgentPage() {
         <Container>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { value: approvalRate, label: "Tingkat diterima", sub: `${s.approvals} dari ${s.verdicts} foto disetujui`, tone: "green" as const },
+              {
+                value: approvalRate,
+                label: tr("Tingkat diterima", "Approval rate"),
+                sub: tr(`${s.approvals} dari ${s.verdicts} foto disetujui`, `${s.approvals} of ${s.verdicts} photos approved`),
+                tone: "green" as const,
+              },
               {
                 value: rep?.agreement ?? null,
-                label: "Kesepakatan koperasi",
-                sub: rep ? `${rep.count} penilaian di ERC-8004 Reputation` : "membaca registri reputasi…",
+                label: tr("Kesepakatan koperasi", "Cooperative agreement"),
+                sub: rep
+                  ? tr(`${rep.count} penilaian di ERC-8004 Reputation`, `${rep.count} ratings in ERC-8004 Reputation`)
+                  : tr("membaca registri reputasi…", "reading the reputation registry…"),
                 tone: "gold" as const,
               },
-              { value: s.verdicts > 0 ? s.rejections / s.verdicts : null, label: "Tingkat ditolak", sub: `${s.rejections} foto tidak lolos pemeriksaan`, tone: "sky" as const },
-              { value: correctionRate, label: "Dikoreksi admin", sub: `${s.overturned} putusan dibatalkan saat sengketa`, tone: "stone" as const },
+              {
+                value: s.verdicts > 0 ? s.rejections / s.verdicts : null,
+                label: tr("Tingkat ditolak", "Rejection rate"),
+                sub: tr(`${s.rejections} foto tidak lolos pemeriksaan`, `${s.rejections} photos didn't pass the checks`),
+                tone: "sky" as const,
+              },
+              {
+                value: correctionRate,
+                label: tr("Dikoreksi admin", "Overruled by admin"),
+                sub: tr(`${s.overturned} putusan dibatalkan saat sengketa`, `${s.overturned} verdicts overturned in disputes`),
+                tone: "stone" as const,
+              },
             ].map((r, i) => (
               <Reveal key={r.label} delay={i * 80}>
                 <Ring {...r} />
@@ -415,14 +499,20 @@ export default function AgentPage() {
         {/* -------------------------------------------------------- Pipeline */}
         <Container>
           <Reveal>
-            <SectionTitle eyebrow="Cara kerja agen" description="Tujuh langkah yang dijalankan untuk setiap foto bukti, otomatis, tanpa campur tangan manusia.">
-              Dari foto masuk sampai putusan onchain
+            <SectionTitle
+              eyebrow={tr("Cara kerja agen", "How the agent works")}
+              description={tr(
+                "Tujuh langkah yang dijalankan untuk setiap foto bukti, otomatis, tanpa campur tangan manusia.",
+                "Seven steps run for every proof photo, automatically, with no human in the loop.",
+              )}
+            >
+              {tr("Dari foto masuk sampai putusan onchain", "From incoming photo to onchain verdict")}
             </SectionTitle>
           </Reveal>
           <ol className="relative mt-8 grid gap-4 lg:grid-cols-7 lg:gap-3">
             <span className="pipe-flow absolute top-9 right-[7%] left-[7%] hidden h-1 rounded-full opacity-60 lg:block" aria-hidden />
             <span className="pipe-flow-y absolute top-4 bottom-4 left-9 w-1 rounded-full opacity-50 lg:hidden" aria-hidden />
-            {PIPELINE.map((p, i) => (
+            {pipeline().map((p, i) => (
               <Reveal as="li" key={p.title} delay={i * 70} className="relative flex gap-4 lg:flex-col lg:items-center lg:gap-3 lg:text-center">
                 <span className="relative z-10 grid size-[4.5rem] shrink-0 place-items-center rounded-2xl bg-hutan-950 text-emas-300 shadow-lift ring-4 ring-krem-50">
                   <p.icon className="size-7" aria-hidden />
@@ -438,11 +528,14 @@ export default function AgentPage() {
           <Reveal>
             <div className="mt-8 flex flex-col gap-3 rounded-3xl bg-hutan-950 p-5 text-white sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <p className="max-w-3xl text-sm leading-relaxed text-pretty text-white/75">
-                <span className="font-semibold text-emas-300">Aturan putusan:</span> foto diterima hanya kalau benar foto lahan, tanaman dan fasenya cocok, AI
-                cukup yakin (minimal 70%), lokasi dan tanggalnya tidak bertentangan, dan foto itu belum pernah dipakai.
+                <span className="font-semibold text-emas-300">{tr("Aturan putusan:", "Verdict rule:")}</span>{" "}
+                {tr(
+                  "foto diterima hanya kalau benar foto lahan, tanaman dan fasenya cocok, AI cukup yakin (minimal 70%), lokasi dan tanggalnya tidak bertentangan, dan foto itu belum pernah dipakai.",
+                  "a photo is approved only if it really shows a field, the crop and stage match, the AI is confident enough (at least 70%), its location and date don't contradict the claim, and it has never been used before.",
+                )}
               </p>
               <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
-                <BrandLogo name="gemini" /> Gemini menilai, aturan memutuskan
+                <BrandLogo name="gemini" /> {tr("Gemini menilai, aturan memutuskan", "Gemini assesses, the rules decide")}
               </span>
             </div>
           </Reveal>
@@ -453,8 +546,8 @@ export default function AgentPage() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
             <Reveal className="h-full">
               <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-[radial-gradient(120%_90%_at_50%_20%,#0f3a28_0%,#0b2a1d_45%,#071710_100%)] p-5 text-white shadow-lift sm:p-6">
-                <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">Wilayah kerja</p>
-                <p className="mt-1 font-display text-2xl font-semibold">Lahan yang diawasi agen</p>
+                <p className="text-xs font-semibold tracking-[0.18em] text-emas-300 uppercase">{tr("Wilayah kerja", "Coverage")}</p>
+                <p className="mt-1 font-display text-2xl font-semibold">{tr("Lahan yang diawasi agen", "Fields the agent watches")}</p>
                 <div className="my-auto py-4">
                   <CoverageMap />
                 </div>
@@ -470,8 +563,8 @@ export default function AgentPage() {
             <Reveal delay={100} className="h-full">
               <div className="flex h-full flex-col gap-5 rounded-3xl bg-white p-5 shadow-soft ring-1 ring-krem-200 sm:p-6">
                 <div>
-                  <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">Isi agent card</p>
-                  <p className="mt-1 text-sm text-stone-600">Data yang diumumkan agen tentang dirinya di registri ERC-8004, bisa dibaca aplikasi lain.</p>
+                  <p className="text-xs font-semibold tracking-[0.18em] text-emas-600 uppercase">{tr("Isi agent card", "Agent card contents")}</p>
+                  <p className="mt-1 text-sm text-stone-600">{tr("Data yang diumumkan agen tentang dirinya di registri ERC-8004, bisa dibaca aplikasi lain.", "What the agent publishes about itself in the ERC-8004 registry, readable by other apps.")}</p>
                 </div>
                 {agent.cardError ? (
                   <p className="text-sm text-red-700">{agent.cardError}</p>
@@ -480,8 +573,8 @@ export default function AgentPage() {
                 ) : (
                   <>
                     {[
-                      { k: "Komoditas", items: card.bagipanen?.commodities ?? [], cls: "bg-emas-50 text-emas-800 ring-emas-200" },
-                      { k: "Metode", items: (card.bagipanen?.methods ?? []).map((m) => METHOD_LABEL[m] ?? m), cls: "bg-hutan-50 text-hutan-800 ring-hutan-200" },
+                      { k: tr("Komoditas", "Crops"), items: (card.bagipanen?.commodities ?? []).map(trTerm), cls: "bg-emas-50 text-emas-800 ring-emas-200" },
+                      { k: tr("Metode", "Methods"), items: (card.bagipanen?.methods ?? []).map((m) => METHOD_LABEL[m] ?? m), cls: "bg-hutan-50 text-hutan-800 ring-hutan-200" },
                     ].map((g) => (
                       <div key={g.k}>
                         <p className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">{g.k}</p>
@@ -496,7 +589,7 @@ export default function AgentPage() {
                     ))}
                     <div>
                       <p className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
-                        Koperasi mitra ({card.bagipanen?.partnerCooperatives?.length ?? 0})
+                        {tr("Koperasi mitra", "Partner cooperatives")} ({card.bagipanen?.partnerCooperatives?.length ?? 0})
                       </p>
                       <ul className="grid gap-1 text-sm text-stone-700 sm:grid-cols-2">
                         {(card.bagipanen?.partnerCooperatives ?? []).map((c) => (
@@ -508,7 +601,7 @@ export default function AgentPage() {
                       </ul>
                     </div>
                     <details className="mt-auto text-xs">
-                      <summary className="cursor-pointer font-semibold text-hutan-700 hover:text-hutan-900">Lihat JSON lengkap</summary>
+                      <summary className="cursor-pointer font-semibold text-hutan-700 hover:text-hutan-900">{tr("Lihat JSON lengkap", "View full JSON")}</summary>
                       <pre className="mt-2 max-h-72 overflow-auto rounded-2xl bg-hutan-950 p-4 text-emas-100">{JSON.stringify(card, null, 2)}</pre>
                     </details>
                     {agent.tokenURI && (
@@ -536,21 +629,22 @@ export default function AgentPage() {
                 <ShieldCheck className="absolute -right-8 -bottom-10 size-56 text-hutan-950/10" aria-hidden />
                 <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1.4fr)_auto]">
                   <div>
-                    <p className="text-xs font-bold tracking-[0.18em] uppercase">Reputasi di ERC-8004</p>
-                    <h2 className="mt-2 font-display text-3xl font-semibold text-balance sm:text-4xl">Dinilai koperasi, tercatat di registri resmi</h2>
+                    <p className="text-xs font-bold tracking-[0.18em] uppercase">{tr("Reputasi di ERC-8004", "Reputation on ERC-8004")}</p>
+                    <h2 className="mt-2 font-display text-3xl font-semibold text-balance sm:text-4xl">{tr("Dinilai koperasi, tercatat di registri resmi", "Rated by cooperatives, recorded in the official registry")}</h2>
                     <p className="mt-3 max-w-2xl leading-relaxed text-pretty text-hutan-950/75">
-                      Setiap kali koperasi memutuskan satu tahap, koperasi mencatat apakah ia sepakat dengan putusan agen. Catatannya tersimpan di Reputation
-                      Registry ERC-8004, terpisah dari BagiPanen, sehingga rekam jejak agen bisa dibaca aplikasi lain. Yang dihitung hanya penilaian dari{" "}
-                      {coops?.length ?? "…"} koperasi pendamping proyek.
+                      {tr(
+                        `Setiap kali koperasi memutuskan satu tahap, koperasi mencatat apakah ia sepakat dengan putusan agen. Catatannya tersimpan di Reputation Registry ERC-8004, terpisah dari BagiPanen, sehingga rekam jejak agen bisa dibaca aplikasi lain. Yang dihitung hanya penilaian dari ${coops?.length ?? "…"} koperasi pendamping proyek.`,
+                        `Each time a cooperative decides on a stage, it records whether it agrees with the agent's verdict. These ratings live in the ERC-8004 Reputation Registry, separate from BagiPanen, so other apps can read the agent's track record. Only ratings from the ${coops?.length ?? "…"} cooperatives supporting the projects are counted.`,
+                      )}
                     </p>
                     <p className="mt-4 text-sm">
-                      Registri <AddressLink address={REPUTATION_REGISTRY} className="text-hutan-950" />
+                      {tr("Registri", "Registry")} <AddressLink address={REPUTATION_REGISTRY} className="text-hutan-950" />
                     </p>
                   </div>
                   <div className="mx-auto grid size-48 place-items-center rounded-full bg-hutan-950 text-center shadow-lift ring-8 ring-hutan-950/10">
                     <div>
                       <p className="font-display text-5xl font-semibold text-emas-300">{rep?.agreement == null ? "–" : formatPercent(rep.agreement)}</p>
-                      <p className="mt-1 px-6 text-xs text-white/70">{rep ? `kesepakatan dari ${rep.count} penilaian` : "memuat…"}</p>
+                      <p className="mt-1 px-6 text-xs text-white/70">{rep ? tr(`kesepakatan dari ${rep.count} penilaian`, `agreement across ${rep.count} ratings`) : tr("memuat…", "loading…")}</p>
                     </div>
                   </div>
                 </div>
@@ -563,21 +657,24 @@ export default function AgentPage() {
         <Container>
           <Reveal>
             <SectionTitle
-              eyebrow="Jejak putusan"
-              description="Sepuluh foto terakhir yang dinilai agen, lengkap dengan foto bukti, alasan, dan transaksinya."
+              eyebrow={tr("Jejak putusan", "Verdict trail")}
+              description={tr(
+                "Sepuluh foto terakhir yang dinilai agen, lengkap dengan foto bukti, alasan, dan transaksinya.",
+                "The last ten photos the agent judged, with the proof photo, reasons, and transaction.",
+              )}
               action={
                 <Link href="/proyek" className="inline-flex items-center gap-1 text-sm font-semibold text-hutan-700 hover:text-hutan-900">
-                  Lihat proyeknya <ArrowRight className="size-4" aria-hidden />
+                  {tr("Lihat proyeknya", "See the projects")} <ArrowRight className="size-4" aria-hidden />
                 </Link>
               }
             >
-              Putusan terbaru
+              {tr("Putusan terbaru", "Latest verdicts")}
             </SectionTitle>
           </Reveal>
           {!verdicts ? (
-            <Loading>Membaca putusan dari blockchain…</Loading>
+            <Loading>{tr("Membaca putusan dari blockchain…", "Reading verdicts from the blockchain…")}</Loading>
           ) : verdicts.length === 0 ? (
-            <EmptyState icon={ScanEye} title="Belum ada putusan" />
+            <EmptyState icon={ScanEye} title={tr("Belum ada putusan", "No verdicts yet")} />
           ) : (
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
               {verdicts.map((v, i) => (

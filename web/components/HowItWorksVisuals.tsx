@@ -1,3 +1,4 @@
+import { tr } from "@/lib/i18n";
 import { Bot, Lock, LockOpen, Sprout, Users } from "lucide-react";
 import Image from "next/image";
 import type { CSSProperties } from "react";
@@ -15,17 +16,17 @@ const onAttr = (on: boolean) => (on ? "" : undefined);
 /* ---------------------------------------------------------- 1 · Formulir kertas */
 function ProposalPanel({ on }: PanelProps) {
   const rows = [
-    ["Komoditas", "Cabai merah"],
-    ["Lokasi", "Cikajang, Garut"],
-    ["Luas lahan", "0,5 ha"],
-    ["Butuh modal", "1.000 USDT"],
-    ["Perkiraan jual", "1.650 USDT"],
+    [tr("Komoditas", "Crop"), tr("Cabai merah", "Red chili")],
+    [tr("Lokasi", "Location"), "Cikajang, Garut"],
+    [tr("Luas lahan", "Land area"), tr("0,5 ha", "0.5 ha")],
+    [tr("Butuh modal", "Capital needed"), tr("1.000 USDT", "1,000 USDT")],
+    [tr("Perkiraan jual", "Expected sales"), tr("1.650 USDT", "1,650 USDT")],
   ];
   return (
     <div data-on={onAttr(on)} className="how-panel how-paper relative h-full min-h-[27rem] -rotate-1 rounded-[1.75rem] p-6 pl-16 text-[#3b2a14] sm:p-8 sm:pl-20">
       <span className="how-clip absolute -top-4 left-9 rotate-[8deg]" aria-hidden />
-      <p className="font-mono text-[11px] font-bold tracking-[0.25em] text-[#8d5a1c] uppercase">Formulir pengajuan · No. 007</p>
-      <p className="mt-2 font-display text-2xl font-semibold">Modal tanam cabai merah</p>
+      <p className="font-mono text-[11px] font-bold tracking-[0.25em] text-[#8d5a1c] uppercase">{tr("Formulir pengajuan · No. 007", "Proposal form · No. 007")}</p>
+      <p className="mt-2 font-display text-2xl font-semibold">{tr("Modal tanam cabai merah", "Red chili crop funding")}</p>
       <div className="mt-5 grid grid-cols-[1fr_auto] items-start gap-4">
         <dl className="flex flex-col gap-2.5">
           {rows.map(([k, v]) => (
@@ -37,16 +38,16 @@ function ProposalPanel({ on }: PanelProps) {
         </dl>
         <figure className="w-24 rotate-[5deg] bg-white p-1.5 pb-5 shadow-[0_12px_24px_-10px_rgb(0_0_0/0.45)] sm:w-32">
           <Image src={heroImage} alt="" sizes="128px" placeholder="blur" className="aspect-square w-full object-cover" />
-          <figcaption className="mt-1 text-center font-display text-[11px] italic">lahan awal</figcaption>
+          <figcaption className="mt-1 text-center font-display text-[11px] italic">{tr("lahan awal", "the field today")}</figcaption>
         </figure>
       </div>
       <p className="mt-6 font-display text-sm text-[#5c3b20] italic">
-        Tanda tangan petani: <span className="ml-1 font-semibold not-italic [font-family:cursive]">Darto</span>
+        {tr("Tanda tangan petani:", "Farmer's signature:")} <span className="ml-1 font-semibold not-italic [font-family:cursive]">Darto</span>
       </p>
       <div className="how-stamp absolute right-6 bottom-6 rounded-xl border-[3px] border-double border-red-700 px-3 py-1.5 text-center font-mono text-sm leading-tight font-black tracking-widest text-red-700 uppercase mix-blend-multiply">
-        Direview
+        {tr("Direview", "Reviewed")}
         <br />
-        admin
+        {tr("admin", "by admin")}
       </div>
     </div>
   );
@@ -66,15 +67,15 @@ function FundingPanel({ on }: PanelProps) {
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-hutan-300 opacity-70" />
           <span className="relative inline-flex size-2 rounded-full bg-hutan-300" />
         </span>
-        Pool pendanaan · live onchain
+        {tr("Pool pendanaan · live onchain", "Funding pool · live onchain")}
       </p>
       <div className="my-auto grid items-center gap-7 py-6 sm:grid-cols-[auto_1fr]">
         <div className="relative mx-auto">
           <div className="how-ring grid size-48 place-items-center rounded-full">
             <div className="grid size-[10.4rem] place-items-center rounded-full bg-[#04110b] text-center shadow-[inset_0_0_30px_rgb(237_197_106/0.15)]">
               <div>
-                <p className="font-display text-4xl font-semibold tracking-tight">1.000</p>
-                <p className="font-mono text-[10px] tracking-widest text-white/50 uppercase">USDT terkumpul</p>
+                <p className="font-display text-4xl font-semibold tracking-tight">{tr("1.000", "1,000")}</p>
+                <p className="font-mono text-[10px] tracking-widest text-white/50 uppercase">{tr("USDT terkumpul", "USDT raised")}</p>
                 <p className="mt-1 text-sm font-semibold text-emas-300">100%</p>
               </div>
             </div>
@@ -107,7 +108,7 @@ function FundingPanel({ on }: PanelProps) {
           ))}
         </ul>
       </div>
-      <p className="font-mono text-[11px] text-white/45">1 USDT = 1 token porsi (BPS) · tidak bisa dipindahtangankan</p>
+      <p className="font-mono text-[11px] text-white/45">{tr("1 USDT = 1 token porsi (BPS) · tidak bisa dipindahtangankan", "1 USDT = 1 share token (BPS) · non-transferable")}</p>
     </div>
   );
 }
@@ -115,14 +116,14 @@ function FundingPanel({ on }: PanelProps) {
 /* ---------------------------------------------------------- 3 · Tanah & tunas */
 function ReleasePanel({ on }: PanelProps) {
   const rows = [
-    { name: "Pra-panen", pct: "25%", ai: true, coop: false, delay: "1.5s" },
-    { name: "Tumbuh", pct: "35%", ai: true, coop: true, delay: "1s" },
-    { name: "Tanam", pct: "40%", ai: true, coop: true, delay: "0.5s" },
+    { name: tr("Pra-panen", "Pre-harvest"), pct: "25%", ai: true, coop: false, delay: "1.5s" },
+    { name: tr("Tumbuh", "Growing"), pct: "35%", ai: true, coop: true, delay: "1s" },
+    { name: tr("Tanam", "Planting"), pct: "40%", ai: true, coop: true, delay: "0.5s" },
   ];
   const leaf = (y: number, d: string): CSSProperties => ({ transitionDelay: d, transformOrigin: `50px ${y}px` });
   return (
     <div data-on={onAttr(on)} className="how-panel how-soil relative h-full min-h-[27rem] overflow-hidden rounded-[1.75rem] p-5 sm:p-6">
-      <p className="relative font-mono text-[11px] font-bold tracking-[0.25em] text-hutan-800 uppercase">Lahan · pencairan bertahap</p>
+      <p className="relative font-mono text-[11px] font-bold tracking-[0.25em] text-hutan-800 uppercase">{tr("Lahan · pencairan bertahap", "Field · staged release")}</p>
       <svg viewBox="0 0 100 400" className="absolute top-12 bottom-4 left-3 h-[calc(100%-4rem)] w-20 sm:left-6 sm:w-24" aria-hidden>
         <g stroke="#c9a87a" strokeOpacity="0.55" strokeWidth="1.5" fill="none" strokeLinecap="round">
           <path d="M50 395 C40 400 30 410 22 420 M50 395 C60 402 70 410 80 418 M50 395 V425" />
@@ -147,12 +148,12 @@ function ReleasePanel({ on }: PanelProps) {
               <p className="font-semibold text-hutan-950">
                 {r.name} <span className="font-normal text-stone-500">· {r.pct}</span>
               </p>
-              <span className={cn("text-[11px] font-bold tracking-wide uppercase", r.coop ? "text-hutan-600" : "text-emas-700")}>{r.coop ? "Cair" : "Menunggu"}</span>
+              <span className={cn("text-[11px] font-bold tracking-wide uppercase", r.coop ? "text-hutan-600" : "text-emas-700")}>{r.coop ? tr("Cair", "Released") : tr("Menunggu", "Waiting")}</span>
             </div>
             <div className="mt-1.5 flex gap-1.5 text-[11px] font-semibold">
               {[
                 { icon: Bot, label: "AI", ok: r.ai },
-                { icon: Users, label: "Koperasi", ok: r.coop },
+                { icon: Users, label: tr("Koperasi", "Co-op"), ok: r.coop },
               ].map(({ icon: Icon, label, ok }) => (
                 <span key={label} className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5", ok ? "bg-hutan-100 text-hutan-800" : "bg-emas-100 text-emas-800")}>
                   <Icon className="size-3" aria-hidden /> {label}
@@ -170,21 +171,21 @@ function ReleasePanel({ on }: PanelProps) {
 /* ---------------------------------------------------------- 4 · Neo-brutalist */
 function SplitPanel({ on }: PanelProps) {
   const tiles = [
-    { label: "Modal investor", value: "1.000", cls: "bg-hutan-800 text-white", tilt: "-2deg", d: "0.35s" },
-    { label: "Untung investor", value: "260", cls: "bg-hutan-500 text-white", tilt: "1.5deg", d: "0.5s" },
-    { label: "Untung petani", value: "357,5", cls: "bg-emas-400 text-hutan-950", tilt: "1deg", d: "0.65s" },
-    { label: "Dana cadangan", value: "32,5", cls: "bg-[#c0392b] text-white", tilt: "-1.5deg", d: "0.8s" },
+    { label: tr("Modal investor", "Investor capital"), value: tr("1.000", "1,000"), cls: "bg-hutan-800 text-white", tilt: "-2deg", d: "0.35s" },
+    { label: tr("Untung investor", "Investor profit"), value: "260", cls: "bg-hutan-500 text-white", tilt: "1.5deg", d: "0.5s" },
+    { label: tr("Untung petani", "Farmer profit"), value: tr("357,5", "357.5"), cls: "bg-emas-400 text-hutan-950", tilt: "1deg", d: "0.65s" },
+    { label: tr("Dana cadangan", "Reserve fund"), value: tr("32,5", "32.5"), cls: "bg-[#c0392b] text-white", tilt: "-1.5deg", d: "0.8s" },
   ];
   return (
     <div data-on={onAttr(on)} className="how-panel how-brutal relative flex h-full min-h-[27rem] flex-col rounded-[1.25rem] p-6 text-hutan-950 sm:p-7">
       <div className="flex items-start justify-between gap-3">
         <p className="font-display text-3xl leading-none font-black tracking-tight uppercase">
-          Bagi
+          {tr("Bagi", "Profit")}
           <br />
-          hasil
+          {tr("hasil", "split")}
         </p>
         <span className="rotate-6 border-[3px] border-hutan-950 bg-hutan-950 px-2.5 py-1 font-mono text-xs font-black tracking-widest text-emas-300 uppercase shadow-[4px_4px_0_#e6b043]">
-          Otomatis!
+          {tr("Otomatis!", "Automatic!")}
         </span>
       </div>
       <div className="my-auto grid items-center gap-7 py-6 sm:grid-cols-[auto_1fr]">
@@ -194,7 +195,7 @@ function SplitPanel({ on }: PanelProps) {
         >
           <div className="absolute inset-[24%] grid place-items-center rounded-full border-[3px] border-hutan-950 bg-[#fdf9ee] text-center">
             <div>
-              <p className="font-display text-2xl leading-none font-black">1.650</p>
+              <p className="font-display text-2xl leading-none font-black">{tr("1.650", "1,650")}</p>
               <p className="font-mono text-[9px] font-bold tracking-widest uppercase">USDT</p>
             </div>
           </div>
@@ -208,7 +209,7 @@ function SplitPanel({ on }: PanelProps) {
           ))}
         </div>
       </div>
-      <p className="font-mono text-[11px] font-bold">Modal kembali dulu → untung: 55% petani · 40% investor · 5% cadangan</p>
+      <p className="font-mono text-[11px] font-bold">{tr("Modal kembali dulu → untung: 55% petani · 40% investor · 5% cadangan", "Capital back first → profit: 55% farmer · 40% investors · 5% reserve")}</p>
     </div>
   );
 }
@@ -226,24 +227,24 @@ export function StepBadge({ index }: { index: number }) {
   if (index === 0)
     return (
       <span className="inline-block -rotate-3 rounded-md border-2 border-dashed border-red-700/80 px-2.5 py-1 font-mono text-xs font-black tracking-[0.2em] text-red-700 uppercase">
-        Langkah {n}
+        {tr("Langkah", "Step")} {n}
       </span>
     );
   if (index === 1)
     return (
       <span className="inline-block rounded-full bg-[#04110b] px-3 py-1 font-mono text-xs font-bold tracking-[0.2em] text-emas-300 uppercase shadow-[0_0_18px_rgb(237_197_106/0.45)] ring-1 ring-emas-300/40">
-        Langkah {n}
+        {tr("Langkah", "Step")} {n}
       </span>
     );
   if (index === 2)
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-hutan-100 px-3 py-1 text-xs font-bold tracking-[0.15em] text-hutan-800 uppercase ring-1 ring-hutan-200">
-        <Sprout className="size-3.5" aria-hidden /> Langkah {n}
+        <Sprout className="size-3.5" aria-hidden /> {tr("Langkah", "Step")} {n}
       </span>
     );
   return (
     <span className="inline-block border-2 border-hutan-950 bg-emas-300 px-2.5 py-1 font-mono text-xs font-black tracking-[0.2em] text-hutan-950 uppercase shadow-[3px_3px_0_#0b1d15]">
-      Langkah {n}
+      {tr("Langkah", "Step")} {n}
     </span>
   );
 }

@@ -1,3 +1,4 @@
+import { tr } from "@/lib/i18n";
 import { cn } from "./ui";
 
 /**
@@ -31,7 +32,7 @@ export function BrandLogo({ name, className }: { name: LogoKey; className?: stri
 /** Deretan label kecil "ditenagai oleh": logo + nama, atau lencana teks (mis. ERC-8004 yang tak punya logo resmi). */
 export function PoweredBy({ items }: { items: ({ logo: LogoKey; label?: string } | { badge: string; label: string })[] }) {
   return (
-    <ul className="flex flex-wrap items-center gap-1.5" aria-label="Teknologi yang dipakai">
+    <ul className="flex flex-wrap items-center gap-1.5" aria-label={tr("Teknologi yang dipakai", "Technologies used")}>
       {items.map((it) => (
         <li
           key={"logo" in it ? it.logo : it.badge}
