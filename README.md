@@ -133,16 +133,17 @@ Contoh dari data demo — modal 1.000 USDT, hasil penjualan 1.650 USDT. Angka in
 
 ## 🏗️ Arsitektur
 
-Tidak ada server aplikasi maupun database:
+Tidak ada database maupun server yang menyimpan data:
 - smart contract menyimpan data dan dana;
 - IPFS menyimpan foto, metadata, dan putusan;
-- agen AI adalah satu-satunya proses off-chain yang aktif.
+- agen AI adalah satu-satunya proses off-chain yang menulis ke chain;
+- API route Vercel hanya membantu membaca: mengunggah ke Pinata, dan menyajikan indeks event log (`/api/logs`) karena RPC publik membatasi `eth_getLogs` 5.000 blok per panggilan. Semua isinya bisa dicek langsung di BscScan.
 
 ```mermaid
 flowchart LR
   subgraph Browser["web/ — Next.js (Vercel)"]
     UI["Halaman per peran<br/>(petani, investor, koperasi, admin)"]
-    API["API route /api/upload<br/>(satu-satunya kode server)"]
+    API["API route /api/upload & /api/logs<br/>(hanya membaca / mengunggah)"]
   end
   subgraph Chain["BNB Chain — BSC testnet"]
     F["CampaignFactory"] --> HC["HarvestCampaign<br/>escrow + token porsi + milestone"]
@@ -321,7 +322,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 ### Deploy ke Vercel
 
 - Root directory: `web/` (framework Next.js terdeteksi otomatis).
-- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC=https://rpc.sentio.xyz/bsc-testnet` (publicnode hanya menyimpan log beberapa hari terakhir; tanpa ini riwayat lama seperti pendaftaran koperasi tidak terbaca), `NEXT_PUBLIC_IDR_PER_USDT=16000`.
+- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC=https://rpc.sentio.xyz/bsc-testnet` (publicnode hanya menyimpan log beberapa hari terakhir; Sentio menyimpan riwayat lengkap tetapi membatasi 5.000 blok per panggilan, jadi server `/api/logs` memindainya mulai dari snapshot `web/data/log-snapshot.json`, yang diperbarui otomatis tiap 3 hari oleh workflow *Snapshot log web*), `NEXT_PUBLIC_IDR_PER_USDT=16000`.
 - Alamat kontrak tidak perlu diisi, karena sudah ada di `web/lib/deployments.ts` hasil `npm run sync`. Variabel `NEXT_PUBLIC_*_ADDRESS` hanya untuk menimpa alamat itu.
 - Agen AI tidak di-deploy ke Vercel (fungsi Vercel hanya hidup saat ada permintaan). Agen berjalan di GitHub Actions, lihat bagian berikut.
 

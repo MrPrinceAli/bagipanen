@@ -305,3 +305,13 @@ Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahas
     - Ikon tab browser `web/app/icon.svg` memakai versi bergaris lebih tebal supaya tetap terbaca di 16 px.
     - `favicon.ico` bawaan Next.js dihapus.
 
+## Operasional — Indeks event log di server (16 Okt 2026)
+
+1. **Masalah:** RPC log Sentio kini membatasi `eth_getLogs` maksimal 5.000 blok per panggilan (sebelumnya 50.000 diterima). Web memakai potongan 50.000, jadi semua pembacaan log gagal: daftar petani, putusan terbaru di `/agent`, riwayat transaksi proyek, dan daftar anggota koperasi tidak tampil. Rentang sejak deploy juga terus bertambah (±190 ribu blok per hari), sehingga memindai dari browser per 5.000 blok butuh ±580 panggilan (±1 menit) dan makin lambat.
+2. **Keputusan:** indeks log dipindah ke server, hanya-baca.
+   - `scripts/log-snapshot.mjs` menyimpan semua log CampaignFactory + HarvestCampaign resmi ke `web/data/log-snapshot.json` (tanpa dependensi).
+   - `GET /api/logs` = snapshot + pindai blok sesudahnya (5.000 blok, 8 paralel), disimpan di memori instance dan di-cache CDN Vercel (`s-maxage=15`, `stale-while-revalidate=300`).
+   - Di browser, `logsClient` memakai transport khusus: `eth_getLogs` dijawab dari indeks itu dan difilter (alamat, topik, rentang blok) di browser, sehingga kode pembaca log lain tidak berubah. Jika `/api/logs` gagal, browser kembali memindai RPC log sendiri per 5.000 blok (lambat, tetapi jalan).
+   - Workflow *Snapshot log web* memperbarui snapshot tiap 3 hari agar rentang yang dipindai server tetap kecil.
+3. **Konsekuensi:** data riwayat bisa telat beberapa detik (cache 15 detik). Server tidak bisa mengubah apa pun dan semua log tetap bisa dicek di BscScan; README diperbarui karena web kini punya satu API route pembaca. Kontrak, agen, dan transaksi tidak berubah.
+
