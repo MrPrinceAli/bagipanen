@@ -154,7 +154,7 @@ export default function FarmerDirectoryPage() {
                   <Card key={c.address} className="flex flex-col gap-2">
                     <p className="font-semibold text-hutan-950">{c.name}</p>
                     <p className="text-sm text-stone-600">
-                      {members} petani anggota · {projects} proyek
+                      {tr(`${members} petani anggota · ${projects} proyek`, `${members} member farmers · ${projects} projects`)}
                     </p>
                     <AddressLink address={c.address} className="text-xs text-stone-500" />
                   </Card>

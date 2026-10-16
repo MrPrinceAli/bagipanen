@@ -290,7 +290,7 @@ export default function ProjectsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#5c3d16]/25 bg-[#f6ecd4] px-4 py-3 font-display text-xs text-[#5c3d16] italic sm:absolute sm:bottom-9 sm:left-9 sm:flex-col sm:items-start sm:gap-y-1 sm:rounded-xl sm:border sm:border-[#5c3d16]/40 sm:bg-[#f6ecd4]/90">
             <span className="w-full font-semibold not-italic">
-              {visible.length} proyek · {provinces.length} provinsi
+              {tr(`${visible.length} proyek · ${provinces.length} provinsi`, `${visible.length} projects · ${provinces.length} provinces`)}
             </span>
             {[
               ["#edc56a", tr("Cari dana", "Funding")],

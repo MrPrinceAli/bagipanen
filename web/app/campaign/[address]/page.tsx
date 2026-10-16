@@ -49,7 +49,7 @@ export default function CampaignPage() {
         <section className="glow-hutan bg-hutan-950 pt-10 pb-24">
           <Container>
             <Link href="/#proyek" className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
-              <ArrowLeft className="size-4" aria-hidden /> Semua proyek
+              <ArrowLeft className="size-4" aria-hidden /> {tr("Semua proyek", "All projects")}
             </Link>
             {isLoading && <Skeleton className="mt-6 h-12 max-w-xl bg-white/10" />}
           </Container>
@@ -84,14 +84,14 @@ export default function CampaignPage() {
         <div className="pola-bedengan absolute inset-0" aria-hidden />
         <Container className="relative pt-8 pb-24 sm:pb-28">
           <Link href="/#proyek" className="inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white">
-            <ArrowLeft className="size-4" aria-hidden /> Semua proyek
+            <ArrowLeft className="size-4" aria-hidden /> {tr("Semua proyek", "All projects")}
           </Link>
           <div className="mt-6 grid items-center gap-8 lg:grid-cols-[1.15fr_1fr]">
             <div className="animate-fade-up">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={c.status} failType={c.failType} glass />
                 <span className="text-xs text-white/50">
-                  Proyek #{c.campaignId.toString()} · token {symbol}
+                  {tr("Proyek", "Project")} #{c.campaignId.toString()} · token {symbol}
                 </span>
               </div>
               <h1 className="mt-4 font-display text-3xl leading-[1.1] font-semibold text-balance sm:text-5xl">{meta?.title ?? `${trTerm(c.commodity)} ${tr("di", "in")} ${c.locationName}`}</h1>
@@ -140,7 +140,10 @@ export default function CampaignPage() {
               {formatUsdt(c.raisedAmount)} <span className="font-sans text-lg font-semibold text-stone-400">USDT</span>
             </p>
             <p className="text-sm text-stone-500">
-              dari target {formatUsdt(c.targetAmount)} USDT · sekitar {formatRupiah(c.targetAmount)}
+              {tr(
+                `dari target ${formatUsdt(c.targetAmount)} USDT · sekitar ${formatRupiah(c.targetAmount)}`,
+                `of a ${formatUsdt(c.targetAmount)} USDT target · about ${formatRupiah(c.targetAmount)}`,
+              )}
             </p>
             <ProgressBar value={c.raisedAmount} max={c.targetAmount} className="mt-4" />
             <p className="mt-2 text-sm font-semibold text-emas-700">{pct}% {tr("terdanai", "funded")}</p>

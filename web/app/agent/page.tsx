@@ -211,7 +211,7 @@ function ActivityFeed({ verdict }: { verdict: VerdictEntry | undefined }) {
           {done > 0 && done <= steps.length && <span className="scan-line pointer-events-none absolute inset-x-0 h-10" aria-hidden />}
           {verdict && (
             <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-hutan-900 shadow">
-              {verdict.commodity} · {verdict.milestoneName}
+              {trTerm(verdict.commodity)} · {trTerm(verdict.milestoneName)}
             </span>
           )}
         </div>
