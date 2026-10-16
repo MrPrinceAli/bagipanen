@@ -274,7 +274,7 @@ function CooperativeSection() {
                   <p className="font-semibold text-hutan-950">{c.name}</p>
                   <p className="font-mono text-xs text-stone-500">{shortAddress(c.address)}</p>
                 </div>
-                <Badge tone="green">{members} petani</Badge>
+                <Badge tone="green">{tr(`${members} petani`, `${members} ${members === 1 ? "farmer" : "farmers"}`)}</Badge>
               </li>
             );
           })}

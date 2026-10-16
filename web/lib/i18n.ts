@@ -32,11 +32,10 @@ export function locale(): string {
 export const LANG_STORAGE_KEY = "bagipanen.lang";
 
 /**
- * Saklar fitur dua bahasa untuk pengunjung (toggle di header + deteksi bahasa browser). Selama
- * penerjemahan belum lengkap, false: situs tampil dalam Bahasa Indonesia seperti biasa, dan EN hanya
- * aktif bila `localStorage["bagipanen.lang"] = "en"` diisi manual (untuk pengujian).
+ * Saklar fitur dua bahasa untuk pengunjung (toggle di header + deteksi bahasa browser). false =
+ * situs hanya Bahasa Indonesia, dan EN aktif bila `localStorage["bagipanen.lang"] = "en"` diisi manual.
  */
-export const I18N_PUBLIC = false;
+export const I18N_PUBLIC = true;
 
 /** Bahasa bawaan dari browser: Indonesia jika bahasa utama browser `id`, selain itu Inggris. */
 export function detectLang(): Lang {

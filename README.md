@@ -170,7 +170,7 @@ flowchart LR
 | Bagian | Teknologi |
 | --- | --- |
 | Kontrak | Solidity 0.8.24, Foundry, OpenZeppelin v5 |
-| Web | Next.js 16 (App Router), React 19, Tailwind v4, wagmi v2, viem, RainbowKit |
+| Web | Next.js 16 (App Router), React 19, Tailwind v4, wagmi v2, viem, RainbowKit · dua bahasa ID/EN |
 | Agen | Node.js 20, TypeScript, viem, exifr, `@google/genai` (Gemini), Open-Meteo |
 | Penyimpanan | IPFS via Pinata (testnet) / folder lokal (mode lokal) |
 

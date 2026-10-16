@@ -315,3 +315,10 @@ Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahas
    - Workflow *Snapshot log web* memperbarui snapshot tiap 3 hari agar rentang yang dipindai server tetap kecil.
 3. **Konsekuensi:** data riwayat bisa telat beberapa detik (cache 15 detik). Server tidak bisa mengubah apa pun dan semua log tetap bisa dicek di BscScan; README diperbarui karena web kini punya satu API route pembaca. Kontrak, agen, dan transaksi tidak berubah.4. **Agen ikut terdampak.** Agen membaca `ProofSubmitted` per 50.000 blok lewat Sentio, sehingga putaran 16 Okt 2026 gagal ("Invalid parameters were provided to the RPC method"). Batas bawaan `MAX_LOG_RANGE` di testnet diturunkan ke 5.000; rentang antar-putaran (±35 ribu blok) dibaca dalam ±2 detik.
 
+## Web dua bahasa (ID/EN) — 16 Okt 2026
+
+1. **Toggle ID | EN di header** (desktop & HP). Bahasa bawaan mengikuti browser: `id-*` → Indonesia, selain itu Inggris; pilihan disimpan di `localStorage["bagipanen.lang"]`. URL tidak berubah, jadi tautan lama (README, form submission, QR pitch deck) tetap berlaku.
+2. **Teks ditulis berpasangan di tempatnya**, `tr("Teks Indonesia", "English text")` (`web/lib/i18n.ts`), tanpa library tambahan. Bahasa aktif disimpan di variabel modul agar format angka/tanggal, pesan error, dan kalimat putusan agen ikut berganti; `LangBoundary` merender ulang isi halaman saat bahasa diganti (data chain tetap di cache react-query, koneksi dompet tidak terganggu). Render server tetap "id" lalu bahasa pilihan diterapkan setelah hidrasi (`useSyncExternalStore`).
+3. **Konten onchain/IPFS tidak diterjemahkan**: judul & cerita proyek, nama petani/koperasi, catatan bebas Gemini. Istilah baku (nama tahap, komoditas, kondisi tanaman) diterjemahkan lewat tabel padanan `trTerm`. Nama tahap tetap dikirim ke kontrak dalam Bahasa Indonesia.
+4. Dikerjakan bertahap di `main` di balik saklar `I18N_PUBLIC` (preview Vercel dilindungi login), lalu diaktifkan setelah QA semua halaman & peran dalam EN.
+
