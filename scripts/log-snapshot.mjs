@@ -29,6 +29,8 @@ const RECENT_WINDOW = 250_000;
 /** Snapshot berhenti beberapa blok sebelum head; sisanya dipindai server (penyedia bisa sedikit tertinggal). */
 const TAIL = 40;
 const PARALLEL = 8;
+/** publicnode menolak filter berisi lebih dari 9 alamat ("Request blocked"). */
+const MAX_ADDRESSES = { [PUBLICNODE]: 8 };
 const GET_CAMPAIGNS = "0xa6b03633"; // getCampaigns()
 
 const deployment = JSON.parse(fs.readFileSync(path.join(ROOT, "deployments/bscTestnet.json"), "utf8"));
@@ -54,7 +56,7 @@ async function rpc(method, params, url, attempt = 0) {
       const n = Number(/(\d[\d,]{2,})/.exec(msg)?.[1]?.replace(/,/g, ""));
       throw Object.assign(new Error(msg), { rangeLimit: Number.isFinite(n) && n > 0 ? n : 0 });
     }
-    throw Object.assign(new Error(`${host(url)}: ${msg}`), { fatal: /usage|quota|beyond current head/i.test(msg) });
+    throw Object.assign(new Error(`${host(url)}: ${msg}`), { fatal: /usage|quota|beyond current head|blocked/i.test(msg) });
   } catch (e) {
     if (e.rangeLimit !== undefined || e.fatal || attempt >= 3) throw e;
     await new Promise((r) => setTimeout(r, 1_000 * 2 ** attempt));
@@ -79,16 +81,19 @@ async function scan(address, from, to, head) {
   for (const url of providers) {
     let chunk = 50_000;
     for (;;) {
-      const ranges = [];
-      for (let s = from; s <= to; s += chunk) ranges.push([s, Math.min(s + chunk - 1, to)]);
+      const max = MAX_ADDRESSES[url] ?? address.length;
+      const groups = [];
+      for (let i = 0; i < address.length; i += max) groups.push(address.slice(i, i + max));
+      const tasks = [];
+      for (let s = from; s <= to; s += chunk) for (const g of groups) tasks.push([g, s, Math.min(s + chunk - 1, to)]);
       try {
-        console.log(`Memindai blok ${from}–${to} (${ranges.length} × ${chunk}) lewat ${host(url)}…`);
+        console.log(`Memindai blok ${from}–${to} (${tasks.length} panggilan, ${chunk} blok) lewat ${host(url)}…`);
         const out = [];
-        for (let i = 0; i < ranges.length; i += PARALLEL) {
+        for (let i = 0; i < tasks.length; i += PARALLEL) {
           const parts = await Promise.all(
-            ranges
+            tasks
               .slice(i, i + PARALLEL)
-              .map(([a, b]) => rpc("eth_getLogs", [{ address, fromBlock: `0x${a.toString(16)}`, toBlock: `0x${b.toString(16)}` }], url)),
+              .map(([g, a, b]) => rpc("eth_getLogs", [{ address: g, fromBlock: `0x${a.toString(16)}`, toBlock: `0x${b.toString(16)}` }], url)),
           );
           for (const p of parts) out.push(...p);
         }

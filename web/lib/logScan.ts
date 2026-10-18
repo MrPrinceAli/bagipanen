@@ -9,6 +9,7 @@
  * - penyedia dipilih menurut umur rentang: rentang baru → publicnode dulu; rentang lama → hanya
  *   penyedia berriwayat lengkap (jangan sampai log lama hilang diam-diam);
  * - penyedia dicoba berurutan; rentang per panggilan adaptif mengikuti batas di pesan galat;
+ * - publicnode menolak filter berisi lebih dari 9 alamat ("Request blocked"), jadi alamat dipecah per 8;
  * - 429/galat jaringan dicoba ulang dengan jeda sebelum pindah penyedia.
  */
 
@@ -20,6 +21,9 @@ export const RECENT_WINDOW_BLOCKS = 250_000;
 
 export type LogFilter = { address?: string | string[]; topics?: (string | string[] | null)[] };
 export type RawLogLike = { blockNumber: string; logIndex: string };
+
+/** Maksimal alamat per filter eth_getLogs, per penyedia (tak tercantum = tanpa batas). */
+const MAX_ADDRESSES: Record<string, number> = { [PUBLICNODE_TESTNET_RPC]: 8 };
 
 const START_CHUNK = 50_000;
 const MIN_CHUNK = 500;
@@ -84,16 +88,25 @@ async function getLogs<T>(url: string, filter: LogFilter, from: number, to: numb
   }
 }
 
+function splitAddresses(filter: LogFilter, max: number | undefined): LogFilter[] {
+  const list = filter.address;
+  if (!max || !Array.isArray(list) || list.length <= max) return [filter];
+  const out: LogFilter[] = [];
+  for (let i = 0; i < list.length; i += max) out.push({ ...filter, address: list.slice(i, i + max) });
+  return out;
+}
+
 /** Pindai [from, to] dengan satu penyedia; rentang mengecil otomatis, `to` dipangkas ke head penyedia. */
 async function scanWith<T>(url: string, filter: LogFilter, from: number, to: number, parallel: number): Promise<T[]> {
   for (;;) {
     const chunk = chunkFor.get(url) ?? START_CHUNK;
-    const ranges: [number, number][] = [];
-    for (let s = from; s <= to; s += chunk) ranges.push([s, Math.min(s + chunk - 1, to)]);
+    const filters = splitAddresses(filter, MAX_ADDRESSES[url]);
+    const tasks: [LogFilter, number, number][] = [];
+    for (let s = from; s <= to; s += chunk) for (const f of filters) tasks.push([f, s, Math.min(s + chunk - 1, to)]);
     try {
       const out: T[] = [];
-      for (let i = 0; i < ranges.length; i += parallel) {
-        const parts = await Promise.all(ranges.slice(i, i + parallel).map(([a, b]) => getLogs<T>(url, filter, a, b)));
+      for (let i = 0; i < tasks.length; i += parallel) {
+        const parts = await Promise.all(tasks.slice(i, i + parallel).map(([f, a, b]) => getLogs<T>(url, f, a, b)));
         for (const p of parts) out.push(...p);
       }
       return out;

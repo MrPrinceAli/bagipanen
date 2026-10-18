@@ -53,8 +53,15 @@ let useAddressFilter = false;
 
 type RawProofLog = Awaited<ReturnType<typeof getProofLogsRaw>>[number];
 
+/** publicnode menolak filter berisi lebih dari 9 alamat ("Request blocked"); alamat dipecah per 8. */
+const MAX_ADDRESSES = 8;
+
 async function getProofLogsRaw(lc: LogClient, fromBlock: bigint, toBlock: bigint, address?: Address[]) {
-  return lc.client.getLogs({ address, event: proofSubmittedEvent, fromBlock, toBlock });
+  if (!address || address.length <= MAX_ADDRESSES) return lc.client.getLogs({ address, event: proofSubmittedEvent, fromBlock, toBlock });
+  const groups: Address[][] = [];
+  for (let i = 0; i < address.length; i += MAX_ADDRESSES) groups.push(address.slice(i, i + MAX_ADDRESSES));
+  const parts = await Promise.all(groups.map((g) => lc.client.getLogs({ address: g, event: proofSubmittedEvent, fromBlock, toBlock })));
+  return parts.flat();
 }
 
 async function getProofLogsRange(lc: LogClient, fromBlock: bigint, toBlock: bigint): Promise<RawProofLog[]> {
