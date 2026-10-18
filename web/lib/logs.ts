@@ -3,13 +3,11 @@
 import { createPublicClient, custom, type EIP1193RequestFn, type Hex } from "viem";
 import { BSC_TESTNET_LOGS_RPC, IS_LOCAL, testnetChain } from "./config";
 import { START_BLOCK } from "./addresses";
+import { logProviders, scanLogs } from "./logScan";
 
 type RawLog = { address: Hex; topics: Hex[]; blockNumber: Hex };
 type LogFilter = { address?: Hex | Hex[]; topics?: (Hex | Hex[] | null)[]; fromBlock?: Hex | string; toBlock?: Hex | string };
 
-/** Batas eth_getLogs per panggilan di RPC publik (Sentio: 5.000 blok). Hanya untuk jalur cadangan. */
-const CHUNK = Number(process.env.NEXT_PUBLIC_LOG_CHUNK_BLOCKS || 5_000);
-const PARALLEL = 4;
 const INDEX_TTL_MS = 8_000;
 
 let index: { at: number; promise: Promise<{ toBlock: number; logs: RawLog[] }> } | undefined;
@@ -55,24 +53,13 @@ async function rpc(url: string, method: string, params: unknown) {
   return body.result;
 }
 
-/** Cadangan bila /api/logs gagal: pindai RPC log langsung, per CHUNK blok. Lambat, tetapi tetap jalan. */
+/** Cadangan bila /api/logs gagal: pindai RPC log langsung dari browser (lib/logScan). Lebih lambat, tetapi tetap jalan. */
 async function scanDirect(f: LogFilter): Promise<RawLog[]> {
-  const url = BSC_TESTNET_LOGS_RPC ?? testnetChain.rpcUrls.default.http[0];
   const latest = Number(await rpc(testnetChain.rpcUrls.default.http[0], "eth_blockNumber", []));
   const from = blockOf(f.fromBlock, Number(START_BLOCK));
   const to = Math.min(blockOf(f.toBlock, latest), latest);
-  const ranges: [number, number][] = [];
-  for (let s = from; s <= to; s += CHUNK) ranges.push([s, Math.min(s + CHUNK - 1, to)]);
-  const out: RawLog[] = [];
-  for (let i = 0; i < ranges.length; i += PARALLEL) {
-    const parts = await Promise.all(
-      ranges.slice(i, i + PARALLEL).map(([a, b]) =>
-        rpc(url, "eth_getLogs", [{ ...f, fromBlock: `0x${a.toString(16)}`, toBlock: `0x${b.toString(16)}` }]) as Promise<RawLog[]>,
-      ),
-    );
-    for (const p of parts) out.push(...p);
-  }
-  return out;
+  const logs = await scanLogs<RawLog & { logIndex: Hex }>(logProviders(from, latest, BSC_TESTNET_LOGS_RPC), { address: f.address, topics: f.topics }, from, to, 4);
+  return logs;
 }
 
 /** eth_getLogs dijawab dari indeks server; metode lain diteruskan ke RPC utama. */

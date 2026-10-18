@@ -313,7 +313,19 @@ Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahas
    - `GET /api/logs` = snapshot + pindai blok sesudahnya (5.000 blok, 8 paralel), disimpan di memori instance dan di-cache CDN Vercel (`s-maxage=15`, `stale-while-revalidate=300`).
    - Di browser, `logsClient` memakai transport khusus: `eth_getLogs` dijawab dari indeks itu dan difilter (alamat, topik, rentang blok) di browser, sehingga kode pembaca log lain tidak berubah. Jika `/api/logs` gagal, browser kembali memindai RPC log sendiri per 5.000 blok (lambat, tetapi jalan).
    - Workflow *Snapshot log web* memperbarui snapshot tiap 3 hari agar rentang yang dipindai server tetap kecil.
-3. **Konsekuensi:** data riwayat bisa telat beberapa detik (cache 15 detik). Server tidak bisa mengubah apa pun dan semua log tetap bisa dicek di BscScan; README diperbarui karena web kini punya satu API route pembaca. Kontrak, agen, dan transaksi tidak berubah.4. **Agen ikut terdampak.** Agen membaca `ProofSubmitted` per 50.000 blok lewat Sentio, sehingga putaran 16 Okt 2026 gagal ("Invalid parameters were provided to the RPC method"). Batas bawaan `MAX_LOG_RANGE` di testnet diturunkan ke 5.000; rentang antar-putaran (±35 ribu blok) dibaca dalam ±2 detik.
+3. **Konsekuensi:** data riwayat bisa telat beberapa detik (cache 15 detik). Server tidak bisa mengubah apa pun dan semua log tetap bisa dicek di BscScan; README diperbarui karena web kini punya satu API route pembaca. Kontrak, agen, dan transaksi tidak berubah.
+4. **Agen ikut terdampak.** Agen membaca `ProofSubmitted` per 50.000 blok lewat Sentio, sehingga putaran 16 Okt 2026 gagal ("Invalid parameters were provided to the RPC method"). Batas bawaan `MAX_LOG_RANGE` di testnet diturunkan ke 5.000; rentang antar-putaran (±35 ribu blok) dibaca dalam ±2 detik.
+
+## Operasional — Penyedia log berlapis (18 Okt 2026)
+
+1. **Masalah:** Sentio kembali memperketat `eth_getLogs` menjadi 1.000 blok per panggilan dan mulai menolak dengan HTTP 429. `/api/logs` gagal (502), sehingga data petani di `/petani` dan aktivitas terbaru di `/agent` kembali lambat (browser memindai sendiri). Agen di GitHub Actions gagal tiap putaran sejak 17 Okt 18:52 UTC karena RPC utamanya (Sentio) juga 429.
+2. **Keputusan:** jangan bergantung pada satu RPC publik.
+   - `web/lib/logScan.ts` (server & browser), `scripts/log-snapshot.mjs`, dan `agent/src/chain.ts` mencoba penyedia berurutan dengan rentang adaptif (mengecil mengikuti batas yang disebut pesan galat; "usage limit"/429 = pindah penyedia).
+   - Rentang baru (±30 jam terakhir) dibaca lewat publicnode dulu: cepat, 50.000 blok per panggilan, tetapi hanya menyimpan log ±2 hari. Rentang lebih lama hanya lewat penyedia berriwayat lengkap (Sentio, NodeReal publik) agar log lama tidak hilang diam-diam.
+   - Snapshot kini inkremental (hanya blok sesudah snapshot lama; kampanye baru dipindai dari blok deploy) dan berjalan tiap 6 jam, jadi server selalu hanya memindai rentang baru.
+   - Server memindai ulang ±40 blok ujung tiap putaran (penyedia bisa sedikit tertinggal dari head).
+   - Agen: transaksi & pembacaan biasa memakai `fallback` viem (RPC utama → publicnode → RPC resmi BNB); `MAX_LOG_RANGE` kini rentang awal 50.000.
+3. **Konsekuensi:** tidak ada perubahan kontrak atau tampilan. Bila semua penyedia gagal, browser tetap memindai sendiri seperti sebelumnya.
 
 ## Web dua bahasa (ID/EN) — 16 Okt 2026
 

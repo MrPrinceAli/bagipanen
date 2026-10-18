@@ -1,11 +1,12 @@
 # Snapshot event log untuk web (web/data/log-snapshot.json). Server /api/logs hanya memindai blok
-# sesudah snapshot (RPC publik dibatasi 5.000 blok per eth_getLogs), jadi snapshot diperbarui
-# berkala agar rentang itu tetap kecil. Commit snapshot memicu deploy Vercel seperti biasa.
+# sesudah snapshot lewat publicnode (cepat, tetapi hanya menyimpan log ±2 hari), jadi snapshot
+# diperbarui tiap 6 jam secara inkremental agar rentang itu selalu baru dan kecil.
+# Commit snapshot memicu deploy Vercel seperti biasa.
 name: Snapshot log web
 
 on:
   schedule:
-    - cron: "17 2 */3 * *"
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -26,7 +27,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Pindai log sejak blok deploy
+      - name: Pindai log sejak snapshot terakhir
         run: node scripts/log-snapshot.mjs
 
       - name: Commit snapshot

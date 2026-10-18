@@ -42,6 +42,22 @@ const rpcUrl = IS_LOCAL
   ? env("LOCAL_RPC_URL") ?? anvil.rpcUrls.default.http[0]
   : env("BSC_TESTNET_RPC") ?? bscTestnet.rpcUrls.default.http[0];
 
+/** RPC publik BSC testnet tanpa kunci; dipakai sebagai cadangan bila RPC utama menolak (mis. HTTP 429). */
+export const PUBLICNODE_TESTNET_RPC = "https://bsc-testnet-rpc.publicnode.com";
+/** Endpoint publik NodeReal (dokumentasi BNB Chain): riwayat log lengkap, kuota bersama. */
+export const NODEREAL_TESTNET_RPC = "https://bsc-testnet.nodereal.io/v1/e9a36765eb8a40b9bd12e680a1fd2bc5";
+
+const list = (v: string | undefined) => (v ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+const unique = (xs: string[]) => [...new Set(xs)];
+
+/** RPC utama + cadangan (baca & kirim transaksi). */
+const rpcUrls = IS_LOCAL ? [rpcUrl] : unique([rpcUrl, PUBLICNODE_TESTNET_RPC, bscTestnet.rpcUrls.default.http[0]]);
+/**
+ * Penyedia eth_getLogs, dicoba berurutan. publicnode cepat (50.000 blok/panggilan) tetapi hanya menyimpan
+ * log ±2 hari, jadi dipakai hanya untuk rentang baru (lihat chain.ts); sisanya berriwayat lengkap.
+ */
+const logRpcUrls = IS_LOCAL ? [rpcUrl] : unique([...list(env("LOGS_RPC")), PUBLICNODE_TESTNET_RPC, rpcUrl, NODEREAL_TESTNET_RPC]);
+
 export const chain = defineChain({
   ...(IS_LOCAL ? anvil : bscTestnet),
   rpcUrls: { default: { http: [rpcUrl] } },
@@ -74,6 +90,8 @@ function resolveAccount(): LocalAccount {
 export const config = {
   mode: APP_MODE,
   rpcUrl,
+  rpcUrls,
+  logRpcUrls,
   factory: resolveFactory(),
   startBlock: BigInt(env("START_BLOCK") ?? deployment?.startBlock ?? 0),
   identityIsMock: deployment?.identityIsMock ?? true,
@@ -93,8 +111,8 @@ export const config = {
   retryAttempts: 3,
   retryDelayMs: Number(env("RETRY_DELAY_MS") ?? 15_000),
   /**
-   * Rentang blok maksimal per getLogs. RPC publik resmi BNB menolak eth_getLogs; Sentio (RPC log
-   * yang dipakai) membatasi 5.000 blok per panggilan sejak Okt 2026 (sebelumnya 50.000).
+   * Rentang blok awal per getLogs. Rentang mengecil otomatis per penyedia bila RPC menyebut batasnya
+   * (Sentio: 1.000 blok sejak Okt 2026; publicnode/NodeReal: 50.000).
    */
-  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 5_000)),
+  maxLogRange: BigInt(env("MAX_LOG_RANGE") ?? (IS_LOCAL ? 100_000 : 50_000)),
 };

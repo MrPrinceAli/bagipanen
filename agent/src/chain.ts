@@ -1,11 +1,35 @@
-import { type Address, createPublicClient, createWalletClient, getAbiItem, getAddress, type Hash, http, zeroAddress } from "viem";
+import {
+  type Address,
+  createPublicClient,
+  createWalletClient,
+  fallback,
+  getAbiItem,
+  getAddress,
+  type Hash,
+  http,
+  type PublicClient,
+  zeroAddress,
+} from "viem";
 import { campaignFactoryAbi } from "./abi/CampaignFactory.js";
 import { harvestCampaignAbi } from "./abi/HarvestCampaign.js";
 import { chain, config } from "./config.js";
 import { log } from "./log.js";
 
-export const publicClient = createPublicClient({ chain, transport: http(config.rpcUrl) });
-export const walletClient = createWalletClient({ account: config.account, chain, transport: http(config.rpcUrl) });
+/** RPC utama, lalu cadangan bila menolak (mis. HTTP 429 dari RPC publik yang membatasi frekuensi). */
+const transport = () => fallback(config.rpcUrls.map((url) => http(url, { retryCount: 1 })));
+export const publicClient = createPublicClient({ chain, transport: transport() });
+export const walletClient = createWalletClient({ account: config.account, chain, transport: transport() });
+
+/** Klien eth_getLogs per penyedia (config.logRpcUrls) + rentang blok yang terakhir diterima masing-masing. */
+const logClients = config.logRpcUrls.map((url) => ({
+  url,
+  host: new URL(url).host,
+  client: createPublicClient({ chain, transport: http(url, { retryCount: 2 }) }) as PublicClient,
+  range: config.maxLogRange,
+}));
+type LogClient = (typeof logClients)[number];
+/** publicnode hanya menyimpan log ±2 hari (blok lebih tua → [] tanpa galat); rentang lebih lama dilewatkan. */
+const RECENT_WINDOW = 250_000n;
 
 /** Event `ProofSubmitted(uint8 index, string cid, uint8 attempt)` dari HarvestCampaign. */
 export const proofSubmittedEvent = getAbiItem({ abi: harvestCampaignAbi, name: "ProofSubmitted" });
@@ -29,25 +53,63 @@ let useAddressFilter = false;
 
 type RawProofLog = Awaited<ReturnType<typeof getProofLogsRaw>>[number];
 
-async function getProofLogsRaw(fromBlock: bigint, toBlock: bigint, address?: Address[]) {
-  return publicClient.getLogs({ address, event: proofSubmittedEvent, fromBlock, toBlock });
+async function getProofLogsRaw(lc: LogClient, fromBlock: bigint, toBlock: bigint, address?: Address[]) {
+  return lc.client.getLogs({ address, event: proofSubmittedEvent, fromBlock, toBlock });
 }
 
-async function getProofLogsRange(fromBlock: bigint, toBlock: bigint): Promise<RawProofLog[]> {
+async function getProofLogsRange(lc: LogClient, fromBlock: bigint, toBlock: bigint): Promise<RawProofLog[]> {
   if (!useAddressFilter) {
     try {
-      return await getProofLogsRaw(fromBlock, toBlock);
+      return await getProofLogsRaw(lc, fromBlock, toBlock);
     } catch (e) {
-      // Galat jaringan biasa akan gagal juga di bawah dan dicoba lagi di tick berikutnya.
+      if (rangeLimitOf(e) !== undefined) throw e;
+      // Galat jaringan biasa akan gagal juga di bawah dan penyedia berikutnya dicoba.
       const campaigns = await getCampaigns();
-      const logs = campaigns.length > 0 ? await getProofLogsRaw(fromBlock, toBlock, campaigns) : [];
+      const logs = campaigns.length > 0 ? await getProofLogsRaw(lc, fromBlock, toBlock, campaigns) : [];
       useAddressFilter = true;
-      log("AGEN", `RPC menolak getLogs tanpa alamat (${(e as { shortMessage?: string }).shortMessage ?? "galat"}) → memakai filter daftar proyek resmi`);
+      log("AGEN", `RPC menolak getLogs tanpa alamat (${errorText(e)}) → memakai filter daftar proyek resmi`);
       return logs;
     }
   }
   const campaigns = await getCampaigns();
-  return campaigns.length > 0 ? getProofLogsRaw(fromBlock, toBlock, campaigns) : [];
+  return campaigns.length > 0 ? getProofLogsRaw(lc, fromBlock, toBlock, campaigns) : [];
+}
+
+function errorText(e: unknown): string {
+  const err = e as { details?: string; shortMessage?: string; message?: string };
+  return err.details ?? err.shortMessage ?? err.message ?? String(e);
+}
+
+/**
+ * Batas rentang dari galat "exceed maximum block range: 50000" / "limited to 1000 blocks" (0 = tak
+ * disebut angkanya); undefined = bukan galat rentang (mis. "usage limit", HTTP 429).
+ */
+export function rangeLimitOf(e: unknown): bigint | undefined {
+  const msg = errorText(e);
+  if (!/range|blocks/i.test(msg) || /usage|quota|rate|beyond current head|HTTP request failed/i.test(msg)) return undefined;
+  const n = /(\d[\d,]{2,})/.exec(msg)?.[1]?.replace(/,/g, "");
+  return n ? BigInt(n) : 0n;
+}
+
+/** Semua bukti di [fromBlock, toBlock] lewat satu penyedia; rentang mengecil mengikuti batasnya. */
+async function scanWith(lc: LogClient, fromBlock: bigint, toBlock: bigint): Promise<RawProofLog[]> {
+  const out: RawProofLog[] = [];
+  let start = fromBlock;
+  while (start <= toBlock) {
+    const end = start + lc.range - 1n < toBlock ? start + lc.range - 1n : toBlock;
+    try {
+      out.push(...(await getProofLogsRange(lc, start, end)));
+      start = end + 1n;
+    } catch (e) {
+      const limit = rangeLimitOf(e);
+      if (limit === undefined) throw e;
+      const next = limit > 0n && limit <= lc.range ? limit - 1n : lc.range / 2n;
+      if (next < 500n) throw e;
+      log("AGEN", `${lc.host} membatasi getLogs → ${next} blok per panggilan`);
+      lc.range = next;
+    }
+  }
+  return out;
 }
 
 async function getCampaigns(): Promise<Address[]> {
@@ -57,25 +119,32 @@ async function getCampaigns(): Promise<Address[]> {
 /**
  * Semua log ProofSubmitted di rentang blok. Sesuai PRD, difilter berdasarkan signature event saja
  * (tanpa filter alamat), kecuali RPC mewajibkan alamat (lihat `useAddressFilter`).
- * Rentang dibagi per `maxLogRange` karena RPC publik membatasinya.
+ * Penyedia log dicoba berurutan (config.logRpcUrls); rentang per panggilan adaptif.
  */
 export async function getProofLogs(fromBlock: bigint, toBlock: bigint): Promise<ProofLog[]> {
-  const out: ProofLog[] = [];
-  for (let start = fromBlock; start <= toBlock; start += config.maxLogRange) {
-    const end = start + config.maxLogRange - 1n < toBlock ? start + config.maxLogRange - 1n : toBlock;
-    for (const l of await getProofLogsRange(start, end)) {
-      out.push({
-        campaign: getAddress(l.address),
-        index: Number(l.args.index),
-        cid: l.args.cid ?? "",
-        attempt: Number(l.args.attempt),
-        blockNumber: l.blockNumber,
-        txHash: l.transactionHash,
-        logIndex: l.logIndex,
-      });
+  const recent = fromBlock + RECENT_WINDOW >= toBlock;
+  const providers = logClients.filter((lc) => recent || !lc.url.includes("publicnode"));
+  let raw: RawProofLog[] | undefined;
+  let last: unknown;
+  for (const lc of providers) {
+    try {
+      raw = await scanWith(lc, fromBlock, toBlock);
+      break;
+    } catch (e) {
+      last = e;
+      log("AGEN", `getLogs lewat ${lc.host} gagal (${errorText(e).split("\n")[0]}) → penyedia berikutnya`);
     }
   }
-  return out;
+  if (!raw) throw last instanceof Error ? last : new Error("Semua RPC log gagal.");
+  return raw.map((l) => ({
+    campaign: getAddress(l.address),
+    index: Number(l.args.index),
+    cid: l.args.cid ?? "",
+    attempt: Number(l.args.attempt),
+    blockNumber: l.blockNumber,
+    txHash: l.transactionHash,
+    logIndex: l.logIndex,
+  }));
 }
 
 export async function isCampaign(address: Address): Promise<boolean> {
