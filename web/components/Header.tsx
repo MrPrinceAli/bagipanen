@@ -94,16 +94,15 @@ export function Header() {
               {ROLE_LABEL[role]}
             </span>
           )}
-          <LangToggle className="hidden sm:flex" />
           <WalletButton />
+          <LangToggle />
         </div>
       </Container>
       <div className="border-t border-white/5 xl:hidden">
         <Container className="flex items-center gap-2 py-2">
           <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto">{nav.map((n) => link(n, true))}</nav>
-          <div className="flex items-center gap-2 sm:hidden">
+          <div className="sm:hidden">
             <FaucetButton compact />
-            <LangToggle />
           </div>
         </Container>
       </div>
