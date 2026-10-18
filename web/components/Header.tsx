@@ -95,7 +95,7 @@ export function Header() {
             </span>
           )}
           <WalletButton />
-          <LangToggle />
+          <LangToggle className="ml-1 sm:ml-4" />
         </div>
       </Container>
       <div className="border-t border-white/5 xl:hidden">
