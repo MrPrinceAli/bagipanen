@@ -1,4 +1,4 @@
-import { createPublicClient, http, type Address, type Hex } from "viem";
+import { createPublicClient, fallback, http, type Address, type Hex } from "viem";
 import { campaignFactoryAbi } from "@/lib/abi/CampaignFactory";
 import { addresses, START_BLOCK } from "@/lib/addresses";
 import { BSC_TESTNET_LOGS_RPC, testnetChain } from "@/lib/config";
@@ -21,7 +21,10 @@ export type RawLog = {
 type Snapshot = { factory: string; toBlock: number; addresses: string[]; logs: RawLog[] };
 const base = snapshot as unknown as Snapshot;
 
-const client = createPublicClient({ chain: testnetChain, transport: http() });
+/** RPC log berkunci milik sendiri (mis. NodeReal), rahasia: hanya dibaca di server, jangan NEXT_PUBLIC_. */
+const OWN_LOGS_RPC = process.env.LOGS_RPC?.trim() || undefined;
+
+const client = createPublicClient({ chain: testnetChain, transport: OWN_LOGS_RPC ? fallback([http(), http(OWN_LOGS_RPC)]) : http() });
 
 /** Jumlah blok ujung yang dipindai ulang tiap putaran (±1 menit di BSC testnet). */
 const RESCAN_TAIL = 40;
@@ -59,7 +62,7 @@ async function build(): Promise<LogIndex> {
 
   // RPC utama bisa sedikit tertinggal dari snapshot/indeks; jangan sampai indeks mundur.
   const top = Math.max(latest, fromBlock - 1);
-  const fresh = await scanLogs<RawLog>(logProviders(fromBlock, top, BSC_TESTNET_LOGS_RPC), { address: all }, fromBlock, top);
+  const fresh = await scanLogs<RawLog>(logProviders(fromBlock, top, BSC_TESTNET_LOGS_RPC, OWN_LOGS_RPC), { address: all }, fromBlock, top);
   const logs = [...fromLogs, ...fresh];
   // Blok paling ujung dipindai ulang di putaran berikutnya: penyedia bisa sedikit tertinggal dari
   // head (mengembalikan [] untuk blok yang belum ia punya) atau blok ujung bisa ter-reorg.

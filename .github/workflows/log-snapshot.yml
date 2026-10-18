@@ -29,6 +29,8 @@ jobs:
 
       - name: Pindai log sejak snapshot terakhir
         run: node scripts/log-snapshot.mjs
+        env:
+          LOGS_RPC: ${{ secrets.LOGS_RPC }}
 
       - name: Commit snapshot
         run: |

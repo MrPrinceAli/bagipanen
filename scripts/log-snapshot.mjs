@@ -10,7 +10,7 @@
  * Inkremental: bila snapshot lama ada (factory sama), hanya blok sesudah `toBlock`-nya yang dipindai;
  * kampanye baru yang belum ada di snapshot dipindai dari blok deploy. Rentang baru lewat publicnode
  * (cepat, 50.000 blok, tetapi hanya menyimpan log ±2 hari); rentang lama hanya lewat penyedia
- * berriwayat lengkap (LOGS_RPC/Sentio, NodeReal). Rentang per panggilan adaptif mengikuti batas di
+ * berriwayat lengkap (Sentio, NodeReal publik). RPC berkunci di env LOGS_RPC (bila ada) selalu dicoba pertama. Rentang per panggilan adaptif mengikuti batas di
  * pesan galat RPC (logika yang sama dengan web/lib/logScan.ts).
  */
 import fs from "node:fs";
@@ -21,7 +21,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "web/data/log-snapshot.json");
 const PUBLICNODE = "https://bsc-testnet-rpc.publicnode.com";
 const NODEREAL = "https://bsc-testnet.nodereal.io/v1/e9a36765eb8a40b9bd12e680a1fd2bc5";
-const HISTORY = [...new Set([process.env.LOGS_RPC || "https://rpc.sentio.xyz/bsc-testnet", NODEREAL])];
+/** RPC log berkunci milik sendiri (secret LOGS_RPC, mis. NodeReal): dicoba paling awal. */
+const OWN = process.env.LOGS_RPC?.trim() || undefined;
+const HISTORY = [...new Set(["https://rpc.sentio.xyz/bsc-testnet", NODEREAL])];
 /** RPC untuk eth_blockNumber/eth_call (bukan getLogs). */
 const HEAD_RPC = process.env.HEAD_RPC || "https://bsc-testnet.bnbchain.org";
 /** Rentang yang dianggap "baru" (masih disimpan publicnode): ±30 jam. */
@@ -76,7 +78,7 @@ function decodeAddressArray(hex) {
 /** Pindai semua log alamat-alamat ini di [from, to]: penyedia berurutan, rentang adaptif. */
 async function scan(address, from, to, head) {
   if (from > to || address.length === 0) return [];
-  const providers = from >= head - RECENT_WINDOW ? [PUBLICNODE, ...HISTORY] : HISTORY;
+  const providers = [...new Set([OWN, ...(from >= head - RECENT_WINDOW ? [PUBLICNODE, ...HISTORY] : HISTORY)].filter(Boolean))];
   let last;
   for (const url of providers) {
     let chunk = 50_000;

@@ -147,10 +147,12 @@ export async function scanLogs<T extends RawLogLike>(
 }
 
 /**
- * Urutan penyedia untuk rentang [from, …] dengan head `head`: rentang baru boleh lewat publicnode
- * (cepat, 50.000 blok), rentang lama hanya lewat penyedia berriwayat lengkap.
+ * Urutan penyedia untuk rentang [from, …] dengan head `head`: RPC berkunci milik sendiri (`ownRpc`,
+ * hanya di server) dulu; lalu rentang baru boleh lewat publicnode (cepat, 50.000 blok), sedangkan
+ * rentang lama hanya lewat penyedia berriwayat lengkap.
  */
-export function logProviders(from: number, head: number, historyRpc?: string): string[] {
+export function logProviders(from: number, head: number, historyRpc?: string, ownRpc?: string): string[] {
   const full = [historyRpc, NODEREAL_TESTNET_RPC].filter((x): x is string => Boolean(x));
-  return from >= head - RECENT_WINDOW_BLOCKS ? [PUBLICNODE_TESTNET_RPC, ...full] : full;
+  const rest = from >= head - RECENT_WINDOW_BLOCKS ? [PUBLICNODE_TESTNET_RPC, ...full] : full;
+  return ownRpc ? [ownRpc, ...rest] : rest;
 }

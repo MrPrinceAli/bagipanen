@@ -322,7 +322,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 ### Deploy ke Vercel
 
 - Root directory: `web/` (framework Next.js terdeteksi otomatis).
-- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC=https://rpc.sentio.xyz/bsc-testnet` (publicnode hanya menyimpan log beberapa hari terakhir; Sentio menyimpan riwayat lengkap tetapi membatasi 5.000 blok per panggilan, jadi server `/api/logs` memindainya mulai dari snapshot `web/data/log-snapshot.json`, yang diperbarui otomatis tiap 3 hari oleh workflow *Snapshot log web*), `NEXT_PUBLIC_IDR_PER_USDT=16000`.
+- Environment variable: `NEXT_PUBLIC_APP_MODE=testnet`, `PINATA_JWT` (rahasia, hanya dipakai API route di server), `NEXT_PUBLIC_IPFS_GATEWAY`, `NEXT_PUBLIC_BSC_TESTNET_RPC=https://bsc-testnet-rpc.publicnode.com`, `LOGS_RPC` (rahasia, hanya server: RPC log berkunci milik sendiri, mis. akun gratis NodeReal), `NEXT_PUBLIC_BSC_TESTNET_LOGS_RPC=https://rpc.sentio.xyz/bsc-testnet` (cadangan publik). Server `/api/logs` memindai log mulai dari snapshot `web/data/log-snapshot.json`, yang diperbarui otomatis tiap 6 jam oleh workflow *Snapshot log web*; penyedia dicoba berurutan (`LOGS_RPC` → publicnode untuk blok baru → Sentio → NodeReal publik), `NEXT_PUBLIC_IDR_PER_USDT=16000`.
 - Alamat kontrak tidak perlu diisi, karena sudah ada di `web/lib/deployments.ts` hasil `npm run sync`. Variabel `NEXT_PUBLIC_*_ADDRESS` hanya untuk menimpa alamat itu.
 - Agen AI tidak di-deploy ke Vercel (fungsi Vercel hanya hidup saat ada permintaan). Agen berjalan di GitHub Actions, lihat bagian berikut.
 
@@ -331,7 +331,7 @@ Semua layanan memakai paket gratis. Daftar variabelnya ada di [.env.example](.en
 [`.github/workflows/agent.yml`](.github/workflows/agent.yml) membangunkan agen setiap ±5 menit untuk **satu putaran** (`npm start -- --once`): membaca bukti baru di chain, menilainya, mencatat putusan, lalu berhenti. Gratis untuk repo publik dan tidak bergantung pada laptop siapa pun.
 
 - **State antar-run** (blok terakhir, sidik jari foto, antrean ulang) disimpan dengan cache Actions. Kalau cache kosong, agen memulihkan sidik jari foto lama langsung dari chain + IPFS tanpa memanggil Gemini, jadi deteksi foto daur ulang tetap jalan.
-- **Secrets** (Settings → Secrets and variables → Actions): `AGENT_PRIVATE_KEY`, `GEMINI_API_KEY`, `PINATA_JWT`, `IPFS_GATEWAY`, `BSC_TESTNET_RPC`. Model bisa diatur lewat *variables* `GEMINI_MODEL` dan `GEMINI_FALLBACK_MODELS`.
+- **Secrets** (Settings → Secrets and variables → Actions): `AGENT_PRIVATE_KEY`, `GEMINI_API_KEY`, `PINATA_JWT`, `IPFS_GATEWAY`, `BSC_TESTNET_RPC`, `LOGS_RPC` (RPC log berkunci, juga dipakai workflow snapshot). Model bisa diatur lewat *variables* `GEMINI_MODEL` dan `GEMINI_FALLBACK_MODELS`.
 - Log Actions bersifat publik, jadi agen hanya mencetak host RPC, bukan URL lengkapnya. Nilai secrets juga otomatis disensor GitHub.
 - Bisa dipicu manual dari tab **Actions → Agen AI verifikator → Run workflow**.
 - **Langsung saat foto dikirim (opsional):** isi `GITHUB_DISPATCH_TOKEN` di environment variable Vercel (fine-grained token, repo ini saja, izin *Actions: Read and write*). Setelah petani mengirim foto, web memanggil `/api/agent-wake`, yang memicu workflow hanya jika kontrak resmi itu benar-benar punya bukti yang menunggu putusan dan agen belum berjalan. Putusan jadi keluar ±1–3 menit, bukan 5–15 menit.

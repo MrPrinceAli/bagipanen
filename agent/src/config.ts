@@ -51,7 +51,7 @@ const list = (v: string | undefined) => (v ?? "").split(",").map((x) => x.trim()
 const unique = (xs: string[]) => [...new Set(xs)];
 
 /** RPC utama + cadangan (baca & kirim transaksi). */
-const rpcUrls = IS_LOCAL ? [rpcUrl] : unique([rpcUrl, PUBLICNODE_TESTNET_RPC, bscTestnet.rpcUrls.default.http[0]]);
+const rpcUrls = IS_LOCAL ? [rpcUrl] : unique([rpcUrl, ...list(env("LOGS_RPC")), PUBLICNODE_TESTNET_RPC, bscTestnet.rpcUrls.default.http[0]]);
 /**
  * Penyedia eth_getLogs, dicoba berurutan. publicnode cepat (50.000 blok/panggilan) tetapi hanya menyimpan
  * log ±2 hari, jadi dipakai hanya untuk rentang baru (lihat chain.ts); sisanya berriwayat lengkap.
