@@ -334,3 +334,9 @@ Atas permintaan pemilik proyek: tampilan harus lebih modern dan megah, dan bahas
 3. **Konten onchain/IPFS tidak diterjemahkan**: judul & cerita proyek, nama petani/koperasi, catatan bebas Gemini. Istilah baku (nama tahap, komoditas, kondisi tanaman) diterjemahkan lewat tabel padanan `trTerm`. Nama tahap tetap dikirim ke kontrak dalam Bahasa Indonesia.
 4. Dikerjakan bertahap di `main` di balik saklar `I18N_PUBLIC` (preview Vercel dilindungi login), lalu diaktifkan setelah QA semua halaman & peran dalam EN.
 
+
+## Lisensi campuran — 21 Okt 2026
+
+1. **Kontrak tetap MIT** (`contracts/src`, `contracts/test`, `contracts/script`, `deployments/`; teks di `contracts/LICENSE`). Kode ini sudah terverifikasi publik di BscScan dengan label MIT. Mengganti SPDX di sumbernya mengubah hash metadata hasil kompilasi, sehingga verifikasi ulang tidak cocok dengan bytecode yang sudah ter-deploy.
+2. **Selain itu BUSL 1.1** (agen AI, web, skrip, dokumentasi; `LICENSE` di root). Boleh dibaca, diubah, dan dipakai non-komersial (termasuk penjurian lomba); pemakaian komersial wajib izin dari @MrPrinceAli. Change Date 2030-10-18 → MIT.
+3. Versi sebelum 21 Okt 2026 tetap MIT. `contracts/lib` dan `docs/demo-photos` tetap memakai lisensi aslinya.

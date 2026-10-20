@@ -13,7 +13,7 @@
 
 <p>
 <a href="https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml"><img src="https://github.com/MrPrinceAli/bagipanen/actions/workflows/agent.yml/badge.svg" alt="Agen AI verifikator"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2c6a48" alt="MIT License"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-BUSL%201.1%20·%20kontrak%20MIT-2c6a48" alt="BUSL 1.1, kontrak MIT"></a>
 <img src="https://img.shields.io/badge/kontrak-5%20terverifikasi%20BscScan-2c6a48" alt="5 kontrak terverifikasi">
 <img src="https://img.shields.io/badge/Foundry-90%20test%20·%20100%25%20coverage-2c6a48" alt="90 Foundry tests, 100% coverage">
 <img src="https://img.shields.io/badge/agen-47%20unit%20test-2c6a48" alt="47 agent tests">
@@ -387,6 +387,11 @@ Login sosial & gasless, BNB Greenfield, pasar sekunder token porsi, pembayaran x
 Kontribusi terbuka, lihat [CONTRIBUTING.md](CONTRIBUTING.md). Laporan keamanan lewat [SECURITY.md](SECURITY.md).
 Foto demo berasal dari Wikimedia Commons; sumber dan lisensinya tercatat di [docs/demo-photos/SUMBER.md](docs/demo-photos/SUMBER.md).
 
-Kode dirilis di bawah lisensi [MIT](LICENSE) © 2026 MrPrinceAli dan kontributor BagiPanen.
+© 2026 MrPrinceAli dan kontributor BagiPanen. Lisensinya dibagi dua:
+
+- **Kontrak** (`contracts/src`, `contracts/test`, `contracts/script`) dan `deployments/`: [MIT](contracts/LICENSE), sama dengan kode yang terverifikasi di BscScan.
+- **Selain itu** (agen AI, web, skrip, dokumentasi): [Business Source License 1.1](LICENSE). Boleh dibaca, dipelajari, diuji, dan dipakai untuk keperluan non-komersial, termasuk penjurian lomba. Pemakaian komersial wajib izin, hubungi [@MrPrinceAli](https://github.com/MrPrinceAli). Pada 18 Oktober 2030 bagian ini otomatis menjadi MIT.
+
+Versi yang dirilis sebelum 21 Oktober 2026 tetap berlisensi MIT.
 
 <div align="center"><sub>Dibuat dengan 💛 untuk petani Indonesia · <a href="https://bagipanen.vercel.app">bagipanen.vercel.app</a></sub></div>

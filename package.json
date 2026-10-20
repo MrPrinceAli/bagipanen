@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Monorepo BagiPanen: contracts/ (Foundry), web/ (Next.js), agent/ (Node.js).",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "homepage": "https://bagipanen.vercel.app",
   "repository": {
     "type": "git",
